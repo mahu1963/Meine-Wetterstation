@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wetterstation</title>
+</head>
+<body>
+    <h1>Meine Wetterstation</h1>
+
+    <p>Temperatur: <span id="temp">--</span> °C</p>
+    <p>Luftfeuchtigkeit: <span id="hum">--</span> %</p>
+    <p>Luftdruck: <span id="press">--</span> hPa</p>
+
+    <script>
+        async function loadData() {
+            try {
+                const response = await fetch("data.json?cache=" + Date.now());
+                const data = await response.json();
+
+                document.getElementById("temp").textContent = data.temperature;
+                document.getElementById("hum").textContent = data.humidity;
+                document.getElementById("press").textContent = data.pressure;
+            } catch (e) {
+                console.error("Fehler beim Laden der Daten:", e);
+            }
+        }
+
+        loadData();
+        setInterval(loadData, 5000);
+    </script>
+</body>
+</html>
