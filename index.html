@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Meine Wetterstation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #151b30;
+      --accent: #4fc3f7;
+      --accent2: #ffca28;
+      --text: #e3f2fd;
+      --muted: #90a4ae;
+      --error: #ef5350;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #1e2746 0, #050814 55%, #02030a 100%);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 900px;
+      width: 100%;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .title {
+      font-size: 2.2rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: linear-gradient(145deg, #111729, #181f36);
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -40%;
+      background: radial-gradient(circle at top, rgba(79, 195, 247, 0.12), transparent 60%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .card-value {
+      font-size: 2.1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .card-unit {
+      font-size: 1rem;
+      color: var(--muted);
+    }
+
+    .card-note {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .temp .card-value {
+      color: var(--accent2);
+    }
+
+    .hum .card-value {
+      color: var(--accent);
+    }
+
+    .press .card-value {
+      color: #81c784;
+    }
+
+    .meta {
+      margin-top: 18px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(79, 195, 247, 0.12);
+      border: 1px solid rgba(79, 195, 247, 0.4);
+      color: var(--accent);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .error {
+      margin-top: 12px;
+      font-size: 0.85rem;
+      color: var(--error);
+    }
+
+    .footer {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .link {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="title">Meine Wetterstation</div>
+      <div class="subtitle">
+        Live‑Daten direkt vom ESP8266 über GitHub aktualisiert
+      </div>
+    </header>
+
+    <main>
+      <div class="grid">
+        <div class="card temp">
+          <div class="card-title">Temperatur</div>
+          <div class="card-value">
+            <span id="temp">–</span>
+            <span class="card-unit">°C</span>
+          </div>
+          <div class="card-note" id="temp-note">Wird geladen …</div>
+        </div>
+
+        <div class="card hum">
+          <div class="card-title">Luftfeuchtigkeit</div>
+          <div class="card-value">
+            <span id="hum">–</span>
+            <span class="card-unit">%</span>
+          </div>
+          <div class="card-note" id="hum-note">Wird geladen …</div>
+        </div>
+
+        <div class="card press">
+          <div class="card-title">Luftdruck</div>
+          <div class="card-value">
+            <span id="press">–</span>
+            <span class="card-unit">hPa</span>
+          </div>
+          <div class="card-note" id="press-note">Wird geladen …</div>
+        </div>
+      </div>
+
+      <div class="meta">
+        <div>
+          Letzte Aktualisierung:
+          <span id="timestamp">–</span>
+        </div>
+        <div class="badge" id="status-badge">Status: lädt …</div>
+      </div>
+
+      <div class="error" id="error"></div>
+    </main>
+
+    <footer class="footer">
+      Datenquelle:
+      <a class="link" href="https://github.com/mahu1963/Meine-Wetterstation" target="_blank">
+        GitHub‑Repository
+      </a>
+    </footer>
+  </div>
+
+  <script>
+    // URL zu deiner data.json auf GitHub Pages oder raw.githubusercontent.com
+    // Beispiel GitHub Pages:
+    // const DATA_URL = "https://mahu1963.github.io/Meine-Wetterstation/data.json";
+    //
+    // Wenn du (erstmal) direkt aus dem Repo lesen willst:
+    // const DATA_URL = "https://raw.githubusercontent.com/mahu1963/Meine-Wetterstation/main/data.json";
+
+    const DATA_URL = "https://raw.githubusercontent.com/mahu1963/Meine-Wetterstation/main/data.json";
+
+    const elTemp = document.getElementById("temp");
+    const elHum = document.getElementById("hum");
+    const elPress = document.getElementById("press");
+    const elTempNote = document.getElementById("temp-note");
+    const elHumNote = document.getElementById("hum-note");
+    const elPressNote = document.getElementById("press-note");
+    const elTimestamp = document.getElementById("timestamp");
+    const elStatus = document.getElementById("status-badge");
+    const elError = document.getElementById("error");
+
+    function formatTimestampMs(ms) {
+      if (!ms || ms <= 0) return "unbekannt";
+      const now = new Date();
+      const boot = new Date(now.getTime() - ms);
+      return (
+        boot.toLocaleDateString("de-DE") +
+        " " +
+        boot.toLocaleTimeString("de-DE")
+      );
+    }
+
+    async function loadData() {
+      elStatus.textContent = "Status: lädt …";
+      elError.textContent = "";
+
+      try {
+        const res = await fetch(DATA_URL + "?t=" + Date.now());
+        if (!res.ok) {
+          throw new Error("HTTP " + res.status);
+        }
+        const data = await res.json();
+
+        const t = Number(data.temperature).toFixed(1);
+        const h = Number(data.humidity).toFixed(1);
+        const p = Number(data.pressure).toFixed(1);
+
+        elTemp.textContent = isNaN(t) ? "–" : t;
+        elHum.textContent = isNaN(h) ? "–" : h;
+        elPress.textContent = isNaN(p) ? "–" : p;
+
+        elTempNote.textContent = "Gefühlte Temperatur ähnlich, abhängig von Wind und Feuchte.";
+        elHumNote.textContent = "Rel. Luftfeuchte am Sensorstandort.";
+        elPressNote.textContent = "Auf Meereshöhe umgerechnet, falls im ESP so konfiguriert.";
+
+        if (data.timestamp_ms !== undefined) {
+          elTimestamp.textContent = formatTimestampMs(data.timestamp_ms) + " (seit ESP‑Start)";
+        } else {
+          elTimestamp.textContent = "kein Zeitstempel in data.json";
+        }
+
+        elStatus.textContent = "Status: OK";
+      } catch (err) {
+        console.error(err);
+        elError.textContent = "Fehler beim Laden der Daten: " + err.message;
+        elStatus.textContent = "Status: Fehler";
+      }
+    }
+
+    // Beim Laden einmal holen
+    loadData();
+    // Alle 30 Sekunden neu laden
+    setInterval(loadData, 30000);
+  </script>
+</body>
+</html>
