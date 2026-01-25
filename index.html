@@ -15,7 +15,7 @@
     <script>
         async function loadData() {
             try {
-                const response = await fetch("data.json?cache=" + Date.now()) ;
+                const response = await fetch("data.json?cache=" +  Date.now()) ;
                 const data = await response.json();
 
                 document.getElementById("temp").textContent = data.temperature;
