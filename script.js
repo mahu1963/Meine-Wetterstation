@@ -1,47 +1,34 @@
 async function loadData() {
-    const r = await fetch("data.json?nocache=" + Date.now());
-    const d = await r.json();
+    try {
+        const response = await fetch("data.json?cachebuster=" + Date.now(), {
+            cache: "no-store"
+        });
 
-    document.getElementById("temp").textContent = d.temperature + " °C";
-    document.getElementById("hum").textContent = d.humidity + " %";
-    document.getElementById("press").textContent = d.pressure + " hPa";
-    document.getElementById("time").textContent = d.timestamp;
+        if (!response.ok) {
+            throw new Error("Fehler beim Laden der Daten");
+        }
+
+        const data = await response.json();
+
+        // Werte aus JSON übernehmen
+        document.getElementById("temp").textContent = data.temperature + " °C";
+        document.getElementById("humidity").textContent = data.humidity + " %";
+        document.getElementById("pressure").textContent = data.pressure + " hPa";
+
+        // Zeitstempel anzeigen
+        const now = new Date();
+        document.getElementById("lastUpdate").textContent =
+            "Zuletzt aktualisiert: " +
+            now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+    } catch (error) {
+        console.error("Fehler beim Laden:", error);
+        document.getElementById("lastUpdate").textContent = "Fehler beim Laden der Daten";
+    }
 }
 
-async function loadHistory() {
-    const r = await fetch("history.json?nocache=" + Date.now());
-    const h = await r.json();
-
-    const labels = h.records.map(e => e.timestamp);
-    const temp = h.records.map(e => e.temperature);
-    const hum = h.records.map(e => e.humidity);
-    const press = h.records.map(e => e.pressure);
-
-    const chartOptions = {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: { x: { ticks: { display: false } } }
-    };
-
-    new Chart(document.getElementById("chartTemp"), {
-        type: "line",
-        data: { labels, datasets: [{ label: "Temperatur", data: temp, borderColor: "red" }] },
-        options: chartOptions
-    });
-
-    new Chart(document.getElementById("chartHum"), {
-        type: "line",
-        data: { labels, datasets: [{ label: "Feuchte", data: hum, borderColor: "cyan" }] },
-        options: chartOptions
-    });
-
-    new Chart(document.getElementById("chartPress"), {
-        type: "line",
-        data: { labels, datasets: [{ label: "Druck", data: press, borderColor: "yellow" }] },
-        options: chartOptions
-    });
-}
-
-setInterval(loadData, 15000);
+// Sofort beim Start laden
 loadData();
-loadHistory();
+
+// Alle 5 Sekunden neu laden
+setInterval(loadData, 5000);
