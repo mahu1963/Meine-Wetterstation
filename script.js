@@ -5,15 +5,18 @@ let tempChart = null;
 let humidityChart = null;
 let pressureChart = null;
 
-// Min/Max Werte
+// Min/Max Werte (Session)
 let minTemp = null, maxTemp = null;
 let minHumidity = null, maxHumidity = null;
 let minPressure = null, maxPressure = null;
 
-// Trend-Vergleichswerte
+// Trend-Vergleichswerte (Session)
 let lastTemp = null;
 let lastHumidity = null;
 let lastPressure = null;
+
+// GitHub Raw URL für Historie
+const HISTORY_URL = "https://raw.githubusercontent.com/mahu1963/Meine-Wetterstation/main/data-history.json";
 
 
 // -----------------------------------------
@@ -85,36 +88,34 @@ function pushChartData(chart, value) {
 
 
 // -----------------------------------------
-// Daten laden
+// Live-Daten laden (data.json)
 // -----------------------------------------
-async function loadData() {
+async function loadLiveData() {
     try {
         const response = await fetch("data.json?cachebuster=" + Date.now(), {
             cache: "no-store"
         });
 
-        if (!response.ok) throw new Error("Fehler beim Laden");
+        if (!response.ok) throw new Error("Fehler beim Laden der Live-Daten");
 
         const data = await response.json();
 
-        // Werte anzeigen
+        // Live-Werte anzeigen
         document.getElementById("temp").textContent = data.temperature + " °C";
         document.getElementById("humidity").textContent = data.humidity + " %";
         document.getElementById("pressure").textContent = data.pressure + " hPa";
 
-        // Min/Max Temperatur
+        // Min/Max (Session)
         if (minTemp === null || data.temperature < minTemp) minTemp = data.temperature;
         if (maxTemp === null || data.temperature > maxTemp) maxTemp = data.temperature;
         document.getElementById("tempMin").textContent = minTemp + " °C";
         document.getElementById("tempMax").textContent = maxTemp + " °C";
 
-        // Min/Max Feuchtigkeit
         if (minHumidity === null || data.humidity < minHumidity) minHumidity = data.humidity;
         if (maxHumidity === null || data.humidity > maxHumidity) maxHumidity = data.humidity;
         document.getElementById("humidityMin").textContent = minHumidity + " %";
         document.getElementById("humidityMax").textContent = maxHumidity + " %";
 
-        // Min/Max Druck
         if (minPressure === null || data.pressure < minPressure) minPressure = data.pressure;
         if (maxPressure === null || data.pressure > maxPressure) maxPressure = data.pressure;
         document.getElementById("pressureMin").textContent = minPressure + " hPa";
@@ -136,17 +137,15 @@ async function loadData() {
             data.pressure > lastPressure ? "↑" :
             data.pressure < lastPressure ? "↓" : "→";
 
-        // Werte für nächsten Vergleich speichern
         lastTemp = data.temperature;
         lastHumidity = data.humidity;
         lastPressure = data.pressure;
 
-        // Diagramme aktualisieren
+        // Live-Diagramme
         pushChartData(tempChart, data.temperature);
         pushChartData(humidityChart, data.humidity);
         pushChartData(pressureChart, data.pressure);
 
-        // Zeit anzeigen
         const now = new Date();
         document.getElementById("lastUpdate").textContent =
             "Zuletzt aktualisiert: " +
@@ -154,8 +153,88 @@ async function loadData() {
 
     } catch (err) {
         console.error(err);
-        document.getElementById("lastUpdate").textContent = "Fehler beim Laden der Daten";
+        document.getElementById("lastUpdate").textContent = "Fehler beim Laden der Live-Daten";
     }
+}
+
+
+// -----------------------------------------
+// Historie laden (data-history.json von GitHub)
+// -----------------------------------------
+async function loadHistory() {
+    try {
+        const response = await fetch(HISTORY_URL + "?cachebuster=" + Date.now(), {
+            cache: "no-store"
+        });
+
+        if (!response.ok) throw new Error("Fehler beim Laden der Historie");
+
+        const history = await response.json(); // Array von Einträgen
+
+        updateDayAndWeekStats(history);
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById("dayStats").textContent = "Fehler beim Laden der Tagesstatistik";
+        document.getElementById("weekStats").textContent = "Fehler beim Laden der Wochenstatistik";
+    }
+}
+
+
+// -----------------------------------------
+// Tages- und Wochenstatistik berechnen
+// -----------------------------------------
+function updateDayAndWeekStats(history) {
+    const now = Date.now();
+    const dayCutoff = now - 24 * 60 * 60 * 1000;
+    const weekCutoff = now - 7 * 24 * 60 * 60 * 1000;
+
+    const dayData = history.filter(e => e.time >= dayCutoff);
+    const weekData = history.filter(e => e.time >= weekCutoff);
+
+    const dayStats = calcStats(dayData);
+    const weekStats = calcStats(weekData);
+
+    if (dayStats) {
+        document.getElementById("dayStats").innerHTML =
+            `Temp: ${dayStats.tempMin}–${dayStats.tempMax} °C (Ø ${dayStats.tempAvg} °C)<br>` +
+            `Feuchte: ${dayStats.humMin}–${dayStats.humMax} % (Ø ${dayStats.humAvg} %)<br>` +
+            `Druck: ${dayStats.presMin}–${dayStats.presMax} hPa (Ø ${dayStats.presAvg} hPa)`;
+    } else {
+        document.getElementById("dayStats").textContent = "Noch keine Daten für die letzten 24 Stunden.";
+    }
+
+    if (weekStats) {
+        document.getElementById("weekStats").innerHTML =
+            `Temp: ${weekStats.tempMin}–${weekStats.tempMax} °C (Ø ${weekStats.tempAvg} °C)<br>` +
+            `Feuchte: ${weekStats.humMin}–${weekStats.humMax} % (Ø ${weekStats.humAvg} %)<br>` +
+            `Druck: ${weekStats.presMin}–${weekStats.presMax} hPa (Ø ${weekStats.presAvg} hPa)`;
+    } else {
+        document.getElementById("weekStats").textContent = "Noch keine Daten für die letzten 7 Tage.";
+    }
+}
+
+
+function calcStats(data) {
+    if (!data || data.length === 0) return null;
+
+    const temps = data.map(e => e.temperature);
+    const hums = data.map(e => e.humidity);
+    const pres = data.map(e => e.pressure);
+
+    const avg = arr => (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1);
+
+    return {
+        tempMin: Math.min(...temps),
+        tempMax: Math.max(...temps),
+        tempAvg: avg(temps),
+        humMin: Math.min(...hums),
+        humMax: Math.max(...hums),
+        humAvg: avg(hums),
+        presMin: Math.min(...pres),
+        presMax: Math.max(...pres),
+        presAvg: avg(pres)
+    };
 }
 
 
@@ -176,7 +255,7 @@ function updateChartColors() {
     });
 }
 
-function applyDarkMode(isDark) {
+function applyDarkMode(isDark, darkToggle) {
     if (isDark) {
         document.body.classList.add("dark");
         darkToggle.checked = true;
@@ -198,25 +277,24 @@ window.addEventListener("DOMContentLoaded", () => {
     const darkToggle = document.getElementById("darkToggle");
 
     darkToggle.addEventListener("change", () => {
-        applyDarkMode(darkToggle.checked);
+        applyDarkMode(darkToggle.checked, darkToggle);
     });
 
-    // Dark Mode laden
     const saved = localStorage.getItem("darkmode");
-
     if (saved === "1") {
-        applyDarkMode(true);
+        applyDarkMode(true, darkToggle);
     } else if (saved === "0") {
-        applyDarkMode(false);
+        applyDarkMode(false, darkToggle);
     } else {
-        applyDarkMode(window.matchMedia("(prefers-color-scheme: dark)").matches);
+        applyDarkMode(window.matchMedia("(prefers-color-scheme: dark)").matches, darkToggle);
     }
 
-    // Diagramme starten
     initAllCharts();
     updateChartColors();
 
-    // Daten laden
-    loadData();
-    setInterval(loadData, 5000);
+    loadLiveData();
+    loadHistory();
+
+    setInterval(loadLiveData, 5000);
+    setInterval(loadHistory, 5 * 60 * 1000);
 });
