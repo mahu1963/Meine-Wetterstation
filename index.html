@@ -10,7 +10,7 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="manifest" href="manifest.json?v=3">
+    <link rel="manifest" href="manifest.json?v=4">
     <meta name="theme-color" content="#4fc3f7">
 
     <title>Meine Wetterstation</title>
@@ -19,7 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Script -->
-    <script src="script.js?v=40" defer></script>
+    <script src="script.js?v=50" defer></script>
 
     <style>
         :root {
@@ -29,7 +29,6 @@
             --accent: #4fc3f7;
         }
 
-        /* Dark Mode */
         .dark {
             --bg: #0b1020;
             --text: #e0e0e0;
@@ -62,7 +61,6 @@
             font-size: 0.9rem;
         }
 
-        /* Toggle Switch Container */
         .toggle-container {
             display: flex;
             justify-content: center;
@@ -73,7 +71,6 @@
             color: var(--text);
         }
 
-        /* iPhone‑Style Switch */
         .switch {
             position: relative;
             display: inline-block;
@@ -134,7 +131,7 @@
         }
 
         .value {
-            font-size: 2.6rem;
+            font-size: 2.4rem;
             font-weight: bold;
             margin-top: 5px;
             color: var(--accent);
@@ -159,6 +156,12 @@
             font-size: 0.9rem;
             color: #666;
         }
+
+        .stats-text {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            color: #555;
+        }
     </style>
 </head>
 
@@ -166,7 +169,7 @@
 
     <header class="header">
         <h1>🌤️ Meine Wetterstation</h1>
-        <p class="subtitle">Live‑Daten aus deinem Sensor</p>
+        <p class="subtitle">Live‑Daten & Historie</p>
     </header>
 
     <div class="toggle-container">
@@ -177,7 +180,7 @@
         </label>
     </div>
 
-    <!-- Temperatur -->
+    <!-- Live-Werte -->
     <section class="card">
         <div class="label">Temperatur</div>
         <div class="value">
@@ -189,7 +192,6 @@
         </div>
     </section>
 
-    <!-- Luftfeuchtigkeit -->
     <section class="card">
         <div class="label">Luftfeuchtigkeit</div>
         <div class="value">
@@ -201,7 +203,6 @@
         </div>
     </section>
 
-    <!-- Luftdruck -->
     <section class="card">
         <div class="label">Luftdruck</div>
         <div class="value">
@@ -213,24 +214,36 @@
         </div>
     </section>
 
-    <!-- Diagramme -->
+    <!-- Live-Diagramme -->
     <section class="card">
-        <div class="label">Temperaturverlauf</div>
+        <div class="label">Temperaturverlauf (Live)</div>
         <canvas id="tempChart" height="120"></canvas>
     </section>
 
     <section class="card">
-        <div class="label">Luftfeuchtigkeit Verlauf</div>
+        <div class="label">Luftfeuchtigkeit Verlauf (Live)</div>
         <canvas id="humidityChart" height="120"></canvas>
     </section>
 
     <section class="card">
-        <div class="label">Luftdruck Verlauf</div>
+        <div class="label">Luftdruck Verlauf (Live)</div>
         <canvas id="pressureChart" height="120"></canvas>
+    </section>
+
+    <!-- Tages-/Wochenstatistik -->
+    <section class="card">
+        <div class="label">Tagesstatistik (letzte 24 Stunden)</div>
+        <div id="dayStats" class="stats-text">Noch keine Daten…</div>
+    </section>
+
+    <section class="card">
+        <div class="label">Wochenstatistik (letzte 7 Tage)</div>
+        <div id="weekStats" class="stats-text">Noch keine Daten…</div>
     </section>
 
     <p id="lastUpdate" class="update">Lade Daten…</p>
 
 </body>
 </html>
+
 
