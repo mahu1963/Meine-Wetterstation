@@ -1,4 +1,3 @@
-
 // -----------------------------------------
 // Diagramm-Variablen
 // -----------------------------------------
@@ -10,10 +9,7 @@ let tempChart = null;
 // -----------------------------------------
 function initChart() {
     const canvas = document.getElementById("tempChart");
-    if (!canvas) {
-        console.error("Canvas nicht gefunden!");
-        return;
-    }
+    if (!canvas) return;
 
     const ctx = canvas.getContext("2d");
 
@@ -39,8 +35,6 @@ function initChart() {
             }
         }
     });
-
-    console.log("Diagramm initialisiert");
 }
 
 
@@ -109,16 +103,24 @@ function updateChartColors() {
     tempChart.update();
 }
 
-function toggleDarkMode() {
-    document.body.classList.toggle("dark");
+function applyDarkMode(isDark) {
+    if (isDark) {
+        document.body.classList.add("dark");
+        darkToggle.checked = true;
+    } else {
+        document.body.classList.remove("dark");
+        darkToggle.checked = false;
+    }
 
-    const isDark = document.body.classList.contains("dark");
     localStorage.setItem("darkmode", isDark ? "1" : "0");
-
     updateChartColors();
 }
 
-document.getElementById("darkToggle").addEventListener("click", toggleDarkMode);
+const darkToggle = document.getElementById("darkToggle");
+
+darkToggle.addEventListener("change", () => {
+    applyDarkMode(darkToggle.checked);
+});
 
 
 // -----------------------------------------
@@ -128,10 +130,13 @@ window.addEventListener("DOMContentLoaded", () => {
 
     // Dark Mode laden
     const saved = localStorage.getItem("darkmode");
+
     if (saved === "1") {
-        document.body.classList.add("dark");
-    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        document.body.classList.add("dark");
+        applyDarkMode(true);
+    } else if (saved === "0") {
+        applyDarkMode(false);
+    } else {
+        applyDarkMode(window.matchMedia("(prefers-color-scheme: dark)").matches);
     }
 
     // Diagramm starten
