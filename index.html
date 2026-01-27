@@ -1,73 +1,110 @@
-
-
-
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
 
-    <!-- Verhindert hartnäckiges iPhone‑Caching -->
+    <!-- iPhone Cache verhindern -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
 
-    <!-- PWA‑Grundlagen -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="manifest" href="manifest.json?v=2">
-    <meta name="theme-color" content="#2196f3">
 
+    <!-- Manifest mit Versionsnummer -->
+    <link rel="manifest" href="manifest.json?v=2">
+
+    <meta name="theme-color" content="#4fc3f7">
     <title>Meine Wetterstation</title>
 
-    <!-- Dein Script mit Versionsnummer, damit iOS IMMER neu lädt -->
+    <!-- Script mit Versionsnummer -->
     <script src="script.js?v=3" defer></script>
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background: #f0f4f8;
-            color: #222;
+        :root {
+            --bg: #eef3f8;
+            --text: #1a1a1a;
+            --card: #ffffff;
+            --accent: #4fc3f7;
         }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            margin: 0;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
         .card {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+            background: var(--card);
+            padding: 20px;
+            border-radius: 18px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
             margin-bottom: 20px;
         }
-        .value {
-            font-size: 2rem;
-            font-weight: bold;
+
+        .label {
+            font-size: 1rem;
+            color: #666;
         }
-        #lastUpdate {
-            margin-top: 10px;
+
+        .value {
+            font-size: 2.6rem;
+            font-weight: bold;
+            margin-top: 5px;
+            color: var(--accent);
+        }
+
+        .update {
+            text-align: center;
+            margin-top: 15px;
             font-size: 0.9rem;
-            color: #555;
+            color: #666;
         }
     </style>
 </head>
 
 <body>
 
-    <h1>🌤️ Meine Wetterstation</h1>
+    <header class="header">
+        <h1>🌤️ Meine Wetterstation</h1>
+        <p class="subtitle">Live‑Daten aus deinem Sensor</p>
+    </header>
 
-    <div class="card">
-        <p>Temperatur:</p>
-        <p id="temp" class="value">–</p>
-    </div>
+    <section class="card">
+        <div class="label">Temperatur</div>
+        <div id="temp" class="value">–</div>
+    </section>
 
-    <div class="card">
-        <p>Luftfeuchtigkeit:</p>
-        <p id="humidity" class="value">–</p>
-    </div>
+    <section class="card">
+        <div class="label">Luftfeuchtigkeit</div>
+        <div id="humidity" class="value">–</div>
+    </section>
 
-    <div class="card">
-        <p>Luftdruck:</p>
-        <p id="pressure" class="value">–</p>
-    </div>
+    <section class="card">
+        <div class="label">Luftdruck</div>
+        <div id="pressure" class="value">–</div>
+    </section>
 
-    <p id="lastUpdate">Lade Daten…</p>
+    <p id="lastUpdate" class="update">Lade Daten…</p>
 
 </body>
 </html>
+
+
