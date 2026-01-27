@@ -30,7 +30,7 @@ function initChart() {
     });
 }
 
-initChart();
+window.addEventListener("DOMContentLoaded", initChart);
 
 
 // -------------------------------
@@ -68,11 +68,10 @@ async function loadData() {
     }
 }
 
-// Sofort laden
-loadData();
-
-// Alle 5 Sekunden neu laden
-setInterval(loadData, 5000);
+window.addEventListener("DOMContentLoaded", () => {
+    loadData();
+    setInterval(loadData, 5000);
+});
 
 
 // -------------------------------
