@@ -1,10 +1,22 @@
-// -------------------------------
-// Diagramm initialisieren
-// -------------------------------
-let tempChart;
+// -----------------------------------------
+// Diagramm-Variablen
+// -----------------------------------------
+let tempChart = null;
 
+
+// -----------------------------------------
+// Diagramm initialisieren (erst wenn DOM fertig)
+// -----------------------------------------
 function initChart() {
-    const ctx = document.getElementById("tempChart").getContext("2d");
+    const canvas = document.getElementById("tempChart");
+
+    // Falls Canvas nicht existiert → abbrechen
+    if (!canvas) {
+        console.error("Canvas für Diagramm nicht gefunden!");
+        return;
+    }
+
+    const ctx = canvas.getContext("2d");
 
     tempChart = new Chart(ctx, {
         type: "line",
@@ -28,14 +40,38 @@ function initChart() {
             }
         }
     });
+
+    console.log("Diagramm initialisiert");
 }
 
-window.addEventListener("DOMContentLoaded", initChart);
+
+// -----------------------------------------
+// Diagramm aktualisieren
+// -----------------------------------------
+function updateChart(temp) {
+    if (!tempChart) {
+        console.warn("Diagramm noch nicht bereit");
+        return;
+    }
+
+    const now = new Date().toLocaleTimeString();
+
+    tempChart.data.labels.push(now);
+    tempChart.data.datasets[0].data.push(temp);
+
+    // Nur die letzten 20 Werte behalten
+    if (tempChart.data.labels.length > 20) {
+        tempChart.data.labels.shift();
+        tempChart.data.datasets[0].data.shift();
+    }
+
+    tempChart.update();
+}
 
 
-// -------------------------------
+// -----------------------------------------
 // Daten laden
-// -------------------------------
+// -----------------------------------------
 async function loadData() {
     try {
         const response = await fetch("data.json?cachebuster=" + Date.now(), {
@@ -68,26 +104,14 @@ async function loadData() {
     }
 }
 
+
+// -----------------------------------------
+// Start erst, wenn DOM vollständig geladen ist
+// -----------------------------------------
 window.addEventListener("DOMContentLoaded", () => {
-    loadData();
-    setInterval(loadData, 5000);
+    console.log("DOM geladen → starte App");
+
+    initChart();      // Diagramm initialisieren
+    loadData();       // Daten sofort laden
+    setInterval(loadData, 5000); // Alle 5 Sekunden aktualisieren
 });
-
-
-// -------------------------------
-// Diagramm aktualisieren
-// -------------------------------
-function updateChart(temp) {
-    const now = new Date().toLocaleTimeString();
-
-    tempChart.data.labels.push(now);
-    tempChart.data.datasets[0].data.push(temp);
-
-    // Nur die letzten 20 Werte behalten
-    if (tempChart.data.labels.length > 20) {
-        tempChart.data.labels.shift();
-        tempChart.data.datasets[0].data.shift();
-    }
-
-    tempChart.update();
-}
