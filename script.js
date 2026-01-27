@@ -5,6 +5,16 @@ let tempChart = null;
 let humidityChart = null;
 let pressureChart = null;
 
+// Min/Max Werte
+let minTemp = null, maxTemp = null;
+let minHumidity = null, maxHumidity = null;
+let minPressure = null, maxPressure = null;
+
+// Trend-Vergleichswerte
+let lastTemp = null;
+let lastHumidity = null;
+let lastPressure = null;
+
 
 // -----------------------------------------
 // Universelle Chart-Erstellung
@@ -87,14 +97,56 @@ async function loadData() {
 
         const data = await response.json();
 
+        // Werte anzeigen
         document.getElementById("temp").textContent = data.temperature + " °C";
         document.getElementById("humidity").textContent = data.humidity + " %";
         document.getElementById("pressure").textContent = data.pressure + " hPa";
 
+        // Min/Max Temperatur
+        if (minTemp === null || data.temperature < minTemp) minTemp = data.temperature;
+        if (maxTemp === null || data.temperature > maxTemp) maxTemp = data.temperature;
+        document.getElementById("tempMin").textContent = minTemp + " °C";
+        document.getElementById("tempMax").textContent = maxTemp + " °C";
+
+        // Min/Max Feuchtigkeit
+        if (minHumidity === null || data.humidity < minHumidity) minHumidity = data.humidity;
+        if (maxHumidity === null || data.humidity > maxHumidity) maxHumidity = data.humidity;
+        document.getElementById("humidityMin").textContent = minHumidity + " %";
+        document.getElementById("humidityMax").textContent = maxHumidity + " %";
+
+        // Min/Max Druck
+        if (minPressure === null || data.pressure < minPressure) minPressure = data.pressure;
+        if (maxPressure === null || data.pressure > maxPressure) maxPressure = data.pressure;
+        document.getElementById("pressureMin").textContent = minPressure + " hPa";
+        document.getElementById("pressureMax").textContent = maxPressure + " hPa";
+
+        // Trendpfeile
+        document.getElementById("tempTrend").textContent =
+            lastTemp === null ? "→" :
+            data.temperature > lastTemp ? "↑" :
+            data.temperature < lastTemp ? "↓" : "→";
+
+        document.getElementById("humidityTrend").textContent =
+            lastHumidity === null ? "→" :
+            data.humidity > lastHumidity ? "↑" :
+            data.humidity < lastHumidity ? "↓" : "→";
+
+        document.getElementById("pressureTrend").textContent =
+            lastPressure === null ? "→" :
+            data.pressure > lastPressure ? "↑" :
+            data.pressure < lastPressure ? "↓" : "→";
+
+        // Werte für nächsten Vergleich speichern
+        lastTemp = data.temperature;
+        lastHumidity = data.humidity;
+        lastPressure = data.pressure;
+
+        // Diagramme aktualisieren
         pushChartData(tempChart, data.temperature);
         pushChartData(humidityChart, data.humidity);
         pushChartData(pressureChart, data.pressure);
 
+        // Zeit anzeigen
         const now = new Date();
         document.getElementById("lastUpdate").textContent =
             "Zuletzt aktualisiert: " +
