@@ -2,23 +2,20 @@
 // Diagramm-Variablen
 // -----------------------------------------
 let tempChart = null;
+let humidityChart = null;
+let pressureChart = null;
 
 
 // -----------------------------------------
-// Diagramm initialisieren
+// Universelle Chart-Erstellung
 // -----------------------------------------
-function initChart() {
-    const canvas = document.getElementById("tempChart");
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-
-    tempChart = new Chart(ctx, {
+function createLineChart(ctx, label) {
+    return new Chart(ctx, {
         type: "line",
         data: {
             labels: [],
             datasets: [{
-                label: "Temperatur (°C)",
+                label: label,
                 data: [],
                 borderColor: "#4fc3f7",
                 backgroundColor: "rgba(79, 195, 247, 0.2)",
@@ -39,22 +36,41 @@ function initChart() {
 
 
 // -----------------------------------------
-// Diagramm aktualisieren
+// Alle Diagramme initialisieren
 // -----------------------------------------
-function updateChart(temp) {
-    if (!tempChart) return;
+function initAllCharts() {
+    tempChart = createLineChart(
+        document.getElementById("tempChart").getContext("2d"),
+        "Temperatur (°C)"
+    );
 
+    humidityChart = createLineChart(
+        document.getElementById("humidityChart").getContext("2d"),
+        "Luftfeuchtigkeit (%)"
+    );
+
+    pressureChart = createLineChart(
+        document.getElementById("pressureChart").getContext("2d"),
+        "Luftdruck (hPa)"
+    );
+}
+
+
+// -----------------------------------------
+// Daten in Diagramm pushen
+// -----------------------------------------
+function pushChartData(chart, value) {
     const now = new Date().toLocaleTimeString();
 
-    tempChart.data.labels.push(now);
-    tempChart.data.datasets[0].data.push(temp);
+    chart.data.labels.push(now);
+    chart.data.datasets[0].data.push(value);
 
-    if (tempChart.data.labels.length > 20) {
-        tempChart.data.labels.shift();
-        tempChart.data.datasets[0].data.shift();
+    if (chart.data.labels.length > 20) {
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
     }
 
-    tempChart.update();
+    chart.update();
 }
 
 
@@ -75,7 +91,9 @@ async function loadData() {
         document.getElementById("humidity").textContent = data.humidity + " %";
         document.getElementById("pressure").textContent = data.pressure + " hPa";
 
-        updateChart(data.temperature);
+        pushChartData(tempChart, data.temperature);
+        pushChartData(humidityChart, data.humidity);
+        pushChartData(pressureChart, data.pressure);
 
         const now = new Date();
         document.getElementById("lastUpdate").textContent =
@@ -93,14 +111,17 @@ async function loadData() {
 // Dark Mode
 // -----------------------------------------
 function updateChartColors() {
-    if (!tempChart) return;
-
     const isDark = document.body.classList.contains("dark");
+    const charts = [tempChart, humidityChart, pressureChart];
 
-    tempChart.options.scales.x.ticks.color = isDark ? "#ccc" : "#666";
-    tempChart.options.scales.y.ticks.color = isDark ? "#ccc" : "#666";
+    charts.forEach(chart => {
+        if (!chart) return;
 
-    tempChart.update();
+        chart.options.scales.x.ticks.color = isDark ? "#ccc" : "#666";
+        chart.options.scales.y.ticks.color = isDark ? "#ccc" : "#666";
+
+        chart.update();
+    });
 }
 
 function applyDarkMode(isDark) {
@@ -116,17 +137,17 @@ function applyDarkMode(isDark) {
     updateChartColors();
 }
 
-const darkToggle = document.getElementById("darkToggle");
-
-darkToggle.addEventListener("change", () => {
-    applyDarkMode(darkToggle.checked);
-});
-
 
 // -----------------------------------------
 // Start erst, wenn DOM vollständig geladen ist
 // -----------------------------------------
 window.addEventListener("DOMContentLoaded", () => {
+
+    const darkToggle = document.getElementById("darkToggle");
+
+    darkToggle.addEventListener("change", () => {
+        applyDarkMode(darkToggle.checked);
+    });
 
     // Dark Mode laden
     const saved = localStorage.getItem("darkmode");
@@ -139,8 +160,8 @@ window.addEventListener("DOMContentLoaded", () => {
         applyDarkMode(window.matchMedia("(prefers-color-scheme: dark)").matches);
     }
 
-    // Diagramm starten
-    initChart();
+    // Diagramme starten
+    initAllCharts();
     updateChartColors();
 
     // Daten laden
