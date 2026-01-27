@@ -1,84 +1,107 @@
-// -----------------------------------------
-// Diagramm-Variablen
-// -----------------------------------------
-let tempChart = null;
-let humidityChart = null;
-let pressureChart = null;
-
-// Min/Max Werte (Session)
-let minTemp = null, maxTemp = null;
-let minHumidity = null, maxHumidity = null;
-let minPressure = null, maxPressure = null;
-
-// Trend-Vergleichswerte (Session)
-let lastTemp = null;
-let lastHumidity = null;
-let lastPressure = null;
-
-// GitHub Raw URL für Historie
+// -----------------------------
+// Konfiguration
+// -----------------------------
+const LIVE_URL = "data.json";
 const HISTORY_URL = "https://raw.githubusercontent.com/mahu1963/Meine-Wetterstation/main/data-history.json";
 
+// Charts
+let tempChart, humChart, presChart;
 
-// -----------------------------------------
-// Universelle Chart-Erstellung
-// -----------------------------------------
-function createLineChart(ctx, label) {
+// Merker für aktuellen Modus je Kategorie
+let tempMode = "temp-live";
+let humMode = "hum-live";
+let presMode = "pres-live";
+
+// Historie im Speicher
+let historyData = [];
+
+
+// -----------------------------
+// Hilfsfunktionen
+// -----------------------------
+function createLineChart(ctx, label, color = "#4fc3f7") {
     return new Chart(ctx, {
         type: "line",
         data: {
             labels: [],
             datasets: [{
-                label: label,
+                label,
                 data: [],
-                borderColor: "#4fc3f7",
-                backgroundColor: "rgba(79, 195, 247, 0.2)",
-                borderWidth: 3,
+                borderColor: color,
+                backgroundColor: "rgba(79, 195, 247, 0.15)",
+                borderWidth: 2,
                 tension: 0.3,
                 pointRadius: 0
             }]
         },
         options: {
-            plugins: { legend: { display: false }},
+            plugins: { legend: { display: false } },
             scales: {
-                x: { ticks: { color: "#666" }},
-                y: { ticks: { color: "#666" }}
+                x: { ticks: { color: "#666" } },
+                y: { ticks: { color: "#666" } }
             }
         }
     });
 }
 
+function filterHistory(history, days) {
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    return history.filter(e => e.time >= cutoff);
+}
 
-// -----------------------------------------
-// Alle Diagramme initialisieren
-// -----------------------------------------
-function initAllCharts() {
-    tempChart = createLineChart(
-        document.getElementById("tempChart").getContext("2d"),
-        "Temperatur (°C)"
-    );
+function smooth(values, windowSize = 4) {
+    if (!values || values.length === 0) return [];
+    return values.map((v, i, arr) => {
+        const start = Math.max(0, i - windowSize);
+        const end = Math.min(arr.length, i + windowSize);
+        const slice = arr.slice(start, end);
+        return slice.reduce((a, b) => a + b, 0) / slice.length;
+    });
+}
 
-    humidityChart = createLineChart(
-        document.getElementById("humidityChart").getContext("2d"),
-        "Luftfeuchtigkeit (%)"
-    );
-
-    pressureChart = createLineChart(
-        document.getElementById("pressureChart").getContext("2d"),
-        "Luftdruck (hPa)"
+function aggregateByMonth(history, key) {
+    const months = Array.from({ length: 12 }, () => []);
+    history.forEach(e => {
+        const m = new Date(e.time).getMonth();
+        months[m].push(e[key]);
+    });
+    return months.map(arr =>
+        arr.length ? (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1) : null
     );
 }
 
 
-// -----------------------------------------
-// Daten in Diagramm pushen
-// -----------------------------------------
-function pushChartData(chart, value) {
-    const now = new Date().toLocaleTimeString();
+// -----------------------------
+// Live-Daten laden
+// -----------------------------
+async function loadLiveData() {
+    try {
+        const res = await fetch(LIVE_URL + "?cb=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) throw new Error("Live-Daten Fehler");
+        const data = await res.json();
 
+        // Nur Live-Modus aktualisiert die Charts mit Live-Daten
+        if (tempMode === "temp-live") {
+            updateLiveChart(tempChart, data.temperature, "°C");
+        }
+        if (humMode === "hum-live") {
+            updateLiveChart(humChart, data.humidity, "%");
+        }
+        if (presMode === "pres-live") {
+            updateLiveChart(presChart, data.pressure, "hPa");
+        }
+
+    } catch (e) {
+        console.error("Fehler Live-Daten:", e);
+    }
+}
+
+function updateLiveChart(chart, value, unit) {
+    const now = new Date().toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
     chart.data.labels.push(now);
     chart.data.datasets[0].data.push(value);
 
-    if (chart.data.labels.length > 20) {
+    if (chart.data.labels.length > 30) {
         chart.data.labels.shift();
         chart.data.datasets[0].data.shift();
     }
@@ -87,210 +110,359 @@ function pushChartData(chart, value) {
 }
 
 
-// -----------------------------------------
-// Live-Daten laden (data.json)
-// -----------------------------------------
-async function loadLiveData() {
-    try {
-        const response = await fetch("data.json?cachebuster=" + Date.now(), {
-            cache: "no-store"
-        });
-
-        if (!response.ok) throw new Error("Fehler beim Laden der Live-Daten");
-
-        const data = await response.json();
-
-        // Live-Werte anzeigen
-        document.getElementById("temp").textContent = data.temperature + " °C";
-        document.getElementById("humidity").textContent = data.humidity + " %";
-        document.getElementById("pressure").textContent = data.pressure + " hPa";
-
-        // Min/Max (Session)
-        if (minTemp === null || data.temperature < minTemp) minTemp = data.temperature;
-        if (maxTemp === null || data.temperature > maxTemp) maxTemp = data.temperature;
-        document.getElementById("tempMin").textContent = minTemp + " °C";
-        document.getElementById("tempMax").textContent = maxTemp + " °C";
-
-        if (minHumidity === null || data.humidity < minHumidity) minHumidity = data.humidity;
-        if (maxHumidity === null || data.humidity > maxHumidity) maxHumidity = data.humidity;
-        document.getElementById("humidityMin").textContent = minHumidity + " %";
-        document.getElementById("humidityMax").textContent = maxHumidity + " %";
-
-        if (minPressure === null || data.pressure < minPressure) minPressure = data.pressure;
-        if (maxPressure === null || data.pressure > maxPressure) maxPressure = data.pressure;
-        document.getElementById("pressureMin").textContent = minPressure + " hPa";
-        document.getElementById("pressureMax").textContent = maxPressure + " hPa";
-
-        // Trendpfeile
-        document.getElementById("tempTrend").textContent =
-            lastTemp === null ? "→" :
-            data.temperature > lastTemp ? "↑" :
-            data.temperature < lastTemp ? "↓" : "→";
-
-        document.getElementById("humidityTrend").textContent =
-            lastHumidity === null ? "→" :
-            data.humidity > lastHumidity ? "↑" :
-            data.humidity < lastHumidity ? "↓" : "→";
-
-        document.getElementById("pressureTrend").textContent =
-            lastPressure === null ? "→" :
-            data.pressure > lastPressure ? "↑" :
-            data.pressure < lastPressure ? "↓" : "→";
-
-        lastTemp = data.temperature;
-        lastHumidity = data.humidity;
-        lastPressure = data.pressure;
-
-        // Live-Diagramme
-        pushChartData(tempChart, data.temperature);
-        pushChartData(humidityChart, data.humidity);
-        pushChartData(pressureChart, data.pressure);
-
-        const now = new Date();
-        document.getElementById("lastUpdate").textContent =
-            "Zuletzt aktualisiert: " +
-            now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-
-    } catch (err) {
-        console.error(err);
-        document.getElementById("lastUpdate").textContent = "Fehler beim Laden der Live-Daten";
-    }
-}
-
-
-// -----------------------------------------
-// Historie laden (data-history.json von GitHub)
-// -----------------------------------------
+// -----------------------------
+// Historie laden
+// -----------------------------
 async function loadHistory() {
     try {
-        const response = await fetch(HISTORY_URL + "?cachebuster=" + Date.now(), {
-            cache: "no-store"
+        const res = await fetch(HISTORY_URL + "?cb=" + Date.now(), { cache: "no-store" });
+        if (!res.ok) throw new Error("Historie Fehler");
+        const data = await res.json();
+        historyData = data;
+
+        // Nach Laden der Historie alle Modi neu zeichnen
+        updateAllFromModes();
+
+    } catch (e) {
+        console.error("Fehler Historie:", e);
+    }
+}
+
+
+// -----------------------------
+// Temperatur-Modi
+// -----------------------------
+function updateTempChart() {
+    if (!historyData || historyData.length === 0) return;
+
+    if (tempMode === "temp-live") {
+        // Live wird durch loadLiveData() gefüttert
+        return;
+    }
+
+    let labels = [];
+    let valuesTemp = [];
+    let valuesHum = [];
+    let valuesPres = [];
+
+    if (tempMode === "temp-week") {
+        const week = filterHistory(historyData, 7);
+        labels = week.map(e =>
+            new Date(e.time).toLocaleDateString("de-DE", { weekday: "short" })
+        );
+        valuesTemp = week.map(e => e.temperature);
+    }
+
+    if (tempMode === "temp-month") {
+        const month = filterHistory(historyData, 30);
+        labels = month.map(e =>
+            new Date(e.time).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })
+        );
+        valuesTemp = month.map(e => e.temperature);
+    }
+
+    if (tempMode === "temp-year") {
+        const yearAgg = aggregateByMonth(historyData, "temperature");
+        labels = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+        valuesTemp = yearAgg;
+    }
+
+    if (tempMode === "temp-day") {
+        const day = filterHistory(historyData, 1);
+        labels = day.map(e =>
+            new Date(e.time).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
+        );
+        const temps = day.map(e => e.temperature);
+        valuesTemp = smooth(temps, 4);
+    }
+
+    if (tempMode === "temp-combined") {
+        const week = filterHistory(historyData, 7);
+        labels = week.map(e =>
+            new Date(e.time).toLocaleDateString("de-DE", { weekday: "short" })
+        );
+        valuesTemp = week.map(e => e.temperature);
+        valuesHum = week.map(e => e.humidity);
+        valuesPres = week.map(e => e.pressure);
+
+        tempChart.data.labels = labels;
+        tempChart.data.datasets = [
+            {
+                label: "Temperatur (°C)",
+                data: valuesTemp,
+                borderColor: "#ff5252",
+                backgroundColor: "rgba(255,82,82,0.15)",
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 0
+            },
+            {
+                label: "Feuchtigkeit (%)",
+                data: valuesHum,
+                borderColor: "#4fc3f7",
+                backgroundColor: "rgba(79,195,247,0.10)",
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 0
+            },
+            {
+                label: "Luftdruck (hPa)",
+                data: valuesPres,
+                borderColor: "#81c784",
+                backgroundColor: "rgba(129,199,132,0.10)",
+                borderWidth: 2,
+                tension: 0.3,
+                pointRadius: 0
+            }
+        ];
+        tempChart.update();
+        return;
+    }
+
+    // Standard: nur Temperatur
+    tempChart.data.labels = labels;
+    tempChart.data.datasets = [{
+        label: "Temperatur (°C)",
+        data: valuesTemp,
+        borderColor: "#ffb74d",
+        backgroundColor: "rgba(255,183,77,0.15)",
+        borderWidth: 2,
+        tension: 0.3,
+        pointRadius: 0
+    }];
+    tempChart.update();
+}
+
+
+// -----------------------------
+// Feuchtigkeits-Modi
+// -----------------------------
+function updateHumChart() {
+    if (!historyData || historyData.length === 0) return;
+
+    if (humMode === "hum-live") {
+        return;
+    }
+
+    let labels = [];
+    let values = [];
+
+    if (humMode === "hum-week") {
+        const week = filterHistory(historyData, 7);
+        labels = week.map(e =>
+            new Date(e.time).toLocaleDateString("de-DE", { weekday: "short" })
+        );
+        values = week.map(e => e.humidity);
+    }
+
+    if (humMode === "hum-month") {
+        const month = filterHistory(historyData, 30);
+        labels = month.map(e =>
+            new Date(e.time).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })
+        );
+        values = month.map(e => e.humidity);
+    }
+
+    if (humMode === "hum-year") {
+        const yearAgg = aggregateByMonth(historyData, "humidity");
+        labels = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+        values = yearAgg;
+    }
+
+    if (humMode === "hum-day") {
+        const day = filterHistory(historyData, 1);
+        labels = day.map(e =>
+            new Date(e.time).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
+        );
+        const hums = day.map(e => e.humidity);
+        values = smooth(hums, 4);
+    }
+
+    humChart.data.labels = labels;
+    humChart.data.datasets[0].label = "Feuchtigkeit (%)";
+    humChart.data.datasets[0].data = values;
+    humChart.update();
+}
+
+
+// -----------------------------
+// Druck-Modi
+// -----------------------------
+function updatePresChart() {
+    if (!historyData || historyData.length === 0) return;
+
+    if (presMode === "pres-live") {
+        return;
+    }
+
+    let labels = [];
+    let values = [];
+
+    if (presMode === "pres-week") {
+        const week = filterHistory(historyData, 7);
+        labels = week.map(e =>
+            new Date(e.time).toLocaleDateString("de-DE", { weekday: "short" })
+        );
+        values = week.map(e => e.pressure);
+    }
+
+    if (presMode === "pres-month") {
+        const month = filterHistory(historyData, 30);
+        labels = month.map(e =>
+            new Date(e.time).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })
+        );
+        values = month.map(e => e.pressure);
+    }
+
+    if (presMode === "pres-year") {
+        const yearAgg = aggregateByMonth(historyData, "pressure");
+        labels = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+        values = yearAgg;
+    }
+
+    if (presMode === "pres-day") {
+        const day = filterHistory(historyData, 1);
+        labels = day.map(e =>
+            new Date(e.time).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
+        );
+        const pres = day.map(e => e.pressure);
+        values = smooth(pres, 4);
+    }
+
+    presChart.data.labels = labels;
+    presChart.data.datasets[0].label = "Luftdruck (hPa)";
+    presChart.data.datasets[0].data = values;
+    presChart.update();
+}
+
+
+// -----------------------------
+// Alle Charts nach aktuellem Modus aktualisieren
+// -----------------------------
+function updateAllFromModes() {
+    updateTempChart();
+    updateHumChart();
+    updatePresChart();
+}
+
+
+// -----------------------------
+// Tabs & Dropdowns
+// -----------------------------
+function setupTabs() {
+    const allTabs = document.querySelectorAll(".tab[data-target]");
+    const dropdownItems = document.querySelectorAll(".dropdown-item");
+
+    allTabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+            const target = tab.getAttribute("data-target");
+
+            // Kategorie bestimmen
+            if (target.startsWith("temp-")) {
+                tempMode = target;
+                // aktive Tabs in Temperatur-Karte setzen
+                setActiveTabInSection(tab);
+                updateTempChart();
+            }
+            if (target.startsWith("hum-")) {
+                humMode = target;
+                setActiveTabInSection(tab);
+                updateHumChart();
+            }
+            if (target.startsWith("pres-")) {
+                presMode = target;
+                setActiveTabInSection(tab);
+                updatePresChart();
+            }
         });
+    });
 
-        if (!response.ok) throw new Error("Fehler beim Laden der Historie");
+    dropdownItems.forEach(item => {
+        item.addEventListener("click", () => {
+            const target = item.getAttribute("data-target");
 
-        const history = await response.json(); // Array von Einträgen
+            if (target.startsWith("temp-")) {
+                tempMode = target;
+                updateTempChart();
+            }
+            if (target.startsWith("hum-")) {
+                humMode = target;
+                updateHumChart();
+            }
+            if (target.startsWith("pres-")) {
+                presMode = target;
+                updatePresChart();
+            }
 
-        updateDayAndWeekStats(history);
+            // Dropdown schließen
+            const menu = item.closest(".dropdown-menu");
+            menu.classList.remove("show");
+        });
+    });
 
-    } catch (err) {
-        console.error(err);
-        document.getElementById("dayStats").textContent = "Fehler beim Laden der Tagesstatistik";
-        document.getElementById("weekStats").textContent = "Fehler beim Laden der Wochenstatistik";
-    }
+    // Dropdown-Buttons (▼)
+    const dropdownButtons = document.querySelectorAll(".dropdown > .tab");
+    dropdownButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const menu = btn.parentElement.querySelector(".dropdown-menu");
+            menu.classList.toggle("show");
+        });
+    });
+
+    // Klick außerhalb schließt Popover
+    document.addEventListener("click", (e) => {
+        if (!e.target.closest(".dropdown")) {
+            document.querySelectorAll(".dropdown-menu").forEach(m => m.classList.remove("show"));
+        }
+    });
+}
+
+function setActiveTabInSection(tab) {
+    const section = tab.closest(".card");
+    const tabs = section.querySelectorAll(".tab[data-target]");
+    tabs.forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
 }
 
 
-// -----------------------------------------
-// Tages- und Wochenstatistik berechnen
-// -----------------------------------------
-function updateDayAndWeekStats(history) {
-    const now = Date.now();
-    const dayCutoff = now - 24 * 60 * 60 * 1000;
-    const weekCutoff = now - 7 * 24 * 60 * 60 * 1000;
-
-    const dayData = history.filter(e => e.time >= dayCutoff);
-    const weekData = history.filter(e => e.time >= weekCutoff);
-
-    const dayStats = calcStats(dayData);
-    const weekStats = calcStats(weekData);
-
-    if (dayStats) {
-        document.getElementById("dayStats").innerHTML =
-            `Temp: ${dayStats.tempMin}–${dayStats.tempMax} °C (Ø ${dayStats.tempAvg} °C)<br>` +
-            `Feuchte: ${dayStats.humMin}–${dayStats.humMax} % (Ø ${dayStats.humAvg} %)<br>` +
-            `Druck: ${dayStats.presMin}–${dayStats.presMax} hPa (Ø ${dayStats.presAvg} hPa)`;
-    } else {
-        document.getElementById("dayStats").textContent = "Noch keine Daten für die letzten 24 Stunden.";
-    }
-
-    if (weekStats) {
-        document.getElementById("weekStats").innerHTML =
-            `Temp: ${weekStats.tempMin}–${weekStats.tempMax} °C (Ø ${weekStats.tempAvg} °C)<br>` +
-            `Feuchte: ${weekStats.humMin}–${weekStats.humMax} % (Ø ${weekStats.humAvg} %)<br>` +
-            `Druck: ${weekStats.presMin}–${weekStats.presMax} hPa (Ø ${weekStats.presAvg} hPa)`;
-    } else {
-        document.getElementById("weekStats").textContent = "Noch keine Daten für die letzten 7 Tage.";
-    }
-}
-
-
-function calcStats(data) {
-    if (!data || data.length === 0) return null;
-
-    const temps = data.map(e => e.temperature);
-    const hums = data.map(e => e.humidity);
-    const pres = data.map(e => e.pressure);
-
-    const avg = arr => (arr.reduce((a, b) => a + b, 0) / arr.length).toFixed(1);
-
-    return {
-        tempMin: Math.min(...temps),
-        tempMax: Math.max(...temps),
-        tempAvg: avg(temps),
-        humMin: Math.min(...hums),
-        humMax: Math.max(...hums),
-        humAvg: avg(hums),
-        presMin: Math.min(...pres),
-        presMax: Math.max(...pres),
-        presAvg: avg(pres)
-    };
-}
-
-
-// -----------------------------------------
-// Dark Mode
-// -----------------------------------------
-function updateChartColors() {
+// -----------------------------
+// Dark-Mode-Anpassung (optional)
+// -----------------------------
+function updateChartColorsForDarkMode() {
     const isDark = document.body.classList.contains("dark");
-    const charts = [tempChart, humidityChart, pressureChart];
+    const charts = [tempChart, humChart, presChart];
 
     charts.forEach(chart => {
         if (!chart) return;
-
         chart.options.scales.x.ticks.color = isDark ? "#ccc" : "#666";
         chart.options.scales.y.ticks.color = isDark ? "#ccc" : "#666";
-
         chart.update();
     });
 }
 
-function applyDarkMode(isDark, darkToggle) {
-    if (isDark) {
-        document.body.classList.add("dark");
-        darkToggle.checked = true;
-    } else {
-        document.body.classList.remove("dark");
-        darkToggle.checked = false;
-    }
 
-    localStorage.setItem("darkmode", isDark ? "1" : "0");
-    updateChartColors();
-}
-
-
-// -----------------------------------------
-// Start erst, wenn DOM vollständig geladen ist
-// -----------------------------------------
+// -----------------------------
+// Start
+// -----------------------------
 window.addEventListener("DOMContentLoaded", () => {
+    // Charts initialisieren
+    tempChart = createLineChart(
+        document.getElementById("tempChart").getContext("2d"),
+        "Temperatur (°C)",
+        "#ffb74d"
+    );
+    humChart = createLineChart(
+        document.getElementById("humChart").getContext("2d"),
+        "Feuchtigkeit (%)",
+        "#4fc3f7"
+    );
+    presChart = createLineChart(
+        document.getElementById("presChart").getContext("2d"),
+        "Luftdruck (hPa)",
+        "#81c784"
+    );
 
-    const darkToggle = document.getElementById("darkToggle");
-
-    darkToggle.addEventListener("change", () => {
-        applyDarkMode(darkToggle.checked, darkToggle);
-    });
-
-    const saved = localStorage.getItem("darkmode");
-    if (saved === "1") {
-        applyDarkMode(true, darkToggle);
-    } else if (saved === "0") {
-        applyDarkMode(false, darkToggle);
-    } else {
-        applyDarkMode(window.matchMedia("(prefers-color-scheme: dark)").matches, darkToggle);
-    }
-
-    initAllCharts();
-    updateChartColors();
+    setupTabs();
 
     loadLiveData();
     loadHistory();
