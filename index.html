@@ -16,6 +16,9 @@
     <meta name="theme-color" content="#4fc3f7">
     <title>Meine Wetterstation</title>
 
+    <!-- Chart.js für Diagramm -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <!-- Script mit Versionsnummer -->
     <script src="script.js?v=3" defer></script>
 
@@ -102,9 +105,12 @@
         <div id="pressure" class="value">–</div>
     </section>
 
+    <section class="card">
+        <div class="label">Temperaturverlauf</div>
+        <canvas id="tempChart" height="120"></canvas>
+    </section>
+
     <p id="lastUpdate" class="update">Lade Daten…</p>
 
 </body>
 </html>
-
-
