@@ -19,7 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Script -->
-    <script src="script.js?v=30" defer></script>
+    <script src="script.js?v=40" defer></script>
 
     <style>
         :root {
@@ -138,6 +138,19 @@
             font-weight: bold;
             margin-top: 5px;
             color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .trend {
+            font-size: 2rem;
+        }
+
+        .minmax {
+            font-size: 0.9rem;
+            color: #777;
+            margin-top: 5px;
         }
 
         .update {
@@ -164,21 +177,43 @@
         </label>
     </div>
 
+    <!-- Temperatur -->
     <section class="card">
         <div class="label">Temperatur</div>
-        <div id="temp" class="value">–</div>
+        <div class="value">
+            <span id="temp">–</span>
+            <span id="tempTrend" class="trend">→</span>
+        </div>
+        <div class="minmax">
+            Min: <span id="tempMin">–</span> • Max: <span id="tempMax">–</span>
+        </div>
     </section>
 
+    <!-- Luftfeuchtigkeit -->
     <section class="card">
         <div class="label">Luftfeuchtigkeit</div>
-        <div id="humidity" class="value">–</div>
+        <div class="value">
+            <span id="humidity">–</span>
+            <span id="humidityTrend" class="trend">→</span>
+        </div>
+        <div class="minmax">
+            Min: <span id="humidityMin">–</span> • Max: <span id="humidityMax">–</span>
+        </div>
     </section>
 
+    <!-- Luftdruck -->
     <section class="card">
         <div class="label">Luftdruck</div>
-        <div id="pressure" class="value">–</div>
+        <div class="value">
+            <span id="pressure">–</span>
+            <span id="pressureTrend" class="trend">→</span>
+        </div>
+        <div class="minmax">
+            Min: <span id="pressureMin">–</span> • Max: <span id="pressureMax">–</span>
+        </div>
     </section>
 
+    <!-- Diagramme -->
     <section class="card">
         <div class="label">Temperaturverlauf</div>
         <canvas id="tempChart" height="120"></canvas>
@@ -198,3 +233,4 @@
 
 </body>
 </html>
+
