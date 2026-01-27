@@ -2,24 +2,15 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-
-    <!-- Cache verhindern -->
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <link rel="manifest" href="manifest.json?v=4">
-    <meta name="theme-color" content="#4fc3f7">
 
     <title>Meine Wetterstation</title>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="theme-color" content="#4fc3f7">
+    <link rel="manifest" href="manifest.json">
 
-    <!-- Script -->
-    <script src="script.js?v=50" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js" defer></script>
 
     <style>
         :root {
@@ -27,221 +18,169 @@
             --text: #1a1a1a;
             --card: #ffffff;
             --accent: #4fc3f7;
+            --tab-bg: #dfe7ef;
+            --tab-active: #4fc3f7;
+            --popover-bg: #ffffff;
         }
 
-        .dark {
+        body.dark {
             --bg: #0b1020;
             --text: #e0e0e0;
             --card: #1a2238;
-            --accent: #4fc3f7;
+            --tab-bg: #1f2940;
+            --tab-active: #4fc3f7;
+            --popover-bg: #2a3550;
         }
 
         body {
             margin: 0;
             padding: 20px;
-            font-family: "Segoe UI", Arial, sans-serif;
             background: var(--bg);
             color: var(--text);
+            font-family: "Segoe UI", Arial, sans-serif;
             transition: background 0.3s, color 0.3s;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-        }
-
-        .header h1 {
-            margin: 0;
-            font-size: 2rem;
-        }
-
-        .subtitle {
-            margin: 0;
-            color: #555;
-            font-size: 0.9rem;
-        }
-
-        .toggle-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 12px;
-            margin: 20px 0 25px 0;
-            font-size: 1rem;
-            color: var(--text);
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 52px;
-            height: 28px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #bbb;
-            transition: 0.3s;
-            border-radius: 34px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 22px;
-            width: 22px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: 0.3s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: #4fc3f7;
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(24px);
         }
 
         .card {
             background: var(--card);
             padding: 20px;
             border-radius: 18px;
+            margin-bottom: 25px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.12);
-            margin-bottom: 20px;
-            transition: background 0.3s;
         }
 
-        .label {
-            font-size: 1rem;
-            color: #666;
+        h2 {
+            margin-top: 0;
         }
 
-        .value {
-            font-size: 2.4rem;
-            font-weight: bold;
-            margin-top: 5px;
-            color: var(--accent);
+        /* Tabs */
+        .tabs {
             display: flex;
-            align-items: center;
-            gap: 10px;
+            gap: 8px;
+            margin-bottom: 15px;
         }
 
-        .trend {
-            font-size: 2rem;
-        }
-
-        .minmax {
+        .tab {
+            padding: 8px 14px;
+            background: var(--tab-bg);
+            border-radius: 12px;
+            cursor: pointer;
+            user-select: none;
             font-size: 0.9rem;
-            color: #777;
-            margin-top: 5px;
         }
 
-        .update {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 0.9rem;
-            color: #666;
+        .tab.active {
+            background: var(--tab-active);
+            color: white;
         }
 
-        .stats-text {
-            font-size: 0.95rem;
-            line-height: 1.4;
-            color: #555;
+        /* Dropdown Popover */
+        .dropdown {
+            position: relative;
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: 38px;
+            right: 0;
+            background: var(--popover-bg);
+            border-radius: 14px;
+            padding: 10px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+            display: none;
+            z-index: 50;
+        }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 14px;
+            border-radius: 10px;
+            cursor: pointer;
+            margin-bottom: 6px;
+            background: var(--card);
+        }
+
+        .dropdown-item:hover {
+            background: var(--tab-active);
+            color: white;
+        }
+
+        canvas {
+            width: 100%;
         }
     </style>
 </head>
 
 <body>
 
-    <header class="header">
-        <h1>🌤️ Meine Wetterstation</h1>
-        <p class="subtitle">Live‑Daten & Historie</p>
-    </header>
+    <h1>🌤️ Meine Wetterstation</h1>
 
-    <div class="toggle-container">
-        <span>Dark Mode</span>
-        <label class="switch">
-            <input type="checkbox" id="darkToggle">
-            <span class="slider"></span>
-        </label>
-    </div>
-
-    <!-- Live-Werte -->
+    <!-- Temperatur -->
     <section class="card">
-        <div class="label">Temperatur</div>
-        <div class="value">
-            <span id="temp">–</span>
-            <span id="tempTrend" class="trend">→</span>
+        <h2>Temperatur</h2>
+
+        <div class="tabs">
+            <div class="tab active" data-target="temp-live">Live</div>
+            <div class="tab" data-target="temp-week">Woche</div>
+            <div class="tab" data-target="temp-month">Monat</div>
+
+            <div class="dropdown">
+                <div class="tab">▼</div>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item" data-target="temp-year">Jahr</div>
+                    <div class="dropdown-item" data-target="temp-day">Tag (glatt)</div>
+                    <div class="dropdown-item" data-target="temp-combined">Kombiniert</div>
+                </div>
+            </div>
         </div>
-        <div class="minmax">
-            Min: <span id="tempMin">–</span> • Max: <span id="tempMax">–</span>
+
+        <canvas id="tempChart"></canvas>
+    </section>
+
+    <!-- Feuchtigkeit -->
+    <section class="card">
+        <h2>Feuchtigkeit</h2>
+
+        <div class="tabs">
+            <div class="tab active" data-target="hum-live">Live</div>
+            <div class="tab" data-target="hum-week">Woche</div>
+            <div class="tab" data-target="hum-month">Monat</div>
+
+            <div class="dropdown">
+                <div class="tab">▼</div>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item" data-target="hum-year">Jahr</div>
+                    <div class="dropdown-item" data-target="hum-day">Tag (glatt)</div>
+                </div>
+            </div>
         </div>
+
+        <canvas id="humChart"></canvas>
     </section>
 
+    <!-- Luftdruck -->
     <section class="card">
-        <div class="label">Luftfeuchtigkeit</div>
-        <div class="value">
-            <span id="humidity">–</span>
-            <span id="humidityTrend" class="trend">→</span>
+        <h2>Luftdruck</h2>
+
+        <div class="tabs">
+            <div class="tab active" data-target="pres-live">Live</div>
+            <div class="tab" data-target="pres-week">Woche</div>
+            <div class="tab" data-target="pres-month">Monat</div>
+
+            <div class="dropdown">
+                <div class="tab">▼</div>
+                <div class="dropdown-menu">
+                    <div class="dropdown-item" data-target="pres-year">Jahr</div>
+                    <div class="dropdown-item" data-target="pres-day">Tag (glatt)</div>
+                </div>
+            </div>
         </div>
-        <div class="minmax">
-            Min: <span id="humidityMin">–</span> • Max: <span id="humidityMax">–</span>
-        </div>
-    </section>
 
-    <section class="card">
-        <div class="label">Luftdruck</div>
-        <div class="value">
-            <span id="pressure">–</span>
-            <span id="pressureTrend" class="trend">→</span>
-        </div>
-        <div class="minmax">
-            Min: <span id="pressureMin">–</span> • Max: <span id="pressureMax">–</span>
-        </div>
+        <canvas id="presChart"></canvas>
     </section>
-
-    <!-- Live-Diagramme -->
-    <section class="card">
-        <div class="label">Temperaturverlauf (Live)</div>
-        <canvas id="tempChart" height="120"></canvas>
-    </section>
-
-    <section class="card">
-        <div class="label">Luftfeuchtigkeit Verlauf (Live)</div>
-        <canvas id="humidityChart" height="120"></canvas>
-    </section>
-
-    <section class="card">
-        <div class="label">Luftdruck Verlauf (Live)</div>
-        <canvas id="pressureChart" height="120"></canvas>
-    </section>
-
-    <!-- Tages-/Wochenstatistik -->
-    <section class="card">
-        <div class="label">Tagesstatistik (letzte 24 Stunden)</div>
-        <div id="dayStats" class="stats-text">Noch keine Daten…</div>
-    </section>
-
-    <section class="card">
-        <div class="label">Wochenstatistik (letzte 7 Tage)</div>
-        <div id="weekStats" class="stats-text">Noch keine Daten…</div>
-    </section>
-
-    <p id="lastUpdate" class="update">Lade Daten…</p>
 
 </body>
 </html>
