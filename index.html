@@ -19,7 +19,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Script -->
-    <script src="script.js?v=20" defer></script>
+    <script src="script.js?v=30" defer></script>
 
     <style>
         :root {
@@ -182,6 +182,16 @@
     <section class="card">
         <div class="label">Temperaturverlauf</div>
         <canvas id="tempChart" height="120"></canvas>
+    </section>
+
+    <section class="card">
+        <div class="label">Luftfeuchtigkeit Verlauf</div>
+        <canvas id="humidityChart" height="120"></canvas>
+    </section>
+
+    <section class="card">
+        <div class="label">Luftdruck Verlauf</div>
+        <canvas id="pressureChart" height="120"></canvas>
     </section>
 
     <p id="lastUpdate" class="update">Lade Daten…</p>
