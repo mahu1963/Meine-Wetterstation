@@ -1,3 +1,4 @@
+
 // -----------------------------------------
 // Diagramm-Variablen
 // -----------------------------------------
@@ -5,14 +6,12 @@ let tempChart = null;
 
 
 // -----------------------------------------
-// Diagramm initialisieren (erst wenn DOM fertig)
+// Diagramm initialisieren
 // -----------------------------------------
 function initChart() {
     const canvas = document.getElementById("tempChart");
-
-    // Falls Canvas nicht existiert → abbrechen
     if (!canvas) {
-        console.error("Canvas für Diagramm nicht gefunden!");
+        console.error("Canvas nicht gefunden!");
         return;
     }
 
@@ -49,17 +48,13 @@ function initChart() {
 // Diagramm aktualisieren
 // -----------------------------------------
 function updateChart(temp) {
-    if (!tempChart) {
-        console.warn("Diagramm noch nicht bereit");
-        return;
-    }
+    if (!tempChart) return;
 
     const now = new Date().toLocaleTimeString();
 
     tempChart.data.labels.push(now);
     tempChart.data.datasets[0].data.push(temp);
 
-    // Nur die letzten 20 Werte behalten
     if (tempChart.data.labels.length > 20) {
         tempChart.data.labels.shift();
         tempChart.data.datasets[0].data.shift();
@@ -78,40 +73,72 @@ async function loadData() {
             cache: "no-store"
         });
 
-        if (!response.ok) {
-            throw new Error("Fehler beim Laden der Daten");
-        }
+        if (!response.ok) throw new Error("Fehler beim Laden");
 
         const data = await response.json();
 
-        // Werte anzeigen
         document.getElementById("temp").textContent = data.temperature + " °C";
         document.getElementById("humidity").textContent = data.humidity + " %";
         document.getElementById("pressure").textContent = data.pressure + " hPa";
 
-        // Diagramm aktualisieren
         updateChart(data.temperature);
 
-        // Zeit anzeigen
         const now = new Date();
         document.getElementById("lastUpdate").textContent =
             "Zuletzt aktualisiert: " +
             now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 
-    } catch (error) {
-        console.error("Fehler beim Laden:", error);
+    } catch (err) {
+        console.error(err);
         document.getElementById("lastUpdate").textContent = "Fehler beim Laden der Daten";
     }
 }
 
 
 // -----------------------------------------
+// Dark Mode
+// -----------------------------------------
+function updateChartColors() {
+    if (!tempChart) return;
+
+    const isDark = document.body.classList.contains("dark");
+
+    tempChart.options.scales.x.ticks.color = isDark ? "#ccc" : "#666";
+    tempChart.options.scales.y.ticks.color = isDark ? "#ccc" : "#666";
+
+    tempChart.update();
+}
+
+function toggleDarkMode() {
+    document.body.classList.toggle("dark");
+
+    const isDark = document.body.classList.contains("dark");
+    localStorage.setItem("darkmode", isDark ? "1" : "0");
+
+    updateChartColors();
+}
+
+document.getElementById("darkToggle").addEventListener("click", toggleDarkMode);
+
+
+// -----------------------------------------
 // Start erst, wenn DOM vollständig geladen ist
 // -----------------------------------------
 window.addEventListener("DOMContentLoaded", () => {
-    console.log("DOM geladen → starte App");
 
-    initChart();      // Diagramm initialisieren
-    loadData();       // Daten sofort laden
-    setInterval(loadData, 5000); // Alle 5 Sekunden aktualisieren
+    // Dark Mode laden
+    const saved = localStorage.getItem("darkmode");
+    if (saved === "1") {
+        document.body.classList.add("dark");
+    } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        document.body.classList.add("dark");
+    }
+
+    // Diagramm starten
+    initChart();
+    updateChartColors();
+
+    // Daten laden
+    loadData();
+    setInterval(loadData, 5000);
 });
