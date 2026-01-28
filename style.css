@@ -1,27 +1,22 @@
-* {
-  box-sizing: border-box;
+body {
   margin: 0;
-  padding: 0;
+  background: #0f172a;
+  color: #e5e7eb;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
 }
 
-body {
-  background: #0f172a;
-  color: #e5e7eb;
+body.light {
+  background: #f2f2f7;
+  color: #111;
 }
 
 .app {
+  padding: 16px;
   max-width: 420px;
   margin: 0 auto;
-  padding: 16px;
 }
 
-header {
-  margin-bottom: 16px;
-}
-
-h1 {
-  font-size: 1.4rem;
+header h1 {
   margin-bottom: 6px;
 }
 
@@ -29,84 +24,32 @@ h1 {
   font-size: 0.85rem;
   padding: 6px 10px;
   border-radius: 999px;
-  display: inline-block;
   background: #111827;
+  display: inline-block;
 }
 
-main {
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #111827;
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  justify-content: space-around;
+  padding: 10px 0;
 }
 
-.cards {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.card {
-  background: linear-gradient(135deg, #111827, #020617);
-  border-radius: 14px;
-  padding: 12px 14px;
-  border: 1px solid #1f2937;
-}
-
-.label {
-  font-size: 0.8rem;
-  color: #9ca3af;
-  margin-bottom: 4px;
-}
-
-.value {
-  display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-
-.value span:first-child {
-  font-size: 1.8rem;
-  font-weight: 600;
-}
-
-.unit {
+.tabbar button {
+  background: none;
+  border: none;
+  color: #e5e7eb;
   font-size: 0.9rem;
-  color: #9ca3af;
-}
-
-.sub {
-  margin-top: 4px;
-  font-size: 0.75rem;
-  color: #9ca3af;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.trend {
-  font-size: 0.9rem;
-}
-
-.history {
-  background: #020617;
-  border-radius: 14px;
-  padding: 10px 12px;
-  border: 1px solid #1f2937;
-}
-
-.history h2 {
-  font-size: 0.95rem;
-  margin-bottom: 6px;
-}
-
-#historyList {
-  list-style: none;
-  max-height: 160px;
-  overflow-y: auto;
-  font-size: 0.8rem;
-}
-
-#historyList li {
-  padding: 3px 0;
-  border-bottom: 1px solid #111827;
 }
