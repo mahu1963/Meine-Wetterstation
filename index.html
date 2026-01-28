@@ -1,9 +1,64 @@
-<div id="statusBox" style="font-weight:bold; margin-bottom:10px;"></div>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Meine Wetterstation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Wetterstation</h1>
+      <div id="statusBox" class="status">Status wird geladen…</div>
+    </header>
 
-<div>
-  Temperatur: <span id="temp"></span><br>
-  Luftfeuchte: <span id="hum"></span><br>
-  Luftdruck: <span id="pres"></span><br>
-</div>
+    <main>
+      <section class="cards">
+        <div class="card">
+          <div class="label">Temperatur</div>
+          <div class="value">
+            <span id="temp">–.–</span>
+            <span class="unit">°C</span>
+          </div>
+          <div class="sub">
+            Min: <span id="tempMin">–.–</span> °C · Max: <span id="tempMax">–.–</span> °C
+            <span id="tempTrend" class="trend">→</span>
+          </div>
+        </div>
 
-<script src="script.js"></script>
+        <div class="card">
+          <div class="label">Luftfeuchte</div>
+          <div class="value">
+            <span id="hum">–.–</span>
+            <span class="unit">%</span>
+          </div>
+          <div class="sub">
+            Min: <span id="humMin">–.–</span> % · Max: <span id="humMax">–.–</span> %
+            <span id="humTrend" class="trend">→</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="label">Luftdruck</div>
+          <div class="value">
+            <span id="pres">–.–</span>
+            <span class="unit">hPa</span>
+          </div>
+          <div class="sub">
+            Min: <span id="presMin">–.–</span> hPa · Max: <span id="presMax">–.–</span> hPa
+            <span id="presTrend" class="trend">→</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="history">
+        <h2>Verlauf (letzte Werte)</h2>
+        <ul id="historyList"></ul>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
