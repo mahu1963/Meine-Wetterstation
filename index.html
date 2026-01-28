@@ -2,63 +2,43 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Meine Wetterstation</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Wetterstation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app">
-    <header>
-      <h1>Wetterstation</h1>
-      <div id="statusBox" class="status">Status wird geladen…</div>
-    </header>
 
-    <main>
-      <section class="cards">
-        <div class="card">
-          <div class="label">Temperatur</div>
-          <div class="value">
-            <span id="temp">–.–</span>
-            <span class="unit">°C</span>
-          </div>
-          <div class="sub">
-            Min: <span id="tempMin">–.–</span> °C · Max: <span id="tempMax">–.–</span> °C
-            <span id="tempTrend" class="trend">→</span>
-          </div>
-        </div>
+<div class="app">
 
-        <div class="card">
-          <div class="label">Luftfeuchte</div>
-          <div class="value">
-            <span id="hum">–.–</span>
-            <span class="unit">%</span>
-          </div>
-          <div class="sub">
-            Min: <span id="humMin">–.–</span> % · Max: <span id="humMax">–.–</span> %
-            <span id="humTrend" class="trend">→</span>
-          </div>
-        </div>
+  <header>
+    <h1>Wetterstation</h1>
+    <div id="statusBox" class="status">Status wird geladen…</div>
+  </header>
 
-        <div class="card">
-          <div class="label">Luftdruck</div>
-          <div class="value">
-            <span id="pres">–.–</span>
-            <span class="unit">hPa</span>
-          </div>
-          <div class="sub">
-            Min: <span id="presMin">–.–</span> hPa · Max: <span id="presMax">–.–</span> hPa
-            <span id="presTrend" class="trend">→</span>
-          </div>
-        </div>
-      </section>
+  <main id="viewToday" class="view active">
+    <h2>Heute</h2>
+    <div id="todayContent"></div>
+  </main>
 
-      <section class="history">
-        <h2>Verlauf (letzte Werte)</h2>
-        <ul id="historyList"></ul>
-      </section>
-    </main>
-  </div>
+  <main id="view24h" class="view">
+    <h2>Letzte 24 Stunden</h2>
+    <canvas id="chart24h"></canvas>
+  </main>
 
-  <script src="script.js"></script>
+  <main id="viewWeek" class="view">
+    <h2>Woche</h2>
+    <canvas id="chartWeek"></canvas>
+  </main>
+
+</div>
+
+<nav class="tabbar">
+  <button onclick="showView('viewToday')">Heute</button>
+  <button onclick="showView('view24h')">24h</button>
+  <button onclick="showView('viewWeek')">Woche</button>
+  <button onclick="toggleTheme()">Theme</button>
+</nav>
+
+<script src="script.js"></script>
 </body>
 </html>
