@@ -1,11 +1,1 @@
-{
-  "temperature": 23.4,
-  "humidity": 45.2,
-  "pressure": 934.7,
-  "github_ok": true,
-  "fallback_ap": false,
-  "history": [
-    { "t": 23.4, "h": 45.2, "p": 934.7, "ts": 123456 },
-    ...
-  ]
-}
+{"temperature":25.17,"humidity":44.97754,"pressure":934.5754,"timestamp_ms":1085473,"github_ok":false,"fallback_ap":false}
