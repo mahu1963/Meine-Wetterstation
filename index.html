@@ -1,43 +1,68 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Wetterstation</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wetterstation</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="app">
-
-  <header>
+<header>
     <h1>Wetterstation</h1>
-    <div id="statusBox" class="status">Status wird geladen…</div>
-  </header>
+</header>
 
-  <main id="viewToday" class="view active">
-    <h2>Heute</h2>
-    <div id="todayContent"></div>
-  </main>
+<main>
 
-  <main id="view24h" class="view">
-    <h2>Letzte 24 Stunden</h2>
-    <canvas id="chart24h"></canvas>
-  </main>
+    <section class="card">
+        <h2>Aktuell</h2>
+        <div class="values">
+            <div class="value">
+                <span id="temp">--</span>
+                <label>Temperatur</label>
+            </div>
+            <div class="value">
+                <span id="hum">--</span>
+                <label>Feuchtigkeit</label>
+            </div>
+            <div class="value">
+                <span id="press">--</span>
+                <label>Druck</label>
+            </div>
+        </div>
+    </section>
 
-  <main id="viewWeek" class="view">
-    <h2>Woche</h2>
-    <canvas id="chartWeek"></canvas>
-  </main>
+    <section class="card">
+        <h2>Min / Max heute</h2>
+        <div class="values">
+            <div class="value">
+                <span id="minT">--</span>
+                <label>Min °C</label>
+            </div>
+            <div class="value">
+                <span id="maxT">--</span>
+                <label>Max °C</label>
+            </div>
+            <div class="value">
+                <span id="minH">--</span>
+                <label>Min %</label>
+            </div>
+            <div class="value">
+                <span id="maxH">--</span>
+                <label>Max %</label>
+            </div>
+            <div class="value">
+                <span id="minP">--</span>
+                <label>Min hPa</label>
+            </div>
+            <div class="value">
+                <span id="maxP">--</span>
+                <label>Max hPa</label>
+            </div>
+        </div>
+    </section>
 
-</div>
-
-<nav class="tabbar">
-  <button onclick="showView('viewToday')">Heute</button>
-  <button onclick="showView('view24h')">24h</button>
-  <button onclick="showView('viewWeek')">Woche</button>
-  <button onclick="toggleTheme()">Theme</button>
-</nav>
+</main>
 
 <script src="script.js"></script>
 </body>
