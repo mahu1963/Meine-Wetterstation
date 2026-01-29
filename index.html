@@ -5,6 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meine Wetterstation</title>
 
+<!-- App-Icon & PWA -->
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+<!-- Optional: Splash-Screen (Bild splash.png ins Repo legen) -->
+<link rel="apple-touch-startup-image" href="splash.png">
+
 <style>
     body {
         margin: 0;
@@ -107,10 +117,23 @@ async function fetchData() {
 
 let chart;
 
+function trend(a, b) {
+    if (a > b) return "↑";
+    if (a < b) return "↓";
+    return "→";
+}
+
 function updateUI(d) {
-    document.getElementById("temp").textContent = d.t.toFixed(1) + " °C";
-    document.getElementById("hum").textContent  = d.h.toFixed(1) + " %";
-    document.getElementById("pres").textContent = d.p.toFixed(1) + " hPa";
+    const last = d.hist[d.hist.length - 1];
+
+    document.getElementById("temp").textContent =
+        d.t.toFixed(1) + " °C " + trend(d.t, last.t);
+
+    document.getElementById("hum").textContent =
+        d.h.toFixed(1) + " % " + trend(d.h, last.h);
+
+    document.getElementById("pres").textContent =
+        d.p.toFixed(1) + " hPa " + trend(d.p, last.p);
 
     const labels = d.hist.map(h => {
         const dt = new Date(h.ts * 1000);
@@ -167,6 +190,11 @@ function updateUI(d) {
 
 fetchData();
 setInterval(fetchData, 30000);
+
+// Service Worker für PWA
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js");
+}
 </script>
 
 </body>
