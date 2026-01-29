@@ -2,179 +2,171 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
-<title>Wetterstation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meine Wetterstation</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #f5f5f5;
-}
+    body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+        background: #111;
+        color: #eee;
+        text-align: center;
+    }
 
-.tabs {
-  display: flex;
-  background: #fff;
-  border-bottom: 1px solid #ccc;
-  position: sticky;
-  top: 0;
-}
+    .tabs {
+        display: flex;
+        background: #222;
+        border-bottom: 1px solid #444;
+    }
+    .tab {
+        flex: 1;
+        padding: 12px;
+        cursor: pointer;
+        font-weight: bold;
+        color: #aaa;
+    }
+    .tab.active {
+        color: #fff;
+        border-bottom: 3px solid #0af;
+    }
 
-.tab {
-  flex: 1;
-  padding: 12px;
-  text-align: center;
-  cursor: pointer;
-  font-weight: 600;
-  user-select: none;
-}
+    .page {
+        display: none;
+        padding: 20px;
+    }
+    .page.active {
+        display: block;
+    }
 
-.tab.active {
-  border-bottom: 3px solid #007aff;
-  color: #007aff;
-}
+    .value {
+        font-size: 2.4em;
+        margin: 10px 0;
+    }
 
-.page {
-  display: none;
-  padding: 16px;
-}
+    canvas {
+        width: 100%;
+        max-width: 420px;
+        height: 200px;
+        margin-top: 20px;
+    }
 
-.page.active {
-  display: block;
-}
-
-.value {
-  font-size: 2.4rem;
-  font-weight: 700;
-}
-
-.label {
-  color: #666;
-  margin-top: -8px;
-  margin-bottom: 20px;
-}
-
-#status {
-  text-align: center;
-  padding: 6px;
-  font-size: 0.9rem;
-  color: white;
-  background: #ff3b30;
-  display: none;
-}
+    .week-box {
+        background: #222;
+        padding: 10px;
+        margin: 10px auto;
+        width: 90%;
+        border-radius: 8px;
+        text-align: left;
+    }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<div id="status">Verbindung verloren – versuche erneut…</div>
-
 <div class="tabs">
-  <div class="tab active" data-page="aktuell">Aktuell</div>
-  <div class="tab" data-page="verlauf">Verlauf</div>
-  <div class="tab" data-page="woche">Woche</div>
+    <div class="tab active" onclick="showPage(0)">Live</div>
+    <div class="tab" onclick="showPage(1)">Verlauf</div>
+    <div class="tab" onclick="showPage(2)">Woche</div>
 </div>
 
-<div id="aktuell" class="page active">
-  <div class="value" id="tNow">-- °C</div>
-  <div class="label">Temperatur</div>
-
-  <div class="value" id="hNow">-- %</div>
-  <div class="label">Luftfeuchtigkeit</div>
-
-  <div class="value" id="pNow">-- hPa</div>
-  <div class="label">Luftdruck</div>
+<div id="page0" class="page active">
+    <h2>Live‑Werte</h2>
+    <div class="value" id="temp">-- °C</div>
+    <div class="value" id="hum">-- %</div>
+    <div class="value" id="pres">-- hPa</div>
 </div>
 
-<div id="verlauf" class="page">
-  <canvas id="chart24"></canvas>
+<div id="page1" class="page">
+    <h2>24h Verlauf</h2>
+    <canvas id="chart"></canvas>
 </div>
 
-<div id="woche" class="page">
-  <pre id="weekData"></pre>
+<div id="page2" class="page">
+    <h2>Wochen‑Min/Max</h2>
+    <div id="week"></div>
 </div>
 
 <script>
-/* Tabs */
-document.querySelectorAll(".tab").forEach(tab => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-
-    tab.classList.add("active");
-    document.getElementById(tab.dataset.page).classList.add("active");
-  });
-});
-
-/* Auto-Reconnect + Timeout */
-let retryDelay = 1000;
-
-async function fetchWithTimeout(url, timeout = 3000) {
-  return Promise.race([
-    fetch(url),
-    new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), timeout))
-  ]);
+function showPage(i) {
+    document.querySelectorAll(".page").forEach((p, idx) =>
+        p.classList.toggle("active", idx === i)
+    );
+    document.querySelectorAll(".tab").forEach((t, idx) =>
+        t.classList.toggle("active", idx === i)
+    );
 }
 
 async function fetchData() {
-  try {
-    const res = await fetchWithTimeout("/", 3000);
-    if (!res.ok) throw new Error("HTTP Fehler");
-
+    const url = "https://raw.githubusercontent.com/mahu1963/Meine-Wetterstation/main/data.json?ts=" + Date.now();
+    const res = await fetch(url);
     const data = await res.json();
-    retryDelay = 1000;
-
-    document.getElementById("status").style.display = "none";
     updateUI(data);
-  } catch (e) {
-    document.getElementById("status").style.display = "block";
-    setTimeout(fetchData, retryDelay);
-    retryDelay = Math.min(retryDelay * 2, 15000);
-  }
 }
 
-setInterval(fetchData, 5000);
-fetchData();
-
-/* UI */
 let chart;
 
 function updateUI(d) {
-  document.getElementById("tNow").textContent = d.t.toFixed(1) + " °C";
-  document.getElementById("hNow").textContent = d.h.toFixed(1) + " %";
-  document.getElementById("pNow").textContent = d.p.toFixed(1) + " hPa";
+    document.getElementById("temp").textContent = d.t.toFixed(1) + " °C";
+    document.getElementById("hum").textContent  = d.h.toFixed(1) + " %";
+    document.getElementById("pres").textContent = d.p.toFixed(1) + " hPa";
 
-  const labels = d.hist.map(h => new Date(h.ts * 1000).toLocaleTimeString("de-DE", {hour: "2-digit", minute: "2-digit"}));
-  const temps  = d.hist.map(h => h.t);
-
-  if (!chart) {
-    const ctx = document.getElementById("chart24").getContext("2d");
-    chart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: labels,
-        datasets: [{
-          label: "Temperatur (°C)",
-          data: temps,
-          borderColor: "#007aff",
-          backgroundColor: "rgba(0,122,255,0.2)",
-          tension: 0.3
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: { y: { beginAtZero: false } }
-      }
+    const labels = d.hist.map(h => {
+        const dt = new Date(h.ts * 1000);
+        return dt.getHours() + ":" + ("0" + dt.getMinutes()).slice(-2);
     });
-  } else {
-    chart.data.labels = labels;
-    chart.data.datasets[0].data = temps;
-    chart.update();
-  }
 
-  document.getElementById("weekData").textContent = JSON.stringify(d.week, null, 2);
+    const temps = d.hist.map(h => h.t);
+
+    if (!chart) {
+        const ctx = document.getElementById("chart").getContext("2d");
+        chart = new Chart(ctx, {
+            type: "line",
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: "Temperatur (°C)",
+                    data: temps,
+                    borderColor: "#0af",
+                    backgroundColor: "rgba(0,170,255,0.2)",
+                    tension: 0.2
+                }]
+            },
+            options: {
+                scales: {
+                    x: { ticks: { color: "#ccc" } },
+                    y: { ticks: { color: "#ccc" } }
+                },
+                plugins: {
+                    legend: { labels: { color: "#ccc" } }
+                }
+            }
+        });
+    } else {
+        chart.data.labels = labels;
+        chart.data.datasets[0].data = temps;
+        chart.update();
+    }
+
+    const weekDiv = document.getElementById("week");
+    weekDiv.innerHTML = "";
+
+    d.week.forEach(day => {
+        const box = document.createElement("div");
+        box.className = "week-box";
+        box.innerHTML = `
+            <b>${day.day}</b><br>
+            Temp: ${day.minT.toFixed(1)} – ${day.maxT.toFixed(1)} °C<br>
+            Feuchte: ${day.minH.toFixed(1)} – ${day.maxH.toFixed(1)} %<br>
+            Druck: ${day.minP.toFixed(1)} – ${day.maxP.toFixed(1)} hPa
+        `;
+        weekDiv.appendChild(box);
+    });
 }
+
+fetchData();
+setInterval(fetchData, 30000);
 </script>
 
 </body>
