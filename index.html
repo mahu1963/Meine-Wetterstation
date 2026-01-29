@@ -1,69 +1,172 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wetterstation</title>
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wetterstation</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f5f5f5;
+}
+
+.tabs {
+  display: flex;
+  background: #fff;
+  border-bottom: 1px solid #ccc;
+}
+
+.tab {
+  flex: 1;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.tab.active {
+  border-bottom: 3px solid #007aff;
+  color: #007aff;
+}
+
+.page {
+  display: none;
+  padding: 16px;
+}
+
+.page.active {
+  display: block;
+}
+
+.value {
+  font-size: 2.4rem;
+  font-weight: 700;
+}
+
+.label {
+  color: #666;
+  margin-top: -8px;
+  margin-bottom: 20px;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<header>
-    <h1>Wetterstation</h1>
-</header>
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" data-page="aktuell">Aktuell</div>
+  <div class="tab" data-page="verlauf">Verlauf</div>
+  <div class="tab" data-page="woche">Woche</div>
+</div>
 
-<main>
+<!-- Seiten -->
+<div id="aktuell" class="page active">
+  <div class="value" id="tNow">-- °C</div>
+  <div class="label">Temperatur</div>
 
-    <section class="card">
-        <h2>Aktuell</h2>
-        <div class="values">
-            <div class="value">
-                <span id="temp">--</span>
-                <label>Temperatur</label>
-            </div>
-            <div class="value">
-                <span id="hum">--</span>
-                <label>Feuchtigkeit</label>
-            </div>
-            <div class="value">
-                <span id="press">--</span>
-                <label>Druck</label>
-            </div>
-        </div>
-    </section>
+  <div class="value" id="hNow">-- %</div>
+  <div class="label">Luftfeuchtigkeit</div>
 
-    <section class="card">
-        <h2>Min / Max heute</h2>
-        <div class="values">
-            <div class="value">
-                <span id="minT">--</span>
-                <label>Min °C</label>
-            </div>
-            <div class="value">
-                <span id="maxT">--</span>
-                <label>Max °C</label>
-            </div>
-            <div class="value">
-                <span id="minH">--</span>
-                <label>Min %</label>
-            </div>
-            <div class="value">
-                <span id="maxH">--</span>
-                <label>Max %</label>
-            </div>
-            <div class="value">
-                <span id="minP">--</span>
-                <label>Min hPa</label>
-            </div>
-            <div class="value">
-                <span id="maxP">--</span>
-                <label>Max hPa</label>
-            </div>
-        </div>
-    </section>
+  <div class="value" id="pNow">-- hPa</div>
+  <div class="label">Luftdruck</div>
+</div>
 
-</main>
+<div id="verlauf" class="page">
+  <canvas id="chart24"></canvas>
+</div>
 
-<script src="script.js"></script>
+<div id="woche" class="page">
+  <pre id="weekData"></pre>
+</div>
+
+<script>
+/* ---------------------------
+   Tabs
+--------------------------- */
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+
+    tab.classList.add("active");
+    document.getElementById(tab.dataset.page).classList.add("active");
+  });
+});
+
+/* ---------------------------
+   Auto-Reconnect + Fetch
+--------------------------- */
+let retryDelay = 1000;
+
+async function fetchData() {
+  try {
+    const res = await fetch("/");
+    if (!res.ok) throw new Error("HTTP Fehler");
+
+    const data = await res.json();
+    retryDelay = 1000; // Reset bei Erfolg
+
+    updateUI(data);
+  } catch (e) {
+    console.log("Verbindung verloren – neuer Versuch in", retryDelay, "ms");
+    setTimeout(fetchData, retryDelay);
+    retryDelay = Math.min(retryDelay * 2, 15000);
+  }
+}
+
+setInterval(fetchData, 5000);
+fetchData();
+
+/* ---------------------------
+   UI aktualisieren
+--------------------------- */
+let chart;
+
+function updateUI(d) {
+  // Aktuell
+  document.getElementById("tNow").textContent = d.t.toFixed(1) + " °C";
+  document.getElementById("hNow").textContent = d.h.toFixed(1) + " %";
+  document.getElementById("pNow").textContent = d.p.toFixed(1) + " hPa";
+
+  // Verlauf
+  const labels = d.hist.map(h => new Date(h.ts * 1000).toLocaleTimeString("de-DE", {hour: "2-digit", minute: "2-digit"}));
+  const temps  = d.hist.map(h => h.t);
+
+  if (!chart) {
+    const ctx = document.getElementById("chart24").getContext("2d");
+    chart = new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Temperatur (°C)",
+          data: temps,
+          borderColor: "#007aff",
+          backgroundColor: "rgba(0,122,255,0.2)",
+          tension: 0.3
+        }]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: { beginAtZero: false }
+        }
+      }
+    });
+  } else {
+    chart.data.labels = labels;
+    chart.data.datasets[0].data = temps;
+    chart.update();
+  }
+
+  // Woche
+  document.getElementById("weekData").textContent = JSON.stringify(d.week, null, 2);
+}
+</script>
+
 </body>
 </html>
