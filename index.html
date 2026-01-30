@@ -17,6 +17,12 @@
 
 <style>
     body {
+    <button id="modeBtn" onclick="toggleMode()">🌙</button>
+   <label class="switch">
+  <input type="checkbox" id="modeSwitch" onchange="toggleSwitch()">
+  <span class="slider"></span>
+</label>
+
         margin: 0;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
         background: #111;
@@ -199,3 +205,4 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
+
