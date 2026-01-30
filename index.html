@@ -13,6 +13,9 @@
 <link rel="apple-touch-startup-image" href="splash.png">
 
 <style>
+/* ------------------------------------------------ */
+/* Farben für Hell/Dunkel-Modus                    */
+/* ------------------------------------------------ */
 :root {
   --bg: #111;
   --fg: #eee;
@@ -25,6 +28,9 @@
   --accent: #0077cc;
 }
 
+/* ------------------------------------------------ */
+/* Animierter Hintergrundverlauf                   */
+/* ------------------------------------------------ */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
@@ -48,6 +54,9 @@ body {
   100% { background-position: 0% 50%; }
 }
 
+/* ------------------------------------------------ */
+/* Info Panel                                       */
+/* ------------------------------------------------ */
 .info-panel {
   position: fixed;
   top: 16px;
@@ -61,13 +70,15 @@ body {
   line-height: 1.4em;
   z-index: 9999;
   box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-  transition: background 0.3s, color 0.3s;
 }
 
 .light .info-panel {
   background: rgba(255,255,255,0.45);
 }
 
+/* ------------------------------------------------ */
+/* Glow Button                                      */
+/* ------------------------------------------------ */
 #modeBtn {
   position: fixed;
   top: 16px;
@@ -84,7 +95,6 @@ body {
   align-items: center;
   justify-content: center;
   box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-  transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
   z-index: 9999;
   animation: glow 2.5s infinite ease-in-out;
 }
@@ -95,6 +105,9 @@ body {
   100% { box-shadow: 0 0 10px var(--accent); }
 }
 
+/* ------------------------------------------------ */
+/* iPhone Switch                                    */
+/* ------------------------------------------------ */
 .switch {
   position: fixed;
   top: 80px;
@@ -118,7 +131,6 @@ body {
   right: 0;
   bottom: 0;
   transition: .3s;
-  box-shadow: inset 0 0 4px rgba(0,0,0,0.3);
 }
 
 .slider:before {
@@ -131,7 +143,6 @@ body {
   background-color: white;
   border-radius: 50%;
   transition: .3s;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
 
 input:checked + .slider {
@@ -142,6 +153,9 @@ input:checked + .slider:before {
   transform: translateX(24px);
 }
 
+/* ------------------------------------------------ */
+/* iOS Tab Bar                                      */
+/* ------------------------------------------------ */
 .bottom-bar {
   position: fixed;
   bottom: 0;
@@ -159,7 +173,6 @@ input:checked + .slider:before {
 
 .light .bottom-bar {
   background: rgba(255,255,255,0.55);
-  border-top: 1px solid rgba(0,0,0,0.15);
 }
 
 .bottom-item {
@@ -169,14 +182,11 @@ input:checked + .slider:before {
   font-size: 0.9em;
   padding-top: 6px;
   cursor: pointer;
-  transition: transform 0.2s, color 0.3s;
 }
 
-.bottom-item:hover {
-  transform: scale(1.12);
-  color: var(--accent);
-}
-
+/* ------------------------------------------------ */
+/* Seiten                                           */
+/* ------------------------------------------------ */
 .page {
   display: none;
   padding: 20px;
@@ -195,8 +205,8 @@ input:checked + .slider:before {
 canvas {
   width: 100%;
   max-width: 420px;
-  height: 200px;
-  margin-top: 20px;
+  height: 240px;
+  margin: 20px auto;
 }
 
 .week-box {
@@ -231,6 +241,7 @@ canvas {
   <span class="slider"></span>
 </label>
 
+<!-- Seiten -->
 <div id="page0" class="page active">
     <h2>Live‑Werte</h2>
     <div class="value" id="temp">-- °C</div>
@@ -249,10 +260,22 @@ canvas {
 </div>
 
 <div id="page3" class="page">
-    <h2>Jahres‑Min/Max</h2>
+    <h2>Jahr</h2>
+
+    <h3>Jahresgrafik</h3>
+    <canvas id="yearChart"></canvas>
+
+    <h3>Monatsübersicht</h3>
+    <canvas id="monthChart"></canvas>
+
+    <h3>Jahres‑Statistik</h3>
+    <div id="yearStats" class="week-box"></div>
+
+    <h3>Jahres‑Liste</h3>
     <div id="year"></div>
 </div>
 
+<!-- Tab Bar -->
 <div class="bottom-bar">
   <div class="bottom-item" onclick="showPage(0)">🔴 Live</div>
   <div class="bottom-item" onclick="showPage(1)">📈 Verlauf</div>
@@ -275,6 +298,8 @@ async function fetchData() {
 }
 
 let chart;
+let yearChart;
+let monthChart;
 
 function trend(a, b) {
     if (a > b) return "↑";
@@ -316,12 +341,10 @@ function updateUI(d) {
                 }]
             },
             options: {
+                plugins: { legend: { labels: { color: "#ccc" } } },
                 scales: {
                     x: { ticks: { color: "#ccc" } },
                     y: { ticks: { color: "#ccc" } }
-                },
-                plugins: {
-                    legend: { labels: { color: "#ccc" } }
                 }
             }
         });
@@ -331,6 +354,7 @@ function updateUI(d) {
         chart.update();
     }
 
+    // Woche
     const weekDiv = document.getElementById("week");
     weekDiv.innerHTML = "";
 
@@ -343,6 +367,9 @@ function updateUI(d) {
         `;
         weekDiv.appendChild(box);
     });
+
+    // Jahr
+    buildYearCharts(d);
 
     const yearDiv = document.getElementById("year");
     yearDiv.innerHTML = "";
@@ -358,8 +385,111 @@ function updateUI(d) {
     });
 }
 
-fetchData();
-setInterval(fetchData, 30000);
+function buildYearCharts(d) {
+    // Tagesdaten
+    const days = d.year.map(e => e.day);
+    const minT = d.year.map(e => e.minT);
+    const maxT = d.year.map(e => e.maxT);
+
+    const ctx1 = document.getElementById("yearChart").getContext("2d");
+
+    if (yearChart) yearChart.destroy();
+
+    yearChart = new Chart(ctx1, {
+        type: "line",
+        data: {
+            labels: days,
+            datasets: [
+                {
+                    label: "Min °C",
+                    data: minT,
+                    borderColor: "#0af",
+                    backgroundColor: "rgba(0,170,255,0.2)",
+                    tension: 0.2
+                },
+                {
+                    label: "Max °C",
+                    data: maxT,
+                    borderColor: "#f33",
+                    backgroundColor: "rgba(255,80,80,0.2)",
+                    tension: 0.2
+                }
+            ]
+        },
+        options: {
+            plugins: { legend: { labels: { color: "#ccc" } } },
+            scales: {
+                x: { ticks: { color: "#ccc" } },
+                y: { ticks: { color: "#ccc" } }
+            }
+        }
+    });
+
+    // Monatsübersicht
+    const monthlyMin = Array(12).fill(0).map(() => []);
+    const monthlyMax = Array(12).fill(0).map(() => []);
+
+    d.year.forEach(e => {
+        const month = parseInt(String(e.day).substring(4, 6)) - 1;
+        monthlyMin[month].push(e.minT);
+        monthlyMax[month].push(e.maxT);
+    });
+
+    const avgMin = monthlyMin.map(arr =>
+        arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null
+    );
+    const avgMax = monthlyMax.map(arr =>
+        arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null
+    );
+
+    const ctx2 = document.getElementById("monthChart").getContext("2d");
+
+    if (monthChart) monthChart.destroy();
+
+    monthChart = new Chart(ctx2, {
+        type: "bar",
+        data: {
+            labels: ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"],
+            datasets: [
+                {
+                    label: "Ø Min °C",
+                    data: avgMin,
+                    backgroundColor: "rgba(0,170,255,0.6)"
+                },
+                {
+                    label: "Ø Max °C",
+                    data: avgMax,
+                    backgroundColor: "rgba(255,80,80,0.6)"
+                }
+            ]
+        },
+        options: {
+            plugins: { legend: { labels: { color: "#ccc" } } },
+            scales: {
+                x: { ticks: { color: "#ccc" } },
+                y: { ticks: { color: "#ccc" } }
+            }
+        }
+    });
+
+    // Jahresstatistik
+    const allMin = d.year.map(e => e.minT);
+    const allMax = d.year.map(e => e.maxT);
+
+    const avgMinYear = allMin.reduce((a, b) => a + b, 0) / allMin.length;
+    const avgMaxYear = allMax.reduce((a, b) => a + b, 0) / allMax.length;
+
+    const minYear = Math.min(...allMin);
+    const maxYear = Math.max(...allMax);
+
+    document.getElementById("yearStats").innerHTML = `
+        <b>Jahres‑Statistik</b><br>
+        Ø Min: ${avgMinYear.toFixed(1)} °C<br>
+        Ø Max: ${avgMaxYear.toFixed(1)} °C<br>
+        Tiefste Temperatur: ${minYear.toFixed(1)} °C<br>
+        Höchste Temperatur: ${maxYear.toFixed(1)} °C
+    `;
+}
 
 setInterval(() => {
   const now = new Date();
@@ -405,15 +535,6 @@ window.addEventListener("load", () => {
   }
 
   const isLight = document.body.classList.contains("light");
-  document.getElementById("modeSwitch").checked = isLight;
-  document.getElementById("modeBtn").textContent = isLight ? "🌞" : "🌙";
-});
+  document.getElement
 
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js");
-}
-</script>
-
-</body>
-</html>
 
