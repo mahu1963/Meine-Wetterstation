@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meine Wetterstation</title>
 
-<!-- App-Icon & PWA -->
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="icon" type="image/png" href="icon.png">
 <link rel="manifest" href="manifest.json">
@@ -14,9 +13,6 @@
 <link rel="apple-touch-startup-image" href="splash.png">
 
 <style>
-/* ------------------------------------------------ */
-/* Farben für Hell/Dunkel-Modus                    */
-/* ------------------------------------------------ */
 :root {
   --bg: #111;
   --fg: #eee;
@@ -29,9 +25,6 @@
   --accent: #0077cc;
 }
 
-/* ------------------------------------------------ */
-/* Animierter Hintergrundverlauf                   */
-/* ------------------------------------------------ */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
@@ -55,9 +48,6 @@ body {
   100% { background-position: 0% 50%; }
 }
 
-/* ------------------------------------------------ */
-/* Schwebendes Info-Panel                          */
-/* ------------------------------------------------ */
 .info-panel {
   position: fixed;
   top: 16px;
@@ -78,9 +68,6 @@ body {
   background: rgba(255,255,255,0.45);
 }
 
-/* ------------------------------------------------ */
-/* Schwebender runder Button                       */
-/* ------------------------------------------------ */
 #modeBtn {
   position: fixed;
   top: 16px;
@@ -108,9 +95,6 @@ body {
   100% { box-shadow: 0 0 10px var(--accent); }
 }
 
-/* ------------------------------------------------ */
-/* iPhone-Style Toggle Switch                      */
-/* ------------------------------------------------ */
 .switch {
   position: fixed;
   top: 80px;
@@ -158,9 +142,6 @@ input:checked + .slider:before {
   transform: translateX(24px);
 }
 
-/* ------------------------------------------------ */
-/* iOS Tab-Bar Bottom Navigator                    */
-/* ------------------------------------------------ */
 .bottom-bar {
   position: fixed;
   bottom: 0;
@@ -196,9 +177,6 @@ input:checked + .slider:before {
   color: var(--accent);
 }
 
-/* ------------------------------------------------ */
-/* Tabs, Seiten, Layout                            */
-/* ------------------------------------------------ */
 .page {
   display: none;
   padding: 20px;
@@ -240,22 +218,19 @@ canvas {
 
 <body>
 
-<!-- Info Panel -->
 <div class="info-panel">
+  🍽️ Bernstein Stuben<br>
   📍 Bernstein, Burgenland<br>
   ⏱️ <span id="timeNow">--:--</span>
 </div>
 
-<!-- Dark/Light Button -->
 <button id="modeBtn" onclick="toggleMode()">🌙</button>
 
-<!-- iPhone Switch -->
 <label class="switch">
   <input type="checkbox" id="modeSwitch" onchange="toggleSwitch()">
   <span class="slider"></span>
 </label>
 
-<!-- Seiten -->
 <div id="page0" class="page active">
     <h2>Live‑Werte</h2>
     <div class="value" id="temp">-- °C</div>
@@ -273,26 +248,25 @@ canvas {
     <div id="week"></div>
 </div>
 
-<!-- iOS Tab-Bar -->
+<div id="page3" class="page">
+    <h2>Jahres‑Min/Max</h2>
+    <div id="year"></div>
+</div>
+
 <div class="bottom-bar">
   <div class="bottom-item" onclick="showPage(0)">🔴 Live</div>
   <div class="bottom-item" onclick="showPage(1)">📈 Verlauf</div>
   <div class="bottom-item" onclick="showPage(2)">📅 Woche</div>
+  <div class="bottom-item" onclick="showPage(3)">📆 Jahr</div>
 </div>
 
 <script>
-/* ------------------------------------------------ */
-/* Seitenumschaltung                               */
-/* ------------------------------------------------ */
 function showPage(i) {
     document.querySelectorAll(".page").forEach((p, idx) =>
         p.classList.toggle("active", idx === i)
     );
 }
 
-/* ------------------------------------------------ */
-/* Daten laden                                      */
-/* ------------------------------------------------ */
 async function fetchData() {
     const url = "https://raw.githubusercontent.com/mahu1963/Meine-Wetterstation/main/data.json?ts=" + Date.now();
     const res = await fetch(url);
@@ -369,14 +343,24 @@ function updateUI(d) {
         `;
         weekDiv.appendChild(box);
     });
+
+    const yearDiv = document.getElementById("year");
+    yearDiv.innerHTML = "";
+
+    d.year.forEach(day => {
+        const box = document.createElement("div");
+        box.className = "week-box";
+        box.innerHTML = `
+            <b>${day.day}</b><br>
+            Temp: ${day.minT.toFixed(1)} – ${day.maxT.toFixed(1)} °C
+        `;
+        yearDiv.appendChild(box);
+    });
 }
 
 fetchData();
 setInterval(fetchData, 30000);
 
-/* ------------------------------------------------ */
-/* Uhrzeit im Info-Panel                           */
-/* ------------------------------------------------ */
 setInterval(() => {
   const now = new Date();
   const hh = now.getHours().toString().padStart(2,"0");
@@ -384,9 +368,6 @@ setInterval(() => {
   document.getElementById("timeNow").textContent = `${hh}:${mm}`;
 }, 1000);
 
-/* ------------------------------------------------ */
-/* Dark/Light Mode                                  */
-/* ------------------------------------------------ */
 function toggleMode() {
   document.body.classList.toggle("light");
 
@@ -428,9 +409,6 @@ window.addEventListener("load", () => {
   document.getElementById("modeBtn").textContent = isLight ? "🌞" : "🌙";
 });
 
-/* ------------------------------------------------ */
-/* PWA Service Worker                               */
-/* ------------------------------------------------ */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
 }
@@ -438,3 +416,4 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
+
