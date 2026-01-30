@@ -536,5 +536,14 @@ window.addEventListener("load", () => {
 
   const isLight = document.body.classList.contains("light");
   document.getElement
+  const isLight = document.body.classList.contains("light");
+  document.getElementById("modeBtn").textContent = isLight ? "🌞" : "🌙";
+  document.getElementById("modeSwitch").checked = isLight;
+
+  // Seite starten
+  fetchData();
+  setInterval(fetchData, 60000); // alle 60 Sekunden aktualisieren
+});
+</script>
 
 
