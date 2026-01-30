@@ -11,13 +11,12 @@
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
-
 <link rel="apple-touch-startup-image" href="splash.png">
 
 <style>
-/* ----------------------------- */
-/* Farben für Hell/Dunkel-Modus */
-/* ----------------------------- */
+/* ------------------------------------------------ */
+/* Farben für Hell/Dunkel-Modus                    */
+/* ------------------------------------------------ */
 :root {
   --bg: #111;
   --fg: #eee;
@@ -30,19 +29,58 @@
   --accent: #0077cc;
 }
 
-/* Hintergrund-Fade */
+/* ------------------------------------------------ */
+/* Animierter Hintergrundverlauf                   */
+/* ------------------------------------------------ */
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
-  background: var(--bg);
+  background: linear-gradient(120deg, #0a0f2d, #001f4d, #003366);
+  background-size: 300% 300%;
+  animation: bgMove 18s ease infinite;
   color: var(--fg);
   text-align: center;
   transition: background 0.6s ease, color 0.6s ease;
 }
 
-/* ----------------------------- */
-/* Schwebender runder Button     */
-/* ----------------------------- */
+.light {
+  background: linear-gradient(120deg, #dfe9f3, #ffffff, #cfe0ff);
+  background-size: 300% 300%;
+  animation: bgMove 18s ease infinite;
+}
+
+@keyframes bgMove {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ------------------------------------------------ */
+/* Schwebendes Info-Panel                          */
+/* ------------------------------------------------ */
+.info-panel {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  padding: 10px 14px;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  color: var(--fg);
+  font-size: 0.9em;
+  line-height: 1.4em;
+  z-index: 9999;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  transition: background 0.3s, color 0.3s;
+}
+
+.light .info-panel {
+  background: rgba(255,255,255,0.45);
+}
+
+/* ------------------------------------------------ */
+/* Schwebender runder Button                       */
+/* ------------------------------------------------ */
 #modeBtn {
   position: fixed;
   top: 16px;
@@ -61,8 +99,6 @@ body {
   box-shadow: 0 6px 18px rgba(0,0,0,0.25);
   transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
   z-index: 9999;
-
-  /* Glow Animation */
   animation: glow 2.5s infinite ease-in-out;
 }
 
@@ -72,17 +108,9 @@ body {
   100% { box-shadow: 0 0 10px var(--accent); }
 }
 
-#modeBtn:hover {
-  transform: scale(1.08);
-}
-
-#modeBtn:active {
-  transform: scale(0.92);
-}
-
-/* ----------------------------- */
-/* iPhone-Style Toggle Switch    */
-/* ----------------------------- */
+/* ------------------------------------------------ */
+/* iPhone-Style Toggle Switch                      */
+/* ------------------------------------------------ */
 .switch {
   position: fixed;
   top: 80px;
@@ -130,30 +158,53 @@ input:checked + .slider:before {
   transform: translateX(24px);
 }
 
-/* ----------------------------- */
-/* Tabs, Seiten, Layout          */
-/* ----------------------------- */
-.tabs {
+/* ------------------------------------------------ */
+/* iOS Tab-Bar Bottom Navigator                    */
+/* ------------------------------------------------ */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 58px;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(12px);
   display: flex;
-  background: #222;
-  border-bottom: 1px solid #444;
-}
-.tab {
-  flex: 1;
-  padding: 12px;
-  cursor: pointer;
-  font-weight: bold;
-  color: #aaa;
-}
-.tab.active {
-  color: #fff;
-  border-bottom: 3px solid var(--accent);
+  justify-content: space-around;
+  align-items: center;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  z-index: 9999;
 }
 
+.light .bottom-bar {
+  background: rgba(255,255,255,0.55);
+  border-top: 1px solid rgba(0,0,0,0.15);
+}
+
+.bottom-item {
+  flex: 1;
+  text-align: center;
+  color: var(--fg);
+  font-size: 0.9em;
+  padding-top: 6px;
+  cursor: pointer;
+  transition: transform 0.2s, color 0.3s;
+}
+
+.bottom-item:hover {
+  transform: scale(1.12);
+  color: var(--accent);
+}
+
+/* ------------------------------------------------ */
+/* Tabs, Seiten, Layout                            */
+/* ------------------------------------------------ */
 .page {
   display: none;
   padding: 20px;
+  padding-bottom: 80px;
 }
+
 .page.active {
   display: block;
 }
@@ -171,12 +222,16 @@ canvas {
 }
 
 .week-box {
-  background: #222;
+  background: rgba(0,0,0,0.35);
   padding: 10px;
   margin: 10px auto;
   width: 90%;
   border-radius: 8px;
   text-align: left;
+}
+
+.light .week-box {
+  background: rgba(255,255,255,0.35);
 }
 </style>
 
@@ -185,20 +240,22 @@ canvas {
 
 <body>
 
-<!-- Button + Switch -->
+<!-- Info Panel -->
+<div class="info-panel">
+  📍 Bernstein, Burgenland<br>
+  ⏱️ <span id="timeNow">--:--</span>
+</div>
+
+<!-- Dark/Light Button -->
 <button id="modeBtn" onclick="toggleMode()">🌙</button>
 
+<!-- iPhone Switch -->
 <label class="switch">
   <input type="checkbox" id="modeSwitch" onchange="toggleSwitch()">
   <span class="slider"></span>
 </label>
 
-<div class="tabs">
-    <div class="tab active" onclick="showPage(0)">Live</div>
-    <div class="tab" onclick="showPage(1)">Verlauf</div>
-    <div class="tab" onclick="showPage(2)">Woche</div>
-</div>
-
+<!-- Seiten -->
 <div id="page0" class="page active">
     <h2>Live‑Werte</h2>
     <div class="value" id="temp">-- °C</div>
@@ -207,25 +264,35 @@ canvas {
 </div>
 
 <div id="page1" class="page">
-    <h2>24h Verlauf</h2>
+    <h2>Verlauf</h2>
     <canvas id="chart"></canvas>
 </div>
 
 <div id="page2" class="page">
-    <h2>Wochen‑Min/Max</h2>
+    <h2>Woche</h2>
     <div id="week"></div>
 </div>
 
+<!-- iOS Tab-Bar -->
+<div class="bottom-bar">
+  <div class="bottom-item" onclick="showPage(0)">🔴 Live</div>
+  <div class="bottom-item" onclick="showPage(1)">📈 Verlauf</div>
+  <div class="bottom-item" onclick="showPage(2)">📅 Woche</div>
+</div>
+
 <script>
+/* ------------------------------------------------ */
+/* Seitenumschaltung                               */
+/* ------------------------------------------------ */
 function showPage(i) {
     document.querySelectorAll(".page").forEach((p, idx) =>
         p.classList.toggle("active", idx === i)
     );
-    document.querySelectorAll(".tab").forEach((t, idx) =>
-        t.classList.toggle("active", idx === i)
-    );
 }
 
+/* ------------------------------------------------ */
+/* Daten laden                                      */
+/* ------------------------------------------------ */
 async function fetchData() {
     const url = "https://raw.githubusercontent.com/mahu1963/Meine-Wetterstation/main/data.json?ts=" + Date.now();
     const res = await fetch(url);
@@ -307,10 +374,19 @@ function updateUI(d) {
 fetchData();
 setInterval(fetchData, 30000);
 
-/* ----------------------------- */
-/* Dark/Light Mode Logik         */
-/* ----------------------------- */
+/* ------------------------------------------------ */
+/* Uhrzeit im Info-Panel                           */
+/* ------------------------------------------------ */
+setInterval(() => {
+  const now = new Date();
+  const hh = now.getHours().toString().padStart(2,"0");
+  const mm = now.getMinutes().toString().padStart(2,"0");
+  document.getElementById("timeNow").textContent = `${hh}:${mm}`;
+}, 1000);
 
+/* ------------------------------------------------ */
+/* Dark/Light Mode                                  */
+/* ------------------------------------------------ */
 function toggleMode() {
   document.body.classList.toggle("light");
 
@@ -336,7 +412,6 @@ function toggleSwitch() {
 window.addEventListener("load", () => {
   const saved = localStorage.getItem("mode");
 
-  // Auto-Dark-Mode nach Uhrzeit (wenn kein gespeicherter Modus existiert)
   if (!saved) {
     const hour = new Date().getHours();
     const autoLight = hour >= 7 && hour < 19;
@@ -353,9 +428,9 @@ window.addEventListener("load", () => {
   document.getElementById("modeBtn").textContent = isLight ? "🌞" : "🌙";
 });
 
-/* ----------------------------- */
-/* PWA Service Worker            */
-/* ----------------------------- */
+/* ------------------------------------------------ */
+/* PWA Service Worker                               */
+/* ------------------------------------------------ */
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
 }
@@ -363,5 +438,3 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
-
-
