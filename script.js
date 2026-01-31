@@ -18,7 +18,27 @@ function formatDateStamp(dayStamp) {
     const y = parseInt(s.substring(0, 4));
     const m = parseInt(s.substring(4, 6)) - 1;
     const d = parseInt(s.substring(6, 8));
-    const date = new Date(y, m, d);
+    const LOCAL_URL = "http://esp32.local/data.json";
+const GITHUB_URL = "https://mahu1963.github.io/Meine-Wetterstation/data.json";
+
+async function loadData() {
+    try {
+        const res = await fetch(LOCAL_URL);
+        const data = await res.json();
+        updateUI(data);
+        return;
+    } catch(e) {
+        console.warn("Lokaler ESP32 nicht erreichbar, nutze GitHub");
+    }
+
+    try {
+        const res = await fetch(GITHUB_URL);
+        const data = await res.json();
+        updateUI(data);
+    } catch(e) {
+        console.error("Fehler beim Laden:", e);
+    }
+}
     return date.toLocaleDateString("de-AT", {
         day: "2-digit",
         month: "2-digit"
