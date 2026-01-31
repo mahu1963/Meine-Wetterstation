@@ -1,549 +1,104 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meine Wetterstation</title>
-
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="icon" type="image/png" href="icon.png">
-<link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<link rel="apple-touch-startup-image" href="splash.png">
-
-<style>
-/* ------------------------------------------------ */
-/* Farben für Hell/Dunkel-Modus                    */
-/* ------------------------------------------------ */
-:root {
-  --bg: #111;
-  --fg: #eee;
-  --accent: #0af;
-}
-
-.light {
-  --bg: #f0f0f0;
-  --fg: #111;
-  --accent: #0077cc;
-}
-
-/* ------------------------------------------------ */
-/* Animierter Hintergrundverlauf                   */
-/* ------------------------------------------------ */
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
-  background: linear-gradient(120deg, #0a0f2d, #001f4d, #003366);
-  background-size: 300% 300%;
-  animation: bgMove 18s ease infinite;
-  color: var(--fg);
-  text-align: center;
-  transition: background 0.6s ease, color 0.6s ease;
-}
-
-.light {
-  background: linear-gradient(120deg, #dfe9f3, #ffffff, #cfe0ff);
-  background-size: 300% 300%;
-  animation: bgMove 18s ease infinite;
-}
-
-@keyframes bgMove {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* ------------------------------------------------ */
-/* Info Panel                                       */
-/* ------------------------------------------------ */
-.info-panel {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  padding: 10px 14px;
-  background: rgba(0,0,0,0.45);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  color: var(--fg);
-  font-size: 0.9em;
-  line-height: 1.4em;
-  z-index: 9999;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
-}
-
-.light .info-panel {
-  background: rgba(255,255,255,0.45);
-}
-
-/* ------------------------------------------------ */
-/* Glow Button                                      */
-/* ------------------------------------------------ */
-#modeBtn {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  cursor: pointer;
-  font-size: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
-  z-index: 9999;
-  animation: glow 2.5s infinite ease-in-out;
-}
-
-@keyframes glow {
-  0%   { box-shadow: 0 0 10px var(--accent); }
-  50%  { box-shadow: 0 0 22px var(--accent); }
-  100% { box-shadow: 0 0 10px var(--accent); }
-}
-
-/* ------------------------------------------------ */
-/* iPhone Switch                                    */
-/* ------------------------------------------------ */
-.switch {
-  position: fixed;
-  top: 80px;
-  right: 16px;
-  width: 52px;
-  height: 28px;
-  z-index: 9999;
-}
-
-.switch input {
-  display: none;
-}
-
-.slider {
-  position: absolute;
-  cursor: pointer;
-  background-color: #777;
-  border-radius: 34px;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  transition: .3s;
-}
-
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 22px;
-  width: 22px;
-  left: 3px;
-  bottom: 3px;
-  background-color: white;
-  border-radius: 50%;
-  transition: .3s;
-}
-
-input:checked + .slider {
-  background-color: var(--accent);
-}
-
-input:checked + .slider:before {
-  transform: translateX(24px);
-}
-
-/* ------------------------------------------------ */
-/* iOS Tab Bar                                      */
-/* ------------------------------------------------ */
-.bottom-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 58px;
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: blur(12px);
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  border-top: 1px solid rgba(255,255,255,0.15);
-  z-index: 9999;
-}
-
-.light .bottom-bar {
-  background: rgba(255,255,255,0.55);
-}
-
-.bottom-item {
-  flex: 1;
-  text-align: center;
-  color: var(--fg);
-  font-size: 0.9em;
-  padding-top: 6px;
-  cursor: pointer;
-}
-
-/* ------------------------------------------------ */
-/* Seiten                                           */
-/* ------------------------------------------------ */
-.page {
-  display: none;
-  padding: 20px;
-  padding-bottom: 80px;
-}
-
-.page.active {
-  display: block;
-}
-
-.value {
-  font-size: 2.4em;
-  margin: 10px 0;
-}
-
-canvas {
-  width: 100%;
-  max-width: 420px;
-  height: 240px;
-  margin: 20px auto;
-}
-
-.week-box {
-  background: rgba(0,0,0,0.35);
-  padding: 10px;
-  margin: 10px auto;
-  width: 90%;
-  border-radius: 8px;
-  text-align: left;
-}
-
-.light .week-box {
-  background: rgba(255,255,255,0.35);
-}
-</style>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <title>Meine Wetterstation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; margin: 16px; background:#f4f4f4; }
+    .card { background:#fff; border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 2px 6px rgba(0,0,0,0.08); }
+    h1 { font-size:1.4rem; margin-bottom:8px; }
+    h2 { font-size:1.1rem; margin:12px 0 6px; }
+    .value-row { display:flex; justify-content:space-between; margin:4px 0; }
+    .label { color:#555; }
+    .val { font-weight:600; }
+    .pillbar { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
+    .pill { padding:4px 10px; border-radius:999px; font-size:0.8rem; background:#eee; }
+    .pill.live { background:#e53935; color:#fff; }
+  </style>
 </head>
-
 <body>
 
-<div class="info-panel">
-  🍽️ Bernstein Stuben<br>
-  📍 Bernstein, Burgenland<br>
-  ⏱️ <span id="timeNow">--:--</span>
+<div class="card">
+  <h1>Meine Wetterstation</h1>
+  <div class="value-row">
+    <span class="label">Ort</span>
+    <span class="val">Bernstein, Burgenland</span>
+  </div>
+  <div class="value-row">
+    <span class="label">Stand</span>
+    <span class="val" id="time">--:--</span>
+  </div>
 </div>
 
-<button id="modeBtn" onclick="toggleMode()">🌙</button>
-
-<label class="switch">
-  <input type="checkbox" id="modeSwitch" onchange="toggleSwitch()">
-  <span class="slider"></span>
-</label>
-
-<!-- Seiten -->
-<div id="page0" class="page active">
-    <h2>Live‑Werte</h2>
-    <div class="value" id="temp">-- °C</div>
-    <div class="value" id="hum">-- %</div>
-    <div class="value" id="pres">-- hPa</div>
+<div class="card">
+  <h2>Live‑Werte</h2>
+  <div class="value-row">
+    <span class="label">Temperatur</span>
+    <span class="val"><span id="temp">--</span> °C</span>
+  </div>
+  <div class="value-row">
+    <span class="label">Luftfeuchte</span>
+    <span class="val"><span id="hum">--</span> %</span>
+  </div>
+  <div class="value-row">
+    <span class="label">Luftdruck</span>
+    <span class="val"><span id="pres">--</span> hPa</span>
+  </div>
+  <div class="value-row">
+    <span class="label">Batterie</span>
+    <span class="val"><span id="batt">--</span> V</span>
+  </div>
+  <div class="value-row">
+    <span class="label">Signal</span>
+    <span class="val"><span id="rssi">--</span> dBm</span>
+  </div>
 </div>
 
-<div id="page1" class="page">
-    <h2>Verlauf</h2>
-    <canvas id="chart"></canvas>
+<div class="card">
+  <h2>Verlauf</h2>
+  <p>Hier kannst du später Diagramme einbauen (Tag / Woche / Jahr).</p>
 </div>
 
-<div id="page2" class="page">
-    <h2>Woche</h2>
-    <div id="week"></div>
+<div class="card">
+  <h2>Woche</h2>
 </div>
 
-<div id="page3" class="page">
-    <h2>Jahr</h2>
-
-    <h3>Jahresgrafik</h3>
-    <canvas id="yearChart"></canvas>
-
-    <h3>Monatsübersicht</h3>
-    <canvas id="monthChart"></canvas>
-
-    <h3>Jahres‑Statistik</h3>
-    <div id="yearStats" class="week-box"></div>
-
-    <h3>Jahres‑Liste</h3>
-    <div id="year"></div>
-</div>
-
-<!-- Tab Bar -->
-<div class="bottom-bar">
-  <div class="bottom-item" onclick="showPage(0)">🔴 Live</div>
-  <div class="bottom-item" onclick="showPage(1)">📈 Verlauf</div>
-  <div class="bottom-item" onclick="showPage(2)">📅 Woche</div>
-  <div class="bottom-item" onclick="showPage(3)">📆 Jahr</div>
+<div class="card">
+  <h2>Jahr</h2>
+  <div class="pillbar">
+    <span class="pill live">● Live</span>
+    <span class="pill">📈 Verlauf</span>
+    <span class="pill">📅 Woche</span>
+    <span class="pill">📆 Jahr</span>
+  </div>
 </div>
 
 <script>
-function showPage(i) {
-    document.querySelectorAll(".page").forEach((p, idx) =>
-        p.classList.toggle("active", idx === i)
-    );
-}
-
-async function fetchData() {
-    const url = "https://raw.githubusercontent.com/mahu1963/Meine-Wetterstation/main/data.json?ts=" + Date.now();
-    const res = await fetch(url);
+async function loadData() {
+  try {
+    const res = await fetch("/data.json?c=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
     const data = await res.json();
-    updateUI(data);
-}
 
-let chart;
-let yearChart;
-let monthChart;
+    document.getElementById("temp").textContent = data.temperature ?? "--";
+    document.getElementById("hum").textContent  = data.humidity ?? "--";
+    document.getElementById("pres").textContent = data.pressure ?? "--";
+    document.getElementById("batt").textContent = data.battery ?? "--";
+    document.getElementById("rssi").textContent = data.rssi ?? "--";
 
-function trend(a, b) {
-    if (a > b) return "↑";
-    if (a < b) return "↓";
-    return "→";
-}
-
-function updateUI(d) {
-    const last = d.hist[d.hist.length - 1];
-
-    document.getElementById("temp").textContent =
-        d.t.toFixed(1) + " °C " + trend(d.t, last.t);
-
-    document.getElementById("hum").textContent =
-        d.h.toFixed(1) + " % " + trend(d.h, last.h);
-
-    document.getElementById("pres").textContent =
-        d.p.toFixed(1) + " hPa " + trend(d.p, last.p);
-
-    const labels = d.hist.map(h => {
-        const dt = new Date(h.ts * 1000);
-        return dt.getHours() + ":" + ("0" + dt.getMinutes()).slice(-2);
-    });
-
-    const temps = d.hist.map(h => h.t);
-
-    if (!chart) {
-        const ctx = document.getElementById("chart").getContext("2d");
-        chart = new Chart(ctx, {
-            type: "line",
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: "Temperatur (°C)",
-                    data: temps,
-                    borderColor: "#0af",
-                    backgroundColor: "rgba(0,170,255,0.2)",
-                    tension: 0.2
-                }]
-            },
-            options: {
-                plugins: { legend: { labels: { color: "#ccc" } } },
-                scales: {
-                    x: { ticks: { color: "#ccc" } },
-                    y: { ticks: { color: "#ccc" } }
-                }
-            }
-        });
-    } else {
-        chart.data.labels = labels;
-        chart.data.datasets[0].data = temps;
-        chart.update();
+    if (data.timestamp) {
+      const d = new Date(data.timestamp * 1000);
+      document.getElementById("time").textContent = d.toLocaleString();
     }
-
-    // Woche
-    const weekDiv = document.getElementById("week");
-    weekDiv.innerHTML = "";
-
-    d.week.forEach(day => {
-        const box = document.createElement("div");
-        box.className = "week-box";
-        box.innerHTML = `
-            <b>${day.day}</b><br>
-            Temp: ${day.minT.toFixed(1)} – ${day.maxT.toFixed(1)} °C
-        `;
-        weekDiv.appendChild(box);
-    });
-
-    // Jahr
-    buildYearCharts(d);
-
-    const yearDiv = document.getElementById("year");
-    yearDiv.innerHTML = "";
-
-    d.year.forEach(day => {
-        const box = document.createElement("div");
-        box.className = "week-box";
-        box.innerHTML = `
-            <b>${day.day}</b><br>
-            Temp: ${day.minT.toFixed(1)} – ${day.maxT.toFixed(1)} °C
-        `;
-        yearDiv.appendChild(box);
-    });
-}
-
-function buildYearCharts(d) {
-    // Tagesdaten
-    const days = d.year.map(e => e.day);
-    const minT = d.year.map(e => e.minT);
-    const maxT = d.year.map(e => e.maxT);
-
-    const ctx1 = document.getElementById("yearChart").getContext("2d");
-
-    if (yearChart) yearChart.destroy();
-
-    yearChart = new Chart(ctx1, {
-        type: "line",
-        data: {
-            labels: days,
-            datasets: [
-                {
-                    label: "Min °C",
-                    data: minT,
-                    borderColor: "#0af",
-                    backgroundColor: "rgba(0,170,255,0.2)",
-                    tension: 0.2
-                },
-                {
-                    label: "Max °C",
-                    data: maxT,
-                    borderColor: "#f33",
-                    backgroundColor: "rgba(255,80,80,0.2)",
-                    tension: 0.2
-                }
-            ]
-        },
-        options: {
-            plugins: { legend: { labels: { color: "#ccc" } } },
-            scales: {
-                x: { ticks: { color: "#ccc" } },
-                y: { ticks: { color: "#ccc" } }
-            }
-        }
-    });
-
-    // Monatsübersicht
-    const monthlyMin = Array(12).fill(0).map(() => []);
-    const monthlyMax = Array(12).fill(0).map(() => []);
-
-    d.year.forEach(e => {
-        const month = parseInt(String(e.day).substring(4, 6)) - 1;
-        monthlyMin[month].push(e.minT);
-        monthlyMax[month].push(e.maxT);
-    });
-
-    const avgMin = monthlyMin.map(arr =>
-        arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null
-    );
-    const avgMax = monthlyMax.map(arr =>
-        arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null
-    );
-
-    const ctx2 = document.getElementById("monthChart").getContext("2d");
-
-    if (monthChart) monthChart.destroy();
-
-    monthChart = new Chart(ctx2, {
-        type: "bar",
-        data: {
-            labels: ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"],
-            datasets: [
-                {
-                    label: "Ø Min °C",
-                    data: avgMin,
-                    backgroundColor: "rgba(0,170,255,0.6)"
-                },
-                {
-                    label: "Ø Max °C",
-                    data: avgMax,
-                    backgroundColor: "rgba(255,80,80,0.6)"
-                }
-            ]
-        },
-        options: {
-            plugins: { legend: { labels: { color: "#ccc" } } },
-            scales: {
-                x: { ticks: { color: "#ccc" } },
-                y: { ticks: { color: "#ccc" } }
-            }
-        }
-    });
-
-    // Jahresstatistik
-    const allMin = d.year.map(e => e.minT);
-    const allMax = d.year.map(e => e.maxT);
-
-    const avgMinYear = allMin.reduce((a, b) => a + b, 0) / allMin.length;
-    const avgMaxYear = allMax.reduce((a, b) => a + b, 0) / allMax.length;
-
-    const minYear = Math.min(...allMin);
-    const maxYear = Math.max(...allMax);
-
-    document.getElementById("yearStats").innerHTML = `
-        <b>Jahres‑Statistik</b><br>
-        Ø Min: ${avgMinYear.toFixed(1)} °C<br>
-        Ø Max: ${avgMaxYear.toFixed(1)} °C<br>
-        Tiefste Temperatur: ${minYear.toFixed(1)} °C<br>
-        Höchste Temperatur: ${maxYear.toFixed(1)} °C
-    `;
-}
-
-setInterval(() => {
-  const now = new Date();
-  const hh = now.getHours().toString().padStart(2,"0");
-  const mm = now.getMinutes().toString().padStart(2,"0");
-  document.getElementById("timeNow").textContent = `${hh}:${mm}`;
-}, 1000);
-
-function toggleMode() {
-  document.body.classList.toggle("light");
-
-  const isLight = document.body.classList.contains("light");
-
-  document.getElementById("modeBtn").textContent = isLight ? "🌞" : "🌙";
-  document.getElementById("modeSwitch").checked = isLight;
-
-  localStorage.setItem("mode", isLight ? "light" : "dark");
-}
-
-function toggleSwitch() {
-  const isLight = document.getElementById("modeSwitch").checked;
-
-  if (isLight) document.body.classList.add("light");
-  else document.body.classList.remove("light");
-
-  document.getElementById("modeBtn").textContent = isLight ? "🌞" : "🌙";
-
-  localStorage.setItem("mode", isLight ? "light" : "dark");
-}
-
-window.addEventListener("load", () => {
-  const saved = localStorage.getItem("mode");
-
-  if (!saved) {
-    const hour = new Date().getHours();
-    const autoLight = hour >= 7 && hour < 19;
-
-    if (autoLight) document.body.classList.add("light");
-    else document.body.classList.remove("light");
-  } else {
-    if (saved === "light") document.body.classList.add("light");
-    else document.body.classList.remove("light");
+  } catch (e) {
+    console.log("Fehler beim Laden der Daten:", e);
   }
+}
 
-  const isLight = document.body.classList.contains("light");
-  document.getElement
-  const isLight = document.body.classList.contains("light");
-  document.getElementById("modeBtn").textContent = isLight ? "🌞" : "🌙";
-  document.getElementById("modeSwitch").checked = isLight;
-
-  // Seite starten
-  fetchData();
-  setInterval(fetchData, 60000); // alle 60 Sekunden aktualisieren
-});
+loadData();
+setInterval(loadData, 30000);
 </script>
 
-
+</body>
+</html>
