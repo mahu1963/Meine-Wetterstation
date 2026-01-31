@@ -4,31 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meine Wetterstation</title>
+
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#f5f5f7">
+
+    <link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
 
 <div class="container">
 
-    <h1 class="title">Wetterstation</h1>
+    <header class="header">
+        <div>
+            <div class="app-title">Wetterstation</div>
+            <div class="app-subtitle" id="lastUpdate">Letztes Update: --</div>
+        </div>
+        <button class="mode-toggle" id="modeToggle">☾</button>
+    </header>
 
-    <div class="card">
-        <div class="value" id="temp">-- °C</div>
-        <div class="label">Temperatur</div>
-    </div>
+    <section class="grid">
+        <div class="card card-main">
+            <div class="value" id="temp">-- °C</div>
+            <div class="label">Temperatur</div>
+        </div>
 
-    <div class="card">
-        <div class="value" id="hum">-- %</div>
-        <div class="label">Luftfeuchtigkeit</div>
-    </div>
+        <div class="card">
+            <div class="value" id="hum">-- %</div>
+            <div class="label">Luftfeuchtigkeit</div>
+        </div>
 
-    <div class="card">
-        <div class="value" id="press">-- hPa</div>
-        <div class="label">Luftdruck</div>
-    </div>
+        <div class="card">
+            <div class="value" id="press">-- hPa</div>
+            <div class="label">Luftdruck</div>
+        </div>
+    </section>
 
-    <h2 class="subtitle">Verlauf (24h)</h2>
-    <canvas id="chart24"></canvas>
+    <section class="section">
+        <h2 class="subtitle">Verlauf 24 Stunden</h2>
+        <div class="card card-chart">
+            <canvas id="chart24"></canvas>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="subtitle">Woche (Min/Max)</h2>
+        <div class="card card-chart">
+            <canvas id="chartWeek"></canvas>
+        </div>
+    </section>
+
+    <section class="section">
+        <h2 class="subtitle">Jahr (Min/Max)</h2>
+        <div class="card card-chart">
+            <canvas id="chartYear"></canvas>
+        </div>
+    </section>
 
 </div>
 
