@@ -1,23 +1,13 @@
-const LOCAL_URL  = "http://esp32.local/data.json";
-const GITHUB_URL = "https://mahu1963.github.io/Meine-Wetterstation/data.json";
+function updateUI(data, local) {
+    document.getElementById("temp").innerText  = data.t.toFixed(1) + " °C";
+    document.getElementById("hum").innerText   = data.h.toFixed(1) + " %";
+    document.getElementById("press").innerText = data.p.toFixed(1) + " hPa";
 
-async function loadData() {
-    // 1) Versuch: Lokaler ESP32
-    try {
-        const res = await fetch(LOCAL_URL, { cache: "no-cache" });
-        const data = await res.json();
-        updateUI(data, true);
-        return;
-    } catch(e) {
-        console.warn("ESP32 lokal nicht erreichbar, nutze GitHub");
-    }
+    // Anzeige, ob Daten lokal oder GitHub
+    const src = local ? "ESP32 (live)" : "GitHub (Backup)";
+    document.getElementById("lastUpdate").innerText = "Quelle: " + src;
 
-    // 2) Fallback: GitHub
-    try {
-        const res = await fetch(GITHUB_URL, { cache: "no-cache" });
-        const data = await res.json();
-        updateUI(data, false);
-    } catch(e) {
-        console.error("Fehler beim Laden:", e);
-    }
+    draw24hChart(data.hist || []);
+    drawWeekChart(data.week || []);
+    drawYearChart(data.year || []);
 }
