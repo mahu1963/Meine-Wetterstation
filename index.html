@@ -1,104 +1,39 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Meine Wetterstation</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body { font-family: system-ui, -apple-system, sans-serif; margin: 16px; background:#f4f4f4; }
-    .card { background:#fff; border-radius:12px; padding:16px; margin-bottom:12px; box-shadow:0 2px 6px rgba(0,0,0,0.08); }
-    h1 { font-size:1.4rem; margin-bottom:8px; }
-    h2 { font-size:1.1rem; margin:12px 0 6px; }
-    .value-row { display:flex; justify-content:space-between; margin:4px 0; }
-    .label { color:#555; }
-    .val { font-weight:600; }
-    .pillbar { display:flex; gap:6px; margin-top:10px; flex-wrap:wrap; }
-    .pill { padding:4px 10px; border-radius:999px; font-size:0.8rem; background:#eee; }
-    .pill.live { background:#e53935; color:#fff; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meine Wetterstation</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="card">
-  <h1>Meine Wetterstation</h1>
-  <div class="value-row">
-    <span class="label">Ort</span>
-    <span class="val">Bernstein, Burgenland</span>
-  </div>
-  <div class="value-row">
-    <span class="label">Stand</span>
-    <span class="val" id="time">--:--</span>
-  </div>
+<div class="container">
+
+    <h1 class="title">Wetterstation</h1>
+
+    <div class="card">
+        <div class="value" id="temp">-- °C</div>
+        <div class="label">Temperatur</div>
+    </div>
+
+    <div class="card">
+        <div class="value" id="hum">-- %</div>
+        <div class="label">Luftfeuchtigkeit</div>
+    </div>
+
+    <div class="card">
+        <div class="value" id="press">-- hPa</div>
+        <div class="label">Luftdruck</div>
+    </div>
+
+    <h2 class="subtitle">Verlauf (24h)</h2>
+    <canvas id="chart24"></canvas>
+
 </div>
 
-<div class="card">
-  <h2>Live‑Werte</h2>
-  <div class="value-row">
-    <span class="label">Temperatur</span>
-    <span class="val"><span id="temp">--</span> °C</span>
-  </div>
-  <div class="value-row">
-    <span class="label">Luftfeuchte</span>
-    <span class="val"><span id="hum">--</span> %</span>
-  </div>
-  <div class="value-row">
-    <span class="label">Luftdruck</span>
-    <span class="val"><span id="pres">--</span> hPa</span>
-  </div>
-  <div class="value-row">
-    <span class="label">Batterie</span>
-    <span class="val"><span id="batt">--</span> V</span>
-  </div>
-  <div class="value-row">
-    <span class="label">Signal</span>
-    <span class="val"><span id="rssi">--</span> dBm</span>
-  </div>
-</div>
-
-<div class="card">
-  <h2>Verlauf</h2>
-  <p>Hier kannst du später Diagramme einbauen (Tag / Woche / Jahr).</p>
-</div>
-
-<div class="card">
-  <h2>Woche</h2>
-</div>
-
-<div class="card">
-  <h2>Jahr</h2>
-  <div class="pillbar">
-    <span class="pill live">● Live</span>
-    <span class="pill">📈 Verlauf</span>
-    <span class="pill">📅 Woche</span>
-    <span class="pill">📆 Jahr</span>
-  </div>
-</div>
-
-<script>
-async function loadData() {
-  try {
-    const res = await fetch("/data.json?c=" + Date.now());
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    const data = await res.json();
-
-    document.getElementById("temp").textContent = data.temperature ?? "--";
-    document.getElementById("hum").textContent  = data.humidity ?? "--";
-    document.getElementById("pres").textContent = data.pressure ?? "--";
-    document.getElementById("batt").textContent = data.battery ?? "--";
-    document.getElementById("rssi").textContent = data.rssi ?? "--";
-
-    if (data.timestamp) {
-      const d = new Date(data.timestamp * 1000);
-      document.getElementById("time").textContent = d.toLocaleString();
-    }
-  } catch (e) {
-    console.log("Fehler beim Laden der Daten:", e);
-  }
-}
-
-loadData();
-setInterval(loadData, 30000);
-</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="script.js"></script>
 
 </body>
 </html>
