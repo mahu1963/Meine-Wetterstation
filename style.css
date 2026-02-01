@@ -58,6 +58,11 @@ canvas {
     background: #d0d0d5;
 }
 
+/* Diagnose */
+#tab-diag span {
+    font-weight: 600;
+}
+
 /* Dark Mode */
 @media (prefers-color-scheme: dark) {
     body {
