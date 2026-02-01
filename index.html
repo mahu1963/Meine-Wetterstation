@@ -1,315 +1,88 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<!-- iPhone Splash Screens -->
-<link rel="apple-touch-startup-image" href="splash-640x1136.png" media="(device-width: 320px)">
-<link rel="apple-touch-startup-image" href="splash-750x1334.png" media="(device-width: 375px)">
-<link rel="apple-touch-startup-image" href="splash-1125x2436.png" media="(device-width: 375px) and (-webkit-device-pixel-ratio: 3)">
-<link rel="apple-touch-startup-image" href="splash-1242x2688.png" media="(device-width: 414px) and (-webkit-device-pixel-ratio: 3)">
-<link rel="apple-touch-startup-image" href="splash-1536x2048.png" media="(min-device-width: 768px)">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="apple-touch-icon" href="icon-192.png"> 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Wetterstation Stuben-Bernstein</title>
-
-    <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css">
-
-    <!-- Manifest + PWA -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#ffffff">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <link rel="apple-touch-icon" href="icon-192.png">
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<title>Wetterstation Stuben‑Bernstein</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+        padding: 20px;
+        color: #222;
+    }
+    .card {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        max-width: 400px;
+        margin: auto;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .value {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .label {
+        color: #666;
+        margin-bottom: 20px;
+    }
+</style>
 </head>
-
 <body>
 
-    <h1>🌤️ Wetterstation Stuben-Bernstein</h1>
-    <p>Live-Daten aus Stuben-Bernstein</p>
+<div class="card">
+    <h1>Wetterstation</h1>
 
-    <!-- Tabs -->
-    <div class="tabs">
-        <div class="tab active" data-target="day">Tagesverlauf</div>
-        <div class="tab" data-target="trend">Trend</div>
-        <div class="tab" data-target="week">Woche</div>
-        <div class="tab" data-target="year">Jahr</div>
-        <div class="tab" data-target="diag">Diagnose</div>
-    </div>
+    <div class="label">Temperatur</div>
+    <div id="temp" class="value">–</div>
 
-    <!-- Temperaturanzeige -->
-    <h2>Aktuelle Temperatur</h2>
-    <div id="tempNow">--.- °C</div>
+    <div class="label">Luftfeuchtigkeit</div>
+    <div id="hum" class="value">–</div>
 
-    <!-- Tab Inhalte -->
-    <div id="tab-day" class="tab-content">
-        <h2>Temperatur – Tagesverlauf</h2>
-        <canvas id="tempDayChart"></canvas>
-    </div>
+    <div class="label">Luftdruck</div>
+    <div id="pres" class="value">–</div>
 
-    <div id="tab-trend" class="tab-content" style="display:none;">
-        <h2>Temperatur – Trend (24h)</h2>
-        <canvas id="tempTrendChart"></canvas>
-    </div>
+    <div class="label">Letztes Update</div>
+    <div id="time" class="value" style="font-size:1.2rem;">–</div>
+</div>
 
-    <div id="tab-week" class="tab-content" style="display:none;">
-        <h2>Temperatur – Woche (Min/Max)</h2>
-        <canvas id="tempWeekChart"></canvas>
-    </div>
+<script>
+async function loadData() {
+    try {
+        const url = "https://raw.githubusercontent.com/mahu1963/Meine-Wetterstation/main/data.json";
+        const response = await fetch(url + "?nocache=" + Date.now());
+        const data = await response.json();
 
-    <div id="tab-year" class="tab-content" style="display:none;">
-        <h2>Temperatur – Jahr (Min/Max)</h2>
-        <canvas id="tempYearChart"></canvas>
-    </div>
+        // Temperatur
+        document.getElementById("temp").innerText =
+            Number(data.t).toFixed(1) + " °C";
 
-    <!-- Diagnose -->
-    <div id="tab-diag" class="tab-content" style="display:none;">
-        <h2>Systemdiagnose</h2>
+        // Luftfeuchtigkeit
+        document.getElementById("hum").innerText =
+            Number(data.h).toFixed(1) + " %";
 
-        <div style="margin-top:20px; line-height:1.8;">
-            <b>WLAN‑Status:</b> <span id="diagWifi">–</span><br>
-            <b>RSSI:</b> <span id="diagRSSI">–</span><br>
-            <b>IP‑Adresse:</b> <span id="diagIP">–</span><br>
-            <b>DNS‑Server:</b> <span id="diagDNS">–</span><br>
-            <b>Zeit (Unix):</b> <span id="diagTime">–</span><br>
-            <b>Sensor:</b> <span id="diagSensor">–</span><br>
-            <b>Letzter Upload:</b> <span id="diagUpload">–</span><br>
-            <b>Upload‑Fehler (Stunde):</b> <span id="diagRetry">–</span><br>
-        </div>
-    </div>
+        // Luftdruck
+        document.getElementById("pres").innerText =
+            Number(data.p).toFixed(1) + " hPa";
 
-    <script>
-        /* Tabs */
-        document.querySelectorAll(".tab").forEach(tab => {
-            tab.addEventListener("click", () => {
-                document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-                tab.classList.add("active");
+        // Zeit
+        document.getElementById("time").innerText =
+            new Date(data.time * 1000).toLocaleString("de-DE");
 
-                const target = tab.dataset.target;
+    } catch (e) {
+        console.error("Fehler beim Laden:", e);
+    }
+}
 
-                document.querySelectorAll(".tab-content").forEach(c => {
-                    c.style.display = "none";
-                });
-
-                document.getElementById("tab-" + target).style.display = "block";
-            });
-        });
-
-        /* Temperatur Animation */
-        function animateTemperature(from, to) {
-            const el = document.getElementById('tempNow');
-            const duration = 800;
-            const start = performance.now();
-
-            function frame(now) {
-                const progress = Math.min((now - start) / duration, 1);
-                const value = from + (to - from) * progress;
-                el.textContent = value.toFixed(1) + " °C";
-                if (progress < 1) requestAnimationFrame(frame);
-            }
-            requestAnimationFrame(frame);
-        }
-
-        /* Regression */
-        function linearRegression(values) {
-            const n = values.length;
-            const x = [...Array(n).keys()];
-            const y = values;
-
-            const sumX = x.reduce((a, b) => a + b, 0);
-            const sumY = y.reduce((a, b) => a + b, 0);
-            const sumXY = x.reduce((acc, val, i) => acc + val * y[i], 0);
-            const sumXX = x.reduce((acc, val) => acc + val * val, 0);
-
-            const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
-            const intercept = (sumY - slope * sumX) / n;
-
-            return x.map(i => slope * i + intercept);
-        }
-
-        /* Diagramme */
-        let chartDay, chartTrend, chartWeek, chartYear;
-
-        function drawTempDayChart(data) {
-            const labels = data.hist.map(e => e.time);
-            const values = data.hist.map(e => e.t);
-
-            if (!chartDay) {
-                const ctx = document.getElementById('tempDayChart').getContext('2d');
-                chartDay = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels,
-                        datasets: [{
-                            label: 'Temperatur (°C)',
-                            data: values,
-                            borderColor: 'rgba(255, 80, 80, 1)',
-                            backgroundColor: 'rgba(255, 80, 80, 0.2)',
-                            tension: 0.3,
-                            borderWidth: 2
-                        }]
-                    }
-                });
-            } else {
-                chartDay.data.labels = labels;
-                chartDay.data.datasets[0].data = values;
-                chartDay.update();
-            }
-        }
-
-        function drawTempTrendChart(data) {
-            const labels = data.hist.map(e => e.time);
-            const values = data.hist.map(e => e.t);
-            const trend = linearRegression(values);
-
-            if (!chartTrend) {
-                const ctx = document.getElementById('tempTrendChart').getContext('2d');
-                chartTrend = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels,
-                        datasets: [
-                            {
-                                label: 'Temperatur (°C)',
-                                data: values,
-                                borderColor: 'rgba(255, 80, 80, 1)',
-                                backgroundColor: 'rgba(255, 80, 80, 0.2)',
-                                tension: 0.3,
-                                borderWidth: 2
-                            },
-                            {
-                                label: 'Trend',
-                                data: trend,
-                                borderColor: 'rgba(0, 0, 0, 0.8)',
-                                borderDash: [6, 6],
-                                tension: 0,
-                                borderWidth: 2,
-                                pointRadius: 0
-                            }
-                        ]
-                    }
-                });
-            } else {
-                chartTrend.data.labels = labels;
-                chartTrend.data.datasets[0].data = values;
-                chartTrend.data.datasets[1].data = trend;
-                chartTrend.update();
-            }
-        }
-
-        function drawTempWeekChart(data) {
-            const labels = data.week.map(e => e.day);
-            const minValues = data.week.map(e => e.min);
-            const maxValues = data.week.map(e => e.max);
-
-            if (!chartWeek) {
-                const ctx = document.getElementById('tempWeekChart').getContext('2d');
-                chartWeek = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels,
-                        datasets: [
-                            {
-                                label: 'Min (°C)',
-                                data: minValues,
-                                backgroundColor: 'rgba(80, 150, 255, 0.6)'
-                            },
-                            {
-                                label: 'Max (°C)',
-                                data: maxValues,
-                                backgroundColor: 'rgba(255, 80, 80, 0.6)'
-                            }
-                        ]
-                    }
-                });
-            } else {
-                chartWeek.data.labels = labels;
-                chartWeek.data.datasets[0].data = minValues;
-                chartWeek.data.datasets[1].data = maxValues;
-                chartWeek.update();
-            }
-        }
-
-        function drawTempYearChart(data) {
-            const labels = data.year.map(e => e.month);
-            const minValues = data.year.map(e => e.min);
-            const maxValues = data.year.map(e => e.max);
-
-            if (!chartYear) {
-                const ctx = document.getElementById('tempYearChart').getContext('2d');
-                chartYear = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels,
-                        datasets: [
-                            {
-                                label: 'Min (°C)',
-                                data: minValues,
-                                borderColor: 'rgba(80, 150, 255, 1)',
-                                backgroundColor: 'rgba(80, 150, 255, 0.2)',
-                                tension: 0.3,
-                                borderWidth: 2
-                            },
-                            {
-                                label: 'Max (°C)',
-                                data: maxValues,
-                                borderColor: 'rgba(255, 80, 80, 1)',
-                                backgroundColor: 'rgba(255, 80, 80, 0.2)',
-                                tension: 0.3,
-                                borderWidth: 2
-                            }
-                        ]
-                    }
-                });
-            } else {
-                chartYear.data.labels = labels;
-                chartYear.data.datasets[0].data = minValues;
-                chartYear.data.datasets[1].data = maxValues;
-                chartYear.update();
-            }
-        }
-
-        /* JSON laden + Diagnose aktualisieren */
-        function loadData() {
-            fetch("data.json?ts=" + Date.now())
-                .then(r => r.json())
-                .then(data => {
-
-                    // Temperatur animieren
-                    const currentText = document.getElementById('tempNow').textContent;
-                    const match = currentText.match(/([-0-9.]+)/);
-                    const from = match ? parseFloat(match[1]) : data.t;
-                    animateTemperature(from, data.t);
-
-                    // Diagramme aktualisieren
-                    drawTempDayChart(data);
-                    drawTempTrendChart(data);
-                    drawTempWeekChart(data);
-                    drawTempYearChart(data);
-
-                    // Diagnose aktualisieren
-                    document.getElementById("diagWifi").textContent = data.wifiStatus;
-                    document.getElementById("diagRSSI").textContent = data.rssi + " dBm";
-                    document.getElementById("diagIP").textContent = data.ip;
-                    document.getElementById("diagDNS").textContent = data.dns;
-                    document.getElementById("diagTime").textContent = data.time;
-                    document.getElementById("diagSensor").textContent = data.sensorOK;
-                    document.getElementById("diagUpload").textContent = new Date(data.lastUpload).toLocaleString();
-                    document.getElementById("diagRetry").textContent = data.retryCount;
-                });
-        }
-
-        loadData();
-        setInterval(loadData, 60000);
-    </script>
+// alle 30 Sekunden aktualisieren
+loadData();
+setInterval(loadData, 30000);
+</script>
 
 </body>
 </html>
-
-
