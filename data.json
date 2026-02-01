@@ -1,20 +1,14 @@
 {
-  "name": "Meine Wetterstation",
-  "short_name": "Wetter",
-  "start_url": "./",
-  "display": "standalone",
-  "background_color": "#000000",
-  "theme_color": "#000000",
-  "icons": [
-    {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
+  "t": 21.3,
+  "h": 45.2,
+  "p": 1012.8,
+  "hist": [
+    { "time": "08:00", "t": 20.1, "h": 60.2, "p": 1011.5 }
+  ],
+  "week": [
+    { "day": "Mo", "min": 18.2, "max": 25.6 }
+  ],
+  "year": [
+    { "month": "Jan", "min": -2.1, "max": 8.3 }
   ]
 }
