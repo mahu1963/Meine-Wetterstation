@@ -58,7 +58,20 @@
         <h2>Temperatur – Jahr (Min/Max)</h2>
         <canvas id="tempYearChart"></canvas>
     </div>
+<div id="tab-diag" class="tab-content" style="display:none;">
+    <h2>Systemdiagnose</h2>
 
+    <div style="margin-top:20px; line-height:1.8;">
+        <b>WLAN‑Status:</b> <span id="diagWifi">–</span><br>
+        <b>RSSI:</b> <span id="diagRSSI">–</span><br>
+        <b>IP‑Adresse:</b> <span id="diagIP">–</span><br>
+        <b>DNS‑Server:</b> <span id="diagDNS">–</span><br>
+        <b>Zeit (Unix):</b> <span id="diagTime">–</span><br>
+        <b>Sensor:</b> <span id="diagSensor">–</span><br>
+        <b>Letzter Upload:</b> <span id="diagUpload">–</span><br>
+        <b>Upload‑Fehler (Stunde):</b> <span id="diagRetry">–</span><br>
+    </div>
+   
     <script>
         /* Tabs */
         document.querySelectorAll(".tab").forEach(tab => {
@@ -274,4 +287,5 @@
 
 </body>
 </html>
+
 
