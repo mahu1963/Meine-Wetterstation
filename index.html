@@ -1,88 +1,170 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Wetterstation Stuben‑Bernstein</title>
-<style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wetterstation Stuben‑Bernstein</title>
+  <style>
     body {
-        font-family: Arial, sans-serif;
-        background: #f5f5f5;
-        padding: 20px;
-        color: #222;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background: #f2f2f7;
+      color: #111;
+      transition: background 0.3s, color 0.3s;
+    }
+    .tabbar {
+      display: flex;
+      justify-content: space-around;
+      background: #fff;
+      border-bottom: 1px solid #ccc;
+    }
+    .tab {
+      padding: 12px;
+      font-size: 1em;
+      cursor: pointer;
+      color: #555;
+    }
+    .tab.active {
+      color: #007aff;
+      border-bottom: 3px solid #007aff;
+    }
+    .page {
+      display: none;
+      padding: 20px;
+    }
+    .page.active {
+      display: block;
     }
     .card {
-        background: white;
-        padding: 20px;
-        border-radius: 12px;
-        max-width: 400px;
-        margin: auto;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    h1 {
-        text-align: center;
-        margin-bottom: 20px;
-    }
-    .value {
-        font-size: 2rem;
-        font-weight: bold;
-        margin-bottom: 10px;
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
     .label {
-        color: #666;
-        margin-bottom: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
     }
-</style>
+    h2 {
+      text-align: center;
+      margin: 20px 0 10px;
+      font-weight: 500;
+      color: #333;
+    }
+    button {
+      background: none;
+      border: none;
+      font-size: 1.4em;
+      cursor: pointer;
+    }
+
+    /* Dark Mode */
+    body.dark {
+      background: #1c1c1e;
+      color: #eee;
+    }
+    body.dark .card {
+      background: #2c2c2e;
+      color: #eee;
+    }
+    body.dark .tabbar {
+      background: #1c1c1e;
+      border-bottom: 1px solid #444;
+    }
+    body.dark .tab {
+      color: #aaa;
+    }
+    body.dark .tab.active {
+      color: #ffd60a;
+      border-bottom: 3px solid #ffd60a;
+    }
+  </style>
 </head>
 <body>
 
-<div class="card">
-    <h1>Wetterstation</h1>
+  <div style="text-align:right; padding:10px 20px;">
+    <button onclick="toggleTheme()">🌞 / 🌜</button>
+  </div>
 
-    <div class="label">Temperatur</div>
-    <div id="temp" class="value">–</div>
+  <h2>Wetterstation Stuben‑Bernstein</h2>
 
-    <div class="label">Luftfeuchtigkeit</div>
-    <div id="hum" class="value">–</div>
+  <div class="tabbar">
+    <div class="tab active" onclick="showPage('temp')">🌡 Temperatur</div>
+    <div class="tab" onclick="showPage('hum')">💧 Feuchte</div>
+    <div class="tab" onclick="showPage('press')">🧭 Druck</div>
+    <div class="tab" onclick="showPage('sys')">⚙️ System</div>
+    <div class="tab" onclick="showPage('month')">📅 Monat</div>
+    <div class="tab" onclick="showPage('year')">📈 Jahr</div>
+  </div>
 
-    <div class="label">Luftdruck</div>
-    <div id="pres" class="value">–</div>
+  <div id="temp" class="page active">
+    <div class="card">
+      <div class="label">Temperatur</div>
+      <div id="t">–</div>
+    </div>
+  </div>
 
-    <div class="label">Letztes Update</div>
-    <div id="time" class="value" style="font-size:1.2rem;">–</div>
-</div>
+  <div id="hum" class="page">
+    <div class="card">
+      <div class="label">Luftfeuchtigkeit</div>
+      <div id="h">–</div>
+    </div>
+  </div>
 
-<script>
-async function loadData() {
-    try {
-        const url = "https://raw.githubusercontent.com/mahu1963/Meine-Wetterstation/main/data.json";
-        const response = await fetch(url + "?nocache=" + Date.now());
-        const data = await response.json();
+  <div id="press" class="page">
+    <div class="card">
+      <div class="label">Luftdruck</div>
+      <div id="p">–</div>
+    </div>
+  </div>
 
-        // Temperatur
-        document.getElementById("temp").innerText =
-            Number(data.t).toFixed(1) + " °C";
+  <div id="sys" class="page">
+    <div class="card">
+      <div class="label">Systemstatus</div>
+      <div id="sysinfo">–</div>
+    </div>
+  </div>
 
-        // Luftfeuchtigkeit
-        document.getElementById("hum").innerText =
-            Number(data.h).toFixed(1) + " %";
+  <div id="month" class="page">
+    <div class="card">
+      <div class="label">Monatsübersicht</div>
+      <div id="monthData">–</div>
+    </div>
+  </div>
 
-        // Luftdruck
-        document.getElementById("pres").innerText =
-            Number(data.p).toFixed(1) + " hPa";
+  <div id="year" class="page">
+    <div class="card">
+      <div class="label">Jahresübersicht</div>
+      <div id="yearData">–</div>
+    </div>
+  </div>
 
-        // Zeit
-        document.getElementById("time").innerText =
-            new Date(data.time * 1000).toLocaleString("de-DE");
-
-    } catch (e) {
-        console.error("Fehler beim Laden:", e);
+  <script>
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      event.target.classList.add('active');
     }
-}
 
-// alle 30 Sekunden aktualisieren
-loadData();
-setInterval(loadData, 30000);
-</script>
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+    }
+
+    // WebSocket Beispiel (anpassen je nach Pfad)
+    const ws = new WebSocket("ws://" + location.host + "/ws");
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.t) document.getElementById("t").textContent = data.t + " °C";
+      if (data.h) document.getElementById("h").textContent = data.h + " %";
+      if (data.p) document.getElementById("p").textContent = data.p + " hPa";
+      if (data.sys) document.getElementById("sysinfo").textContent = data.sys;
+      if (data.month) document.getElementById("monthData").textContent = data.month;
+      if (data.year) document.getElementById("yearData").textContent = data.year;
+    };
+  </script>
 
 </body>
 </html>
