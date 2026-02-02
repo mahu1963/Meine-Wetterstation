@@ -59,8 +59,6 @@
       font-size: 1.4em;
       cursor: pointer;
     }
-
-    /* Dark Mode */
     body.dark {
       background: #1c1c1e;
       color: #eee;
@@ -80,6 +78,19 @@
       color: #ffd60a;
       border-bottom: 3px solid #ffd60a;
     }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9em;
+    }
+    .table th, .table td {
+      padding: 4px 6px;
+      text-align: left;
+    }
+    .table th {
+      border-bottom: 1px solid #ccc;
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -91,12 +102,12 @@
   <h2>Wetterstation Stuben‑Bernstein</h2>
 
   <div class="tabbar">
-    <div class="tab active" onclick="showPage('temp')">🌡 Temperatur</div>
-    <div class="tab" onclick="showPage('hum')">💧 Feuchte</div>
-    <div class="tab" onclick="showPage('press')">🧭 Druck</div>
-    <div class="tab" onclick="showPage('sys')">⚙️ System</div>
-    <div class="tab" onclick="showPage('month')">📅 Monat</div>
-    <div class="tab" onclick="showPage('year')">📈 Jahr</div>
+    <div class="tab active" onclick="showPage('temp', event)">🌡 Temperatur</div>
+    <div class="tab" onclick="showPage('hum', event)">💧 Feuchte</div>
+    <div class="tab" onclick="showPage('press', event)">🧭 Druck</div>
+    <div class="tab" onclick="showPage('sys', event)">⚙️ System</div>
+    <div class="tab" onclick="showPage('month', event)">📅 Monat</div>
+    <div class="tab" onclick="showPage('year', event)">📈 Jahr</div>
   </div>
 
   <div id="temp" class="page active">
@@ -129,7 +140,7 @@
 
   <div id="month" class="page">
     <div class="card">
-      <div class="label">Monatsübersicht</div>
+      <div class="label">Monatsübersicht (letzte 7 Tage)</div>
       <div id="monthData">–</div>
     </div>
   </div>
@@ -142,27 +153,43 @@
   </div>
 
   <script>
-    function showPage(id) {
+    function showPage(id, ev) {
       document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
       document.getElementById(id).classList.add('active');
-      event.target.classList.add('active');
+      if (ev && ev.target) ev.target.classList.add('active');
     }
 
     function toggleTheme() {
       document.body.classList.toggle("dark");
     }
 
-    // WebSocket Beispiel (anpassen je nach Pfad)
     const ws = new WebSocket("ws://" + location.host + "/ws");
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      if (data.t) document.getElementById("t").textContent = data.t + " °C";
-      if (data.h) document.getElementById("h").textContent = data.h + " %";
-      if (data.p) document.getElementById("p").textContent = data.p + " hPa";
+
+      if (data.t !== undefined) document.getElementById("t").textContent = data.t.toFixed(1) + " °C";
+      if (data.h !== undefined) document.getElementById("h").textContent = data.h.toFixed(1) + " %";
+      if (data.p !== undefined) document.getElementById("p").textContent = data.p.toFixed(1) + " hPa";
       if (data.sys) document.getElementById("sysinfo").textContent = data.sys;
-      if (data.month) document.getElementById("monthData").textContent = data.month;
-      if (data.year) document.getElementById("yearData").textContent = data.year;
+
+      if (Array.isArray(data.week)) {
+        let html = '<table class="table"><tr><th>Tag</th><th>Min</th><th>Max</th></tr>';
+        data.week.forEach(d => {
+          html += `<tr><td>${d.day}</td><td>${d.min.toFixed(1)} °C</td><td>${d.max.toFixed(1)} °C</td></tr>`;
+        });
+        html += '</table>';
+        document.getElementById("monthData").innerHTML = html;
+      }
+
+      if (Array.isArray(data.year)) {
+        let html = '<table class="table"><tr><th>Monat</th><th>Min</th><th>Max</th></tr>';
+        data.year.forEach(m => {
+          html += `<tr><td>${m.month}</td><td>${m.min.toFixed(1)} °C</td><td>${m.max.toFixed(1)} °C</td></tr>`;
+        });
+        html += '</table>';
+        document.getElementById("yearData").innerHTML = html;
+      }
     };
   </script>
 
