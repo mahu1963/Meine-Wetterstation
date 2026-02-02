@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Wetterstation Stuben‑Bernstein</title>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <style>
     body {
       margin: 0;
@@ -12,6 +16,7 @@
       color: #111;
       transition: background 0.3s, color 0.3s;
     }
+
     .tabbar {
       display: flex;
       justify-content: space-around;
@@ -20,7 +25,6 @@
     }
     .tab {
       padding: 12px;
-      font-size: 1em;
       cursor: pointer;
       color: #555;
     }
@@ -28,13 +32,10 @@
       color: #007aff;
       border-bottom: 3px solid #007aff;
     }
-    .page {
-      display: none;
-      padding: 20px;
-    }
-    .page.active {
-      display: block;
-    }
+
+    .page { display: none; padding: 20px; }
+    .page.active { display: block; }
+
     .card {
       background: #fff;
       border-radius: 12px;
@@ -42,23 +43,26 @@
       margin-bottom: 20px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
+
     .label {
       font-weight: 600;
       margin-bottom: 8px;
-      color: #333;
     }
+
     h2 {
       text-align: center;
-      margin: 20px 0 10px;
+      margin: 10px 0 10px;
       font-weight: 500;
-      color: #333;
     }
+
     button {
       background: none;
       border: none;
       font-size: 1.4em;
       cursor: pointer;
     }
+
+    /* Dark Mode */
     body.dark {
       background: #1c1c1e;
       color: #eee;
@@ -78,21 +82,9 @@
       color: #ffd60a;
       border-bottom: 3px solid #ffd60a;
     }
-    .table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.9em;
-    }
-    .table th, .table td {
-      padding: 4px 6px;
-      text-align: left;
-    }
-    .table th {
-      border-bottom: 1px solid #ccc;
-      font-weight: 600;
-    }
   </style>
 </head>
+
 <body>
 
   <div style="text-align:right; padding:10px 20px;">
@@ -106,17 +98,23 @@
     <div class="tab" onclick="showPage('hum', event)">💧 Feuchte</div>
     <div class="tab" onclick="showPage('press', event)">🧭 Druck</div>
     <div class="tab" onclick="showPage('sys', event)">⚙️ System</div>
-    <div class="tab" onclick="showPage('month', event)">📅 Monat</div>
+    <div class="tab" onclick="showPage('month', event)">📅 Woche</div>
     <div class="tab" onclick="showPage('year', event)">📈 Jahr</div>
   </div>
 
+  <!-- Temperatur -->
   <div id="temp" class="page active">
     <div class="card">
       <div class="label">Temperatur</div>
       <div id="t">–</div>
     </div>
+
+    <div class="card">
+      <canvas id="tempChart" height="200"></canvas>
+    </div>
   </div>
 
+  <!-- Feuchte -->
   <div id="hum" class="page">
     <div class="card">
       <div class="label">Luftfeuchtigkeit</div>
@@ -124,6 +122,7 @@
     </div>
   </div>
 
+  <!-- Druck -->
   <div id="press" class="page">
     <div class="card">
       <div class="label">Luftdruck</div>
@@ -131,6 +130,7 @@
     </div>
   </div>
 
+  <!-- System -->
   <div id="sys" class="page">
     <div class="card">
       <div class="label">Systemstatus</div>
@@ -138,60 +138,116 @@
     </div>
   </div>
 
+  <!-- Woche -->
   <div id="month" class="page">
-    <div class="card">
-      <div class="label">Monatsübersicht (letzte 7 Tage)</div>
-      <div id="monthData">–</div>
-    </div>
+    <div id="monthData">–</div>
   </div>
 
+  <!-- Jahr -->
   <div id="year" class="page">
-    <div class="card">
-      <div class="label">Jahresübersicht</div>
-      <div id="yearData">–</div>
-    </div>
+    <div id="yearData">–</div>
   </div>
 
-  <script>
-    function showPage(id, ev) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-      if (ev && ev.target) ev.target.classList.add('active');
+<script>
+
+function showPage(id, ev) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  ev.target.classList.add('active');
+}
+
+function toggleTheme() {
+  document.body.classList.toggle("dark");
+  updateChartColors();
+}
+
+/* === Temperatur-Kurve === */
+
+let tempChart = new Chart(document.getElementById("tempChart"), {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [{
+      label: "Temperatur",
+      data: [],
+      borderColor: "#ff3b30",
+      backgroundColor: "rgba(255,59,48,0.2)",
+      tension: 0.3
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: { y: { beginAtZero: false } }
+  }
+});
+
+function updateChartColors() {
+  if (document.body.classList.contains("dark")) {
+    tempChart.data.datasets[0].borderColor = "#ffd60a";
+    tempChart.data.datasets[0].backgroundColor = "rgba(255,214,10,0.2)";
+  } else {
+    tempChart.data.datasets[0].borderColor = "#ff3b30";
+    tempChart.data.datasets[0].backgroundColor = "rgba(255,59,48,0.2)";
+  }
+  tempChart.update();
+}
+
+/* === WebSocket === */
+
+const ws = new WebSocket("ws://" + location.host + "/ws");
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+
+  if (data.t !== undefined) {
+    document.getElementById("t").textContent = data.t.toFixed(1) + " °C";
+
+    const now = new Date().toLocaleTimeString();
+    tempChart.data.labels.push(now);
+    tempChart.data.datasets[0].data.push(data.t);
+
+    if (tempChart.data.labels.length > 50) {
+      tempChart.data.labels.shift();
+      tempChart.data.datasets[0].data.shift();
     }
+    tempChart.update();
+  }
 
-    function toggleTheme() {
-      document.body.classList.toggle("dark");
-    }
+  if (data.h !== undefined) document.getElementById("h").textContent = data.h.toFixed(1) + " %";
+  if (data.p !== undefined) document.getElementById("p").textContent = data.p.toFixed(1) + " hPa";
+  if (data.sys) document.getElementById("sysinfo").textContent = data.sys;
 
-    const ws = new WebSocket("ws://" + location.host + "/ws");
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
+  /* Woche */
+  if (Array.isArray(data.week)) {
+    let html = "";
+    data.week.forEach(d => {
+      html += `
+        <div class="card">
+          <div class="label">${d.day}</div>
+          <div>Min: ${d.min.toFixed(1)} °C</div>
+          <div>Max: ${d.max.toFixed(1)} °C</div>
+        </div>`;
+    });
+    document.getElementById("monthData").innerHTML = html;
+  }
 
-      if (data.t !== undefined) document.getElementById("t").textContent = data.t.toFixed(1) + " °C";
-      if (data.h !== undefined) document.getElementById("h").textContent = data.h.toFixed(1) + " %";
-      if (data.p !== undefined) document.getElementById("p").textContent = data.p.toFixed(1) + " hPa";
-      if (data.sys) document.getElementById("sysinfo").textContent = data.sys;
+  /* Jahr */
+  if (Array.isArray(data.year)) {
+    let html = "";
+    data.year.forEach(m => {
+      html += `
+        <div class="card">
+          <div class="label">${m.month}</div>
+          <div>Min: ${m.min.toFixed(1)} °C</div>
+          <div>Max: ${m.max.toFixed(1)} °C</div>
+        </div>`;
+    });
+    document.getElementById("yearData").innerHTML = html;
+  }
+};
 
-      if (Array.isArray(data.week)) {
-        let html = '<table class="table"><tr><th>Tag</th><th>Min</th><th>Max</th></tr>';
-        data.week.forEach(d => {
-          html += `<tr><td>${d.day}</td><td>${d.min.toFixed(1)} °C</td><td>${d.max.toFixed(1)} °C</td></tr>`;
-        });
-        html += '</table>';
-        document.getElementById("monthData").innerHTML = html;
-      }
-
-      if (Array.isArray(data.year)) {
-        let html = '<table class="table"><tr><th>Monat</th><th>Min</th><th>Max</th></tr>';
-        data.year.forEach(m => {
-          html += `<tr><td>${m.month}</td><td>${m.min.toFixed(1)} °C</td><td>${m.max.toFixed(1)} °C</td></tr>`;
-        });
-        html += '</table>';
-        document.getElementById("yearData").innerHTML = html;
-      }
-    };
-  </script>
+</script>
 
 </body>
 </html>
