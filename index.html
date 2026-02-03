@@ -4,8 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <!-- iPhone WebApp Fix -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+  <!-- Cache deaktivieren -->
   <meta http-equiv="Cache-Control" content="no-store" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
@@ -22,6 +25,7 @@
       color: #111;
       transition: background 0.3s, color 0.3s;
     }
+
     .tabbar {
       display: flex;
       justify-content: space-around;
@@ -37,8 +41,10 @@
       color: #007aff;
       border-bottom: 3px solid #007aff;
     }
+
     .page { display: none; padding: 20px; }
     .page.active { display: block; }
+
     .card {
       background: #fff;
       border-radius: 12px;
@@ -46,21 +52,26 @@
       margin-bottom: 20px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
+
     .label {
       font-weight: 600;
       margin-bottom: 8px;
     }
+
     h2 {
       text-align: center;
       margin: 10px 0 10px;
       font-weight: 500;
     }
+
     button {
       background: none;
       border: none;
       font-size: 1.4em;
       cursor: pointer;
     }
+
+    /* Dark Mode */
     body.dark {
       background: #1c1c1e;
       color: #eee;
@@ -95,28 +106,35 @@
     <div class="tab active" onclick="showPage('temp', event)">🌡 Temperatur</div>
     <div class="tab" onclick="showPage('hum', event)">💧 Feuchte</div>
     <div class="tab" onclick="showPage('press', event)">🧭 Druck</div>
-    <div class="tab" onclick="showPage('sys', event)">⚙️ System</div>
     <div class="tab" onclick="showPage('week', event)">📅 Woche</div>
     <div class="tab" onclick="showPage('year', event)">📈 Jahr</div>
   </div>
 
+  <!-- Temperatur -->
   <div id="temp" class="page active">
     <div class="card">
       <div class="label">Temperatur</div>
       <div id="t">–</div>
     </div>
+
     <div class="card">
       <canvas id="tempChart" height="200"></canvas>
     </div>
   </div>
 
+  <!-- Feuchte -->
   <div id="hum" class="page">
     <div class="card">
       <div class="label">Luftfeuchtigkeit</div>
       <div id="h">–</div>
     </div>
+
+    <div class="card">
+      <canvas id="humChart" height="200"></canvas>
+    </div>
   </div>
 
+  <!-- Druck -->
   <div id="press" class="page">
     <div class="card">
       <div class="label">Luftdruck</div>
@@ -124,22 +142,18 @@
     </div>
   </div>
 
-  <div id="sys" class="page">
-    <div class="card">
-      <div class="label">Systemstatus</div>
-      <div id="sysinfo">–</div>
-    </div>
-  </div>
-
+  <!-- Woche -->
   <div id="week" class="page">
     <div id="weekData">–</div>
   </div>
 
+  <!-- Jahr -->
   <div id="year" class="page">
     <div id="yearData">–</div>
   </div>
 
 <script>
+
 function showPage(id, ev) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -151,6 +165,8 @@ function toggleTheme() {
   document.body.classList.toggle("dark");
   updateChartColors();
 }
+
+/* === Temperatur-Kurve === */
 
 let tempChart = new Chart(document.getElementById("tempChart"), {
   type: 'line',
@@ -170,33 +186,93 @@ let tempChart = new Chart(document.getElementById("tempChart"), {
   }
 });
 
-function updateChartColors() {
-  if (document.body.classList.contains("dark")) {
-    tempChart.data.datasets[0].borderColor = "#ffd60a";
-    tempChart.data.datasets[0].backgroundColor = "rgba(255,214,10,0.2)";
-  } else {
-    tempChart.data.datasets[0].borderColor = "#ff3b30";
-    tempChart.data.datasets[0].backgroundColor = "rgba(255,59,48,0.2)";
+/* === Feuchte-Kurve === */
+
+let humChart = new Chart(document.getElementById("humChart"), {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [{
+      label: "Luftfeuchtigkeit",
+      data: [],
+      borderColor: "#34c759",
+      backgroundColor: "rgba(52,199,89,0.2)",
+      tension: 0.3
+    }]
+  },
+  options: {
+    responsive: true,
+    scales: { y: { beginAtZero: false } }
   }
+});
+
+function updateChartColors() {
+  const dark = document.body.classList.contains("dark");
+
+  tempChart.data.datasets[0].borderColor = dark ? "#ffd60a" : "#ff3b30";
+  tempChart.data.datasets[0].backgroundColor = dark ? "rgba(255,214,10,0.2)" : "rgba(255,59,48,0.2)";
+
+  humChart.data.datasets[0].borderColor = dark ? "#5ac8fa" : "#34c759";
+  humChart.data.datasets[0].backgroundColor = dark ? "rgba(90,200,250,0.2)" : "rgba(52,199,89,0.2)";
+
   tempChart.update();
+  humChart.update();
+}
+
+/* === GitHub JSON laden === */
+
+async function loadData() {
+  const url = "https://raw.githubusercontent.com/mahu1963/Meine-Wetterstation/main/data.json";
+
+  try {
+    const res = await fetch(url + "?t=" + Date.now());
+    if (!res.ok) return;
+
+    const data = await res.json();
+    updateUI(data);
+
+  } catch (e) {
+    console.log("Fehler beim Laden:", e);
+  }
 }
 
 function updateUI(data) {
+
+  /* Temperatur */
   if (data.t !== undefined) {
     document.getElementById("t").textContent = data.t.toFixed(1) + " °C";
+
     const now = new Date().toLocaleTimeString();
     tempChart.data.labels.push(now);
     tempChart.data.datasets[0].data.push(data.t);
+
     if (tempChart.data.labels.length > 50) {
       tempChart.data.labels.shift();
       tempChart.data.datasets[0].data.shift();
     }
     tempChart.update();
   }
-  if (data.h !== undefined) document.getElementById("h").textContent = data.h.toFixed(1) + " %";
-  if (data.p !== undefined) document.getElementById("p").textContent = data.p.toFixed(1) + " hPa";
-  if (data.sys) document.getElementById("sysinfo").textContent = data.sys;
 
+  /* Feuchte */
+  if (data.h !== undefined) {
+    document.getElementById("h").textContent = data.h.toFixed(1) + " %";
+
+    const now = new Date().toLocaleTimeString();
+    humChart.data.labels.push(now);
+    humChart.data.datasets[0].data.push(data.h);
+
+    if (humChart.data.labels.length > 50) {
+      humChart.data.labels.shift();
+      humChart.data.datasets[0].data.shift();
+    }
+    humChart.update();
+  }
+
+  /* Druck */
+  if (data.p !== undefined)
+    document.getElementById("p").textContent = data.p.toFixed(1) + " hPa";
+
+  /* Woche */
   if (Array.isArray(data.week)) {
     let html = "";
     data.week.forEach(d => {
@@ -210,6 +286,7 @@ function updateUI(data) {
     document.getElementById("weekData").innerHTML = html || "–";
   }
 
+  /* Jahr */
   if (Array.isArray(data.year)) {
     let html = "";
     data.year.forEach(m => {
@@ -224,20 +301,9 @@ function updateUI(data) {
   }
 }
 
-async function loadData() {
-  const url = "https://raw.githubusercontent.com/mahu1963/Meine-Wetterstation/main/data.json";
-  try {
-    const res = await fetch(url + "?t=" + Date.now());
-    if (!res.ok) return;
-    const data = await res.json();
-    updateUI(data);
-  } catch (e) {
-    console.log("Fehler beim Laden:", e);
-  }
-}
-
 setInterval(loadData, 5000);
 loadData();
+
 </script>
 
 </body>
