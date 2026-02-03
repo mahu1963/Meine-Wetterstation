@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Wetterstation Stuben‑Bernstein</title>
 
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -98,7 +97,7 @@
     <div class="tab" onclick="showPage('hum', event)">💧 Feuchte</div>
     <div class="tab" onclick="showPage('press', event)">🧭 Druck</div>
     <div class="tab" onclick="showPage('sys', event)">⚙️ System</div>
-    <div class="tab" onclick="showPage('month', event)">📅 Woche</div>
+    <div class="tab" onclick="showPage('week', event)">📅 Woche</div>
     <div class="tab" onclick="showPage('year', event)">📈 Jahr</div>
   </div>
 
@@ -139,8 +138,8 @@
   </div>
 
   <!-- Woche -->
-  <div id="month" class="page">
-    <div id="monthData">–</div>
+  <div id="week" class="page">
+    <div id="weekData">–</div>
   </div>
 
   <!-- Jahr -->
@@ -229,7 +228,7 @@ ws.onmessage = (event) => {
           <div>Max: ${d.max.toFixed(1)} °C</div>
         </div>`;
     });
-    document.getElementById("monthData").innerHTML = html;
+    document.getElementById("weekData").innerHTML = html;
   }
 
   /* Jahr */
