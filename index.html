@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+
   <title>Wetterstation Stuben‑Bernstein</title>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,7 +22,6 @@
       color: #111;
       transition: background 0.3s, color 0.3s;
     }
-
     .tabbar {
       display: flex;
       justify-content: space-around;
@@ -31,10 +37,8 @@
       color: #007aff;
       border-bottom: 3px solid #007aff;
     }
-
     .page { display: none; padding: 20px; }
     .page.active { display: block; }
-
     .card {
       background: #fff;
       border-radius: 12px;
@@ -42,26 +46,21 @@
       margin-bottom: 20px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-
     .label {
       font-weight: 600;
       margin-bottom: 8px;
     }
-
     h2 {
       text-align: center;
       margin: 10px 0 10px;
       font-weight: 500;
     }
-
     button {
       background: none;
       border: none;
       font-size: 1.4em;
       cursor: pointer;
     }
-
-    /* Dark Mode */
     body.dark {
       background: #1c1c1e;
       color: #eee;
@@ -101,19 +100,16 @@
     <div class="tab" onclick="showPage('year', event)">📈 Jahr</div>
   </div>
 
-  <!-- Temperatur -->
   <div id="temp" class="page active">
     <div class="card">
       <div class="label">Temperatur</div>
       <div id="t">–</div>
     </div>
-
     <div class="card">
       <canvas id="tempChart" height="200"></canvas>
     </div>
   </div>
 
-  <!-- Feuchte -->
   <div id="hum" class="page">
     <div class="card">
       <div class="label">Luftfeuchtigkeit</div>
@@ -121,7 +117,6 @@
     </div>
   </div>
 
-  <!-- Druck -->
   <div id="press" class="page">
     <div class="card">
       <div class="label">Luftdruck</div>
@@ -129,7 +124,6 @@
     </div>
   </div>
 
-  <!-- System -->
   <div id="sys" class="page">
     <div class="card">
       <div class="label">Systemstatus</div>
@@ -137,18 +131,15 @@
     </div>
   </div>
 
-  <!-- Woche -->
   <div id="week" class="page">
     <div id="weekData">–</div>
   </div>
 
-  <!-- Jahr -->
   <div id="year" class="page">
     <div id="yearData">–</div>
   </div>
 
 <script>
-
 function showPage(id, ev) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -160,8 +151,6 @@ function toggleTheme() {
   document.body.classList.toggle("dark");
   updateChartColors();
 }
-
-/* === Temperatur-Kurve === */
 
 let tempChart = new Chart(document.getElementById("tempChart"), {
   type: 'line',
@@ -192,32 +181,22 @@ function updateChartColors() {
   tempChart.update();
 }
 
-/* === WebSocket === */
-
-const ws = new WebSocket("ws://" + location.host + "/ws");
-
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-
+function updateUI(data) {
   if (data.t !== undefined) {
     document.getElementById("t").textContent = data.t.toFixed(1) + " °C";
-
     const now = new Date().toLocaleTimeString();
     tempChart.data.labels.push(now);
     tempChart.data.datasets[0].data.push(data.t);
-
     if (tempChart.data.labels.length > 50) {
       tempChart.data.labels.shift();
       tempChart.data.datasets[0].data.shift();
     }
     tempChart.update();
   }
-
   if (data.h !== undefined) document.getElementById("h").textContent = data.h.toFixed(1) + " %";
   if (data.p !== undefined) document.getElementById("p").textContent = data.p.toFixed(1) + " hPa";
   if (data.sys) document.getElementById("sysinfo").textContent = data.sys;
 
-  /* Woche */
   if (Array.isArray(data.week)) {
     let html = "";
     data.week.forEach(d => {
@@ -228,10 +207,9 @@ ws.onmessage = (event) => {
           <div>Max: ${d.max.toFixed(1)} °C</div>
         </div>`;
     });
-    document.getElementById("weekData").innerHTML = html;
+    document.getElementById("weekData").innerHTML = html || "–";
   }
 
-  /* Jahr */
   if (Array.isArray(data.year)) {
     let html = "";
     data.year.forEach(m => {
@@ -242,10 +220,24 @@ ws.onmessage = (event) => {
           <div>Max: ${m.max.toFixed(1)} °C</div>
         </div>`;
     });
-    document.getElementById("yearData").innerHTML = html;
+    document.getElementById("yearData").innerHTML = html || "–";
   }
-};
+}
 
+async function loadData() {
+  const url = "https://raw.githubusercontent.com/mahu1963/Meine-Wetterstation/main/data.json";
+  try {
+    const res = await fetch(url + "?t=" + Date.now());
+    if (!res.ok) return;
+    const data = await res.json();
+    updateUI(data);
+  } catch (e) {
+    console.log("Fehler beim Laden:", e);
+  }
+}
+
+setInterval(loadData, 5000);
+loadData();
 </script>
 
 </body>
