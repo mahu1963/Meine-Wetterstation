@@ -4,19 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- iPhone WebApp Fix -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
-  <!-- Cache deaktivieren -->
   <meta http-equiv="Cache-Control" content="no-store" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
 
   <title>Wetterstation Stuben‑Bernstein</title>
 
-  <link rel="apple-touch-icon" href="icon.png">
-  
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <style>
@@ -73,7 +69,6 @@
       cursor: pointer;
     }
 
-    /* Dark Mode */
     body.dark {
       background: #1c1c1e;
       color: #eee;
@@ -105,18 +100,18 @@
   <h2>Wetterstation Stuben‑Bernstein</h2>
 
   <div class="tabbar">
-    <div class="tab active" onclick="showPage('temp', event)">🌡 Temperatur</div>
-    <div class="tab" onclick="showPage('hum', event)">💧 Feuchte</div>
-    <div class="tab" onclick="showPage('press', event)">🧭 Druck</div>
+    <div class="tab active" onclick="showPage('tempPage', event)">🌡 Temperatur</div>
+    <div class="tab" onclick="showPage('humPage', event)">💧 Feuchte</div>
+    <div class="tab" onclick="showPage('pressPage', event)">🧭 Druck</div>
     <div class="tab" onclick="showPage('week', event)">📅 Woche</div>
     <div class="tab" onclick="showPage('year', event)">📈 Jahr</div>
   </div>
 
   <!-- Temperatur -->
-  <div id="temp" class="page active">
+  <div id="tempPage" class="page active">
     <div class="card">
       <div class="label">Temperatur</div>
-      <div id="t">–</div>
+      <div id="temp">–</div>
     </div>
 
     <div class="card">
@@ -125,10 +120,10 @@
   </div>
 
   <!-- Feuchte -->
-  <div id="hum" class="page">
+  <div id="humPage" class="page">
     <div class="card">
       <div class="label">Luftfeuchtigkeit</div>
-      <div id="h">–</div>
+      <div id="hum">–</div>
     </div>
 
     <div class="card">
@@ -137,10 +132,10 @@
   </div>
 
   <!-- Druck -->
-  <div id="press" class="page">
+  <div id="pressPage" class="page">
     <div class="card">
       <div class="label">Luftdruck</div>
-      <div id="p">–</div>
+      <div id="press">–</div>
     </div>
   </div>
 
@@ -154,7 +149,6 @@
     <div id="yearData">–</div>
   </div>
 
-  <!-- EINZIGES Script -->
   <script src="script.js"></script>
 
 </body>
