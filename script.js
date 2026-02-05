@@ -15,7 +15,7 @@ let chart24 = null;
 let chartWeek = null;
 let chartYear = null;
 
-const ESP_URL = "http://192.168.1.50/data";   // <- Deine ESP32-URL
+const ESP_URL = "http://esp32.local/data.json";  // <- Deine ESP32-URL
 const GITHUB_URL = "data.json";               // <- Backup-Datei im Repo
 
 // -------------------------
