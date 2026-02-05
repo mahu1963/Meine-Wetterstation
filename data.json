@@ -1,17 +1,41 @@
 {
-  "t": 23.4,
-  "h": 58.2,
-  "p": 948.7,
-  "week": [
-    { "day": "Mo", "min": 21.3, "max": 24.8 },
-    { "day": "Di", "min": 22.1, "max": 25.2 }
-  ],
-  "year": [
-    { "month": "Jan", "min": -3.2, "max": 7.1 },
-    { "month": "Feb", "min": -1.5, "max": 9.3 }
-  ],
-  "hist": [
-    { "t": 23.4, "h": 58.2, "p": 948.7, "ts": 1706960000 },
-    { "t": 23.5, "h": 58.1, "p": 948.6, "ts": 1706960300 }
-  ]
+  "meta": {
+    "device": "ESP32-Weather",
+    "version": 1,
+    "timestamp": 1706960300,
+    "source": "live"
+  },
+
+  "current": {
+    "temperature": 23.4,
+    "humidity": 58.2,
+    "pressure": 948.7
+  },
+
+  "history": {
+    "last24h": [
+      {
+        "time": "12:00",
+        "temperature": 23.4,
+        "humidity": 58.2,
+        "pressure": 948.7
+      },
+      {
+        "time": "12:05",
+        "temperature": 23.5,
+        "humidity": 58.1,
+        "pressure": 948.6
+      }
+    ],
+
+    "week": [
+      { "day": "Mo", "min": 21.3, "max": 24.8 },
+      { "day": "Di", "min": 22.1, "max": 25.2 }
+    ],
+
+    "year": [
+      { "month": "Jan", "min": -3.2, "max": 7.1 },
+      { "month": "Feb", "min": -1.5, "max": 9.3 }
+    ]
+  }
 }
