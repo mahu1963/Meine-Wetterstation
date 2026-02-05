@@ -1,11 +1,5 @@
 // -------------------------------------------------------------
 //  Wetterstation – Professionelle script.js
-//  Funktionen:
-//  - ESP32 Live-Daten abrufen
-//  - GitHub Backup-Daten laden
-//  - UI aktualisieren
-//  - Charts zeichnen
-//  - Dark/Light Mode
 // -------------------------------------------------------------
 
 // -------------------------
@@ -15,8 +9,8 @@ let chart24 = null;
 let chartWeek = null;
 let chartYear = null;
 
-const ESP_URL = "http://esp32.local/data.json";  // <- Deine ESP32-URL
-const GITHUB_URL = "data.json";               // <- Backup-Datei im Repo
+const ESP_URL = "http://esp32.local/data.json";  // ESP32 Live-Daten
+const GITHUB_URL = "data.json";                  // Backup-Datei im Repo
 
 // -------------------------
 // Start
@@ -62,9 +56,10 @@ function updateUI(data, local) {
 
     console.log("Empfangene Daten:", data);
 
-    const t = Number(data?.t ?? data?.temperature);
-    const h = Number(data?.h ?? data?.humidity);
-    const p = Number(data?.p ?? data?.pressure);
+    // Neue JSON-Struktur
+    const t = Number(data?.current?.temperature);
+    const h = Number(data?.current?.humidity);
+    const p = Number(data?.current?.pressure);
 
     document.getElementById("temp").innerText =
         isFinite(t) ? t.toFixed(1) + " °C" : "-- °C";
@@ -78,9 +73,10 @@ function updateUI(data, local) {
     const src = local ? "ESP32 (live)" : "GitHub (Backup)";
     document.getElementById("lastUpdate").innerText = "Quelle: " + src;
 
-    draw24hChart(Array.isArray(data.hist) ? data.hist : []);
-    drawWeekChart(Array.isArray(data.week) ? data.week : []);
-    drawYearChart(Array.isArray(data.year) ? data.year : []);
+    // History-Daten aus neuer Struktur
+    draw24hChart(data?.history?.last24h ?? []);
+    drawWeekChart(data?.history?.week ?? []);
+    drawYearChart(data?.history?.year ?? []);
 }
 
 // -------------------------------------------------------------
@@ -94,10 +90,10 @@ function draw24hChart(values) {
     chart24 = new Chart(ctx, {
         type: "line",
         data: {
-            labels: values.map(v => v.time ?? ""),
+            labels: values.map(v => new Date(v.time * 1000).toLocaleTimeString()),
             datasets: [{
                 label: "Temperatur (°C)",
-                data: values.map(v => v.t),
+                data: values.map(v => v.temperature),
                 borderColor: "#ff5722",
                 tension: 0.3
             }]
@@ -120,7 +116,9 @@ function drawWeekChart(values) {
     chartWeek = new Chart(ctx, {
         type: "bar",
         data: {
-            labels: values.map(v => v.day ?? ""),
+            labels: values.map(v =>
+                new Date(v.dayStamp * 1000).toLocaleDateString()
+            ),
             datasets: [
                 {
                     label: "Min",
@@ -152,7 +150,9 @@ function drawYearChart(values) {
     chartYear = new Chart(ctx, {
         type: "line",
         data: {
-            labels: values.map(v => v.month ?? ""),
+            labels: values.map(v =>
+                ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"][v.month]
+            ),
             datasets: [
                 {
                     label: "Min",
