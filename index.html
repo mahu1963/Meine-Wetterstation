@@ -1,155 +1,71 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-  <meta http-equiv="Cache-Control" content="no-store" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-
-  <title>Wetterstation Stuben‑Bernstein</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <style>
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      background: #f2f2f7;
-      color: #111;
-      transition: background 0.3s, color 0.3s;
-    }
-
-    .tabbar {
-      display: flex;
-      justify-content: space-around;
-      background: #fff;
-      border-bottom: 1px solid #ccc;
-    }
-    .tab {
-      padding: 12px;
-      cursor: pointer;
-      color: #555;
-    }
-    .tab.active {
-      color: #007aff;
-      border-bottom: 3px solid #007aff;
-    }
-
-    .page { display: none; padding: 20px; }
-    .page.active { display: block; }
-
-    .card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-
-    .label {
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-
-    h2 {
-      text-align: center;
-      margin: 10px 0 10px;
-      font-weight: 500;
-    }
-
-    button {
-      background: none;
-      border: none;
-      font-size: 1.4em;
-      cursor: pointer;
-    }
-
-    body.dark {
-      background: #1c1c1e;
-      color: #eee;
-    }
-    body.dark .card {
-      background: #2c2c2e;
-      color: #eee;
-    }
-    body.dark .tabbar {
-      background: #1c1c1e;
-      border-bottom: 1px solid #444;
-    }
-    body.dark .tab {
-      color: #aaa;
-    }
-    body.dark .tab.active {
-      color: #ffd60a;
-      border-bottom: 3px solid #ffd60a;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wetterstation</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body>
 
-  <div style="text-align:right; padding:10px 20px;">
-    <button onclick="toggleTheme()">🌞 / 🌜</button>
-  </div>
+    <!-- Navigation -->
+    <nav>
+        <button onclick="showPage('tempPage')">Temperatur</button>
+        <button onclick="showPage('humPage')">Feuchte</button>
+        <button onclick="showPage('pressPage')">Druck</button>
+        <button onclick="showPage('week')">Woche</button>
+        <button onclick="showPage('year')">Jahr</button>
+        <button id="modeToggle">☾</button>
+    </nav>
 
-  <h2>Wetterstation Stuben‑Bernstein</h2>
-
-  <div class="tabbar">
-    <div class="tab active" onclick="showPage('tempPage', event)">🌡 Temperatur</div>
-    <div class="tab" onclick="showPage('humPage', event)">💧 Feuchte</div>
-    <div class="tab" onclick="showPage('pressPage', event)">🧭 Druck</div>
-    <div class="tab" onclick="showPage('week', event)">📅 Woche</div>
-    <div class="tab" onclick="showPage('year', event)">📈 Jahr</div>
-  </div>
-
-  <!-- Temperatur -->
-  <div id="tempPage" class="page active">
-    <div class="card">
-      <div class="label">Temperatur</div>
-      <div id="temp">–</div>
+    <!-- Temperatur -->
+    <div id="tempPage" class="page">
+        <div class="card">
+            <div class="label">Temperatur</div>
+            <div id="temp">–</div>
+        </div>
+        <canvas id="chart24"></canvas>
     </div>
 
-    <div class="card">
-      <canvas id="tempChart" height="200"></canvas>
-    </div>
-  </div>
-
-  <!-- Feuchte -->
-  <div id="humPage" class="page">
-    <div class="card">
-      <div class="label">Luftfeuchtigkeit</div>
-      <div id="hum">–</div>
+    <!-- Feuchte -->
+    <div id="humPage" class="page">
+        <div class="card">
+            <div class="label">Luftfeuchtigkeit</div>
+            <div id="hum">–</div>
+        </div>
     </div>
 
-    <div class="card">
-      <canvas id="humChart" height="200"></canvas>
+    <!-- Druck -->
+    <div id="pressPage" class="page">
+        <div class="card">
+            <div class="label">Luftdruck</div>
+            <div id="press">–</div>
+        </div>
     </div>
-  </div>
 
-  <!-- Druck -->
-  <div id="pressPage" class="page">
-    <div class="card">
-      <div class="label">Luftdruck</div>
-      <div id="press">–</div>
+    <!-- Woche -->
+    <div id="week" class="page">
+        <canvas id="chartWeek"></canvas>
     </div>
-  </div>
 
-  <!-- Woche -->
-  <div id="week" class="page">
-    <div id="weekData">–</div>
-  </div>
+    <!-- Jahr -->
+    <div id="year" class="page">
+        <canvas id="chartYear"></canvas>
+    </div>
 
-  <!-- Jahr -->
-  <div id="year" class="page">
-    <div id="yearData">–</div>
-  </div>
+    <div id="lastUpdate">Quelle: –</div>
 
-  <script src="script.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+            document.getElementById(id).style.display = 'block';
+        }
+        showPage('tempPage');
+    </script>
 
 </body>
 </html>
