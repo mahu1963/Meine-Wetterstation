@@ -2,80 +2,66 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wetterstation Dashboard</title>
+    <title>Meine Wetterstation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css">
-
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Mixed Content erlauben (HTTP ESP32 + HTTPS GitHub Pages) -->
-    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #eef2f3;
+            margin: 0;
+            padding: 20px;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-top: 0;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: none;
+            background: #007bff;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056c7;
+        }
+    </style>
 </head>
 
 <body>
 
-    <!-- Navigation -->
-    <nav>
-        <button onclick="showPage('tempPage')">Temperatur</button>
-        <button onclick="showPage('humPage')">Feuchte</button>
-        <button onclick="showPage('pressPage')">Druck</button>
-        <button onclick="showPage('weekPage')">Woche</button>
-        <button onclick="showPage('yearPage')">Jahr</button>
-        <button id="modeToggle">☀</button>
-    </nav>
-
-    <!-- Temperatur-Seite -->
-    <div id="tempPage" class="page">
-        <div class="card">
-            <div class="label">Temperatur</div>
-            <div id="temp">-- °C</div>
-        </div>
-        <canvas id="chart24"></canvas>
+    <div class="card">
+        <h2>Live‑Daten</h2>
+        <p>Temperatur: <span id="temp">--</span></p>
+        <p>Luftfeuchte: <span id="hum">--</span></p>
+        <p>Luftdruck: <span id="pres">--</span></p>
+        <p>Letztes Update: <span id="time">--</span></p>
     </div>
 
-    <!-- Feuchte-Seite -->
-    <div id="humPage" class="page" style="display:none;">
-        <div class="card">
-            <div class="label">Luftfeuchtigkeit</div>
-            <div id="hum">-- %</div>
-        </div>
+    <div class="card">
+        <h2>History</h2>
+        <button onclick="showToday()">Heute</button>
+        <button onclick="showWeek()">Woche</button>
+        <button onclick="showMonth()">Monat</button>
+        <button onclick="exportCSV()">CSV Export</button>
+
+        <canvas id="chart" height="200"></canvas>
+
+        <div id="minmax"></div>
     </div>
 
-    <!-- Druck-Seite -->
-    <div id="pressPage" class="page" style="display:none;">
-        <div class="card">
-            <div class="label">Luftdruck</div>
-            <div id="press">-- hPa</div>
-        </div>
-    </div>
-
-    <!-- Woche -->
-    <div id="weekPage" class="page" style="display:none;">
-        <canvas id="chartWeek"></canvas>
-    </div>
-
-    <!-- Jahr -->
-    <div id="yearPage" class="page" style="display:none;">
-        <canvas id="chartYear"></canvas>
-    </div>
-
-    <!-- Quelle -->
-    <div id="lastUpdate">Quelle: --</div>
-
-    <!-- Page Switcher -->
-    <script>
-        function showPage(id) {
-            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-            document.getElementById(id).style.display = 'block';
-        }
-        showPage('tempPage');
-    </script>
-
-    <!-- Deine Hauptlogik MUSS GANZ UNTEN STEHEN -->
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 
 </body>
 </html>
