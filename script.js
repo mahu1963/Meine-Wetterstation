@@ -1,134 +1,214 @@
-let chart24 = null;
-let chartWeek = null;
-let chartYear = null;
+// Firebase laden
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-const ESP_URL = "http://192.168.1.171/data.json";
-const WS_URL  = "ws://192.168.1.171/ws";
-const GITHUB_URL = "data.json";
+// Deine Firebase-Konfiguration
+const firebaseConfig = {
+    apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-Lw",
+    authDomain: "meine-wetterstation.firebaseapp.com",
+    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "meine-wetterstation",
+    storageBucket: "meine-wetterstation.appspot.com",
+    messagingSenderId: "593494014586",
+    appId: "1:593494014586:web:c704ffa5baa9ae5a6059c3"
+};
 
-document.addEventListener("DOMContentLoaded", () => {
-    initModeToggle();
-    initWebSocket();
-    loadData();
-    setInterval(loadData, 60000);
+// Firebase initialisieren
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ----------------------------------------------------------
+// LIVE-DATEN
+// ----------------------------------------------------------
+
+const liveRef = ref(db, "weather");
+
+onValue(liveRef, (snap) => {
+    const d = snap.val();
+    if (!d) return;
+
+    document.getElementById("temp").textContent = d.temperature.toFixed(1) + " °C";
+    document.getElementById("hum").textContent  = d.humidity.toFixed(1) + " %";
+    document.getElementById("pres").textContent = d.pressure.toFixed(1) + " hPa";
+
+    const ts = new Date(d.timestamp);
+    document.getElementById("time").textContent = ts.toLocaleTimeString();
 });
 
-function initWebSocket() {
-    try {
-        const ws = new WebSocket(WS_URL);
-        ws.onmessage = (msg) => {
-            const data = JSON.parse(msg.data);
-            updateUI(data, true);
-        };
-    } catch (e) {
-        console.warn("WebSocket nicht verfügbar.");
+// ----------------------------------------------------------
+// HISTORY LADEN
+// ----------------------------------------------------------
+
+async function loadDay(year, month, day) {
+    const path = `history/${year}/${month}/${day}`;
+    const snap = await get(ref(db, path));
+    if (!snap.exists()) return [];
+
+    const raw = snap.val();
+    return Object.keys(raw).map(ts => ({
+        timestamp: Number(ts),
+        ...raw[ts]
+    }));
+}
+
+async function loadToday() {
+    const d = new Date();
+    return loadDay(
+        d.getFullYear(),
+        String(d.getMonth() + 1).padStart(2, "0"),
+        String(d.getDate()).padStart(2, "0")
+    );
+}
+
+async function loadWeek() {
+    const now = new Date();
+    let all = [];
+
+    for (let i = 0; i < 7; i++) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+
+        const dayData = await loadDay(
+            d.getFullYear(),
+            String(d.getMonth() + 1).padStart(2, "0"),
+            String(d.getDate()).padStart(2, "0")
+        );
+
+        all = all.concat(dayData);
     }
+
+    return all.sort((a, b) => a.timestamp - b.timestamp);
 }
 
-async function loadData() {
-    try {
-        const live = await fetchJSON(ESP_URL);
-        updateUI(live, true);
-    } catch (err) {
-        console.warn("ESP32 offline – nutze GitHub-Backup.");
-        try {
-            const backup = await fetchJSON(GITHUB_URL);
-            updateUI(backup, false);
-        } catch (err2) {
-            console.error("Backup-Daten konnten nicht geladen werden.");
-        }
-    }
+async function loadMonth() {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+
+    const snap = await get(ref(db, `history/${year}/${month}`));
+    if (!snap.exists()) return [];
+
+    const raw = snap.val();
+    let all = [];
+
+    Object.keys(raw).forEach(day => {
+        Object.keys(raw[day]).forEach(ts => {
+            all.push({
+                timestamp: Number(ts),
+                ...raw[day][ts]
+            });
+        });
+    });
+
+    return all.sort((a, b) => a.timestamp - b.timestamp);
 }
 
-async function fetchJSON(url) {
-    const res = await fetch(url + "?t=" + Date.now());
-    if (!res.ok) throw new Error("HTTP " + res.status);
-    return await res.json();
+// ----------------------------------------------------------
+// MIN/MAX
+// ----------------------------------------------------------
+
+function calcMinMax(data) {
+    if (data.length === 0) return null;
+
+    const temps = data.map(e => e.temperature);
+    const hums  = data.map(e => e.humidity);
+    const pres  = data.map(e => e.pressure);
+
+    return {
+        tempMin: Math.min(...temps),
+        tempMax: Math.max(...temps),
+        humMin:  Math.min(...hums),
+        humMax:  Math.max(...hums),
+        presMin: Math.min(...pres),
+        presMax: Math.max(...pres)
+    };
 }
 
-function updateUI(data, local) {
-    const t = Number(data?.current?.temperature);
-    const h = Number(data?.current?.humidity);
-    const p = Number(data?.current?.pressure);
+// ----------------------------------------------------------
+// DIAGRAMM
+// ----------------------------------------------------------
 
-    document.getElementById("temp").innerText =
-        isFinite(t) ? t.toFixed(1) + " °C" : "-- °C";
+let chart = null;
 
-    document.getElementById("hum").innerText =
-        isFinite(h) ? h.toFixed(1) + " %" : "-- %";
+function drawChart(data) {
+    const labels = data.map(e =>
+        new Date(e.timestamp).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
+    );
 
-    document.getElementById("press").innerText =
-        isFinite(p) ? p.toFixed(1) + " hPa" : "-- hPa";
+    const temps = data.map(e => e.temperature);
 
-    document.getElementById("lastUpdate").innerText =
-        "Quelle: " + (local ? "ESP32 (live)" : "GitHub (Backup)");
+    if (chart) chart.destroy();
 
-    draw24hChart(data?.history?.last24h ?? []);
-    drawWeekChart(data?.history?.week ?? []);
-    drawYearChart(data?.history?.year ?? []);
-}
-
-function draw24hChart(values) {
-    const ctx = document.getElementById("chart24");
-    if (chart24) chart24.destroy();
-
-    chart24 = new Chart(ctx, {
+    chart = new Chart(document.getElementById("chart"), {
         type: "line",
         data: {
-            labels: values.map(v => new Date(v.time * 1000).toLocaleTimeString()),
+            labels,
             datasets: [{
                 label: "Temperatur (°C)",
-                data: values.map(v => v.temperature),
-                borderColor: "#00eaff",
-                tension: 0.3
+                data: temps,
+                borderColor: "red",
+                tension: 0.2
             }]
-        },
-        options: { responsive: true }
+        }
     });
 }
 
-function drawWeekChart(values) {
-    const ctx = document.getElementById("chartWeek");
-    if (chartWeek) chartWeek.destroy();
+// ----------------------------------------------------------
+// CSV EXPORT
+// ----------------------------------------------------------
 
-    chartWeek = new Chart(ctx, {
-        type: "bar",
-        data: {
-            labels: values.map(v =>
-                new Date(v.dayStamp * 1000).toLocaleDateString()
-            ),
-            datasets: [
-                { label: "Min", data: values.map(v => v.min), backgroundColor: "#2196f3" },
-                { label: "Max", data: values.map(v => v.max), backgroundColor: "#f44336" }
-            ]
-        },
-        options: { responsive: true }
+function exportCSV() {
+    if (!window.lastData) return;
+
+    let csv = "timestamp;temperature;humidity;pressure\n";
+
+    window.lastData.forEach(e => {
+        csv += `${e.timestamp};${e.temperature};${e.humidity};${e.pressure}\n`;
     });
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "wetterstation_history.csv";
+    a.click();
+
+    URL.revokeObjectURL(url);
 }
 
-function drawYearChart(values) {
-    const ctx = document.getElementById("chartYear");
-    if (chartYear) chartYear.destroy();
+window.exportCSV = exportCSV;
 
-    chartYear = new Chart(ctx, {
-        type: "line",
-        data: {
-            labels: values.map(v =>
-                ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"][v.month]
-            ),
-            datasets: [
-                { label: "Min", data: values.map(v => v.min), borderColor: "#03a9f4", tension: 0.3 },
-                { label: "Max", data: values.map(v => v.max), borderColor: "#e91e63", tension: 0.3 }
-            ]
-        },
-        options: { responsive: true }
-    });
-}
+// ----------------------------------------------------------
+// BUTTON-FUNKTIONEN
+// ----------------------------------------------------------
 
-function initModeToggle() {
-    const btn = document.getElementById("modeToggle");
-    btn.addEventListener("click", () => {
-        document.body.classList.toggle("light");
-        btn.innerText = document.body.classList.contains("light") ? "☾" : "☀";
-    });
-}
+window.showToday = async () => {
+    const data = await loadToday();
+    window.lastData = data;
+    drawChart(data);
+
+    const mm = calcMinMax(data);
+    document.getElementById("minmax").innerHTML =
+        `Min: ${mm.tempMin} °C – Max: ${mm.tempMax} °C`;
+};
+
+window.showWeek = async () => {
+    const data = await loadWeek();
+    window.lastData = data;
+    drawChart(data);
+
+    const mm = calcMinMax(data);
+    document.getElementById("minmax").innerHTML =
+        `Min: ${mm.tempMin} °C – Max: ${mm.tempMax} °C`;
+};
+
+window.showMonth = async () => {
+    const data = await loadMonth();
+    window.lastData = data;
+    drawChart(data);
+
+    const mm = calcMinMax(data);
+    document.getElementById("minmax").innerHTML =
+        `Min: ${mm.tempMin} °C – Max: ${mm.tempMax} °C`;
+};
