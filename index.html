@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
 
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -23,16 +24,17 @@
         <button id="modeToggle">☀</button>
     </nav>
 
-    <!-- Temperatur -->
+    <!-- Temperatur-Seite -->
     <div id="tempPage" class="page">
         <div class="card">
             <div class="label">Temperatur</div>
             <div id="temp">-- °C</div>
         </div>
+
         <canvas id="chart24"></canvas>
     </div>
 
-    <!-- Feuchte -->
+    <!-- Feuchte-Seite -->
     <div id="humPage" class="page">
         <div class="card">
             <div class="label">Luftfeuchtigkeit</div>
@@ -40,7 +42,7 @@
         </div>
     </div>
 
-    <!-- Druck -->
+    <!-- Druck-Seite -->
     <div id="pressPage" class="page">
         <div class="card">
             <div class="label">Luftdruck</div>
@@ -58,10 +60,13 @@
         <canvas id="chartYear"></canvas>
     </div>
 
+    <!-- Quelle -->
     <div id="lastUpdate">Quelle: --</div>
 
+    <!-- Hauptscript -->
     <script src="script.js"></script>
 
+    <!-- Page Switcher -->
     <script>
         function showPage(id) {
             document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
