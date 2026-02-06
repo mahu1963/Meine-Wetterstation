@@ -1,62 +1,52 @@
-// -------------------------------------------------------------
-//  Wetterstation – Professionelle script.js
-// -------------------------------------------------------------
-
-// -------------------------
-// Globale Variablen
-// -------------------------
 let chart24 = null;
 let chartWeek = null;
 let chartYear = null;
 
-const ESP_URL = "http://esp32.local/data.json";  // ESP32 Live-Daten
-const GITHUB_URL = "data.json";                  // Backup-Datei im Repo
+const ESP_URL = "http://esp32.local/data.json";
+const WS_URL  = "ws://esp32.local/ws";
+const GITHUB_URL = "data.json";
 
-// -------------------------
-// Start
-// -------------------------
 document.addEventListener("DOMContentLoaded", () => {
     initModeToggle();
+    initWebSocket();
     loadData();
-    setInterval(loadData, 60_000); // alle 60 Sekunden aktualisieren
+    setInterval(loadData, 60000);
 });
 
-// -------------------------
-// Daten laden (ESP → Fallback GitHub)
-// -------------------------
+function initWebSocket() {
+    try {
+        const ws = new WebSocket(WS_URL);
+        ws.onmessage = (msg) => {
+            const data = JSON.parse(msg.data);
+            updateUI(data, true);
+        };
+    } catch (e) {
+        console.warn("WebSocket nicht verfügbar.");
+    }
+}
+
 async function loadData() {
     try {
-        console.log("Hole Live-Daten vom ESP32…");
         const live = await fetchJSON(ESP_URL);
         updateUI(live, true);
     } catch (err) {
-        console.warn("ESP32 nicht erreichbar – nutze GitHub-Backup.");
+        console.warn("ESP32 offline – nutze GitHub-Backup.");
         try {
             const backup = await fetchJSON(GITHUB_URL);
             updateUI(backup, false);
         } catch (err2) {
-            console.error("Fehler beim Laden der Backup-Daten:", err2);
+            console.error("Backup-Daten konnten nicht geladen werden.");
         }
     }
 }
 
-// -------------------------
-// JSON laden (mit Fehlerbehandlung)
-// -------------------------
 async function fetchJSON(url) {
-    const res = await fetch(url + "?t=" + Date.now()); // Cache umgehen
+    const res = await fetch(url + "?t=" + Date.now());
     if (!res.ok) throw new Error("HTTP " + res.status);
     return await res.json();
 }
 
-// -------------------------
-// UI aktualisieren
-// -------------------------
 function updateUI(data, local) {
-
-    console.log("Empfangene Daten:", data);
-
-    // Neue JSON-Struktur
     const t = Number(data?.current?.temperature);
     const h = Number(data?.current?.humidity);
     const p = Number(data?.current?.pressure);
@@ -70,21 +60,16 @@ function updateUI(data, local) {
     document.getElementById("press").innerText =
         isFinite(p) ? p.toFixed(1) + " hPa" : "-- hPa";
 
-    const src = local ? "ESP32 (live)" : "GitHub (Backup)";
-    document.getElementById("lastUpdate").innerText = "Quelle: " + src;
+    document.getElementById("lastUpdate").innerText =
+        "Quelle: " + (local ? "ESP32 (live)" : "GitHub (Backup)");
 
-    // History-Daten aus neuer Struktur
     draw24hChart(data?.history?.last24h ?? []);
     drawWeekChart(data?.history?.week ?? []);
     drawYearChart(data?.history?.year ?? []);
 }
 
-// -------------------------------------------------------------
-// Chart: 24 Stunden
-// -------------------------------------------------------------
 function draw24hChart(values) {
     const ctx = document.getElementById("chart24");
-
     if (chart24) chart24.destroy();
 
     chart24 = new Chart(ctx, {
@@ -94,23 +79,16 @@ function draw24hChart(values) {
             datasets: [{
                 label: "Temperatur (°C)",
                 data: values.map(v => v.temperature),
-                borderColor: "#ff5722",
+                borderColor: "#00eaff",
                 tension: 0.3
             }]
         },
-        options: {
-            responsive: true,
-            scales: { y: { beginAtZero: false } }
-        }
+        options: { responsive: true }
     });
 }
 
-// -------------------------------------------------------------
-// Chart: Woche (Min/Max)
-// -------------------------------------------------------------
 function drawWeekChart(values) {
     const ctx = document.getElementById("chartWeek");
-
     if (chartWeek) chartWeek.destroy();
 
     chartWeek = new Chart(ctx, {
@@ -120,31 +98,16 @@ function drawWeekChart(values) {
                 new Date(v.dayStamp * 1000).toLocaleDateString()
             ),
             datasets: [
-                {
-                    label: "Min",
-                    data: values.map(v => v.min),
-                    backgroundColor: "#2196f3"
-                },
-                {
-                    label: "Max",
-                    data: values.map(v => v.max),
-                    backgroundColor: "#f44336"
-                }
+                { label: "Min", data: values.map(v => v.min), backgroundColor: "#2196f3" },
+                { label: "Max", data: values.map(v => v.max), backgroundColor: "#f44336" }
             ]
         },
-        options: {
-            responsive: true,
-            scales: { y: { beginAtZero: false } }
-        }
+        options: { responsive: true }
     });
 }
 
-// -------------------------------------------------------------
-// Chart: Jahr (Min/Max)
-// -------------------------------------------------------------
 function drawYearChart(values) {
     const ctx = document.getElementById("chartYear");
-
     if (chartYear) chartYear.destroy();
 
     chartYear = new Chart(ctx, {
@@ -154,35 +117,18 @@ function drawYearChart(values) {
                 ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"][v.month]
             ),
             datasets: [
-                {
-                    label: "Min",
-                    data: values.map(v => v.min),
-                    borderColor: "#03a9f4",
-                    tension: 0.3
-                },
-                {
-                    label: "Max",
-                    data: values.map(v => v.max),
-                    borderColor: "#e91e63",
-                    tension: 0.3
-                }
+                { label: "Min", data: values.map(v => v.min), borderColor: "#03a9f4", tension: 0.3 },
+                { label: "Max", data: values.map(v => v.max), borderColor: "#e91e63", tension: 0.3 }
             ]
         },
-        options: {
-            responsive: true,
-            scales: { y: { beginAtZero: false } }
-        }
+        options: { responsive: true }
     });
 }
 
-// -------------------------------------------------------------
-// Dark/Light Mode
-// -------------------------------------------------------------
 function initModeToggle() {
     const btn = document.getElementById("modeToggle");
-
     btn.addEventListener("click", () => {
-        document.body.classList.toggle("dark");
-        btn.innerText = document.body.classList.contains("dark") ? "☀" : "☾";
+        document.body.classList.toggle("light");
+        btn.innerText = document.body.classList.contains("light") ? "☾" : "☀";
     });
 }
