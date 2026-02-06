@@ -1,18 +1,13 @@
 {
-  "name": "Wetterstation Stuben-Bernstein",
-  "short_name": "Wetterstation",
+  "name": "Wetterstation",
+  "short_name": "Wetter",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#f5f5f7",
-  "theme_color": "#ffffff",
+  "background_color": "#0d0f12",
+  "theme_color": "#00eaff",
   "icons": [
     {
-      "src": "icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "icon-512.png",
+      "src": "icon.png",
       "sizes": "512x512",
       "type": "image/png"
     }
