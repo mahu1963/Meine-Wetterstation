@@ -2,8 +2,8 @@ let chart24 = null;
 let chartWeek = null;
 let chartYear = null;
 
-const ESP_URL = "http://esp32.local/data.json";
-const WS_URL  = "ws://esp32.local/ws";
+const ESP_URL = "http://192.168.1.171/data.json";
+const WS_URL  = "ws://192.168.1.171/ws";
 const GITHUB_URL = "data.json";
 
 document.addEventListener("DOMContentLoaded", () => {
