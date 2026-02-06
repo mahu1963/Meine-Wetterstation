@@ -5,11 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Wetterstation Dashboard</title>
 
+    <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
 
     <!-- Chart.js -->
-    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Mixed Content erlauben (HTTP ESP32 + HTTPS GitHub Pages) -->
+    <meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests">
 </head>
 
 <body>
@@ -30,12 +33,11 @@
             <div class="label">Temperatur</div>
             <div id="temp">-- °C</div>
         </div>
-
         <canvas id="chart24"></canvas>
     </div>
 
     <!-- Feuchte-Seite -->
-    <div id="humPage" class="page">
+    <div id="humPage" class="page" style="display:none;">
         <div class="card">
             <div class="label">Luftfeuchtigkeit</div>
             <div id="hum">-- %</div>
@@ -43,7 +45,7 @@
     </div>
 
     <!-- Druck-Seite -->
-    <div id="pressPage" class="page">
+    <div id="pressPage" class="page" style="display:none;">
         <div class="card">
             <div class="label">Luftdruck</div>
             <div id="press">-- hPa</div>
@@ -51,20 +53,17 @@
     </div>
 
     <!-- Woche -->
-    <div id="weekPage" class="page">
+    <div id="weekPage" class="page" style="display:none;">
         <canvas id="chartWeek"></canvas>
     </div>
 
     <!-- Jahr -->
-    <div id="yearPage" class="page">
+    <div id="yearPage" class="page" style="display:none;">
         <canvas id="chartYear"></canvas>
     </div>
 
     <!-- Quelle -->
     <div id="lastUpdate">Quelle: --</div>
-
-    <!-- Hauptscript -->
-    <script src="script.js"></script>
 
     <!-- Page Switcher -->
     <script>
@@ -75,6 +74,8 @@
         showPage('tempPage');
     </script>
 
+    <!-- Deine Hauptlogik MUSS GANZ UNTEN STEHEN -->
+    <script src="script.js"></script>
+
 </body>
 </html>
-
