@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wetterstation</title>
+    <title>Wetterstation Dashboard</title>
+
     <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -15,16 +18,16 @@
         <button onclick="showPage('tempPage')">Temperatur</button>
         <button onclick="showPage('humPage')">Feuchte</button>
         <button onclick="showPage('pressPage')">Druck</button>
-        <button onclick="showPage('week')">Woche</button>
-        <button onclick="showPage('year')">Jahr</button>
-        <button id="modeToggle">☾</button>
+        <button onclick="showPage('weekPage')">Woche</button>
+        <button onclick="showPage('yearPage')">Jahr</button>
+        <button id="modeToggle">☀</button>
     </nav>
 
     <!-- Temperatur -->
     <div id="tempPage" class="page">
         <div class="card">
             <div class="label">Temperatur</div>
-            <div id="temp">–</div>
+            <div id="temp">-- °C</div>
         </div>
         <canvas id="chart24"></canvas>
     </div>
@@ -33,7 +36,7 @@
     <div id="humPage" class="page">
         <div class="card">
             <div class="label">Luftfeuchtigkeit</div>
-            <div id="hum">–</div>
+            <div id="hum">-- %</div>
         </div>
     </div>
 
@@ -41,21 +44,21 @@
     <div id="pressPage" class="page">
         <div class="card">
             <div class="label">Luftdruck</div>
-            <div id="press">–</div>
+            <div id="press">-- hPa</div>
         </div>
     </div>
 
     <!-- Woche -->
-    <div id="week" class="page">
+    <div id="weekPage" class="page">
         <canvas id="chartWeek"></canvas>
     </div>
 
     <!-- Jahr -->
-    <div id="year" class="page">
+    <div id="yearPage" class="page">
         <canvas id="chartYear"></canvas>
     </div>
 
-    <div id="lastUpdate">Quelle: –</div>
+    <div id="lastUpdate">Quelle: --</div>
 
     <script src="script.js"></script>
 
