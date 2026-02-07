@@ -1,64 +1,154 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Wetterstation</title>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<title>Wetterstation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background: #f5f5f5;
+  color: #222;
+}
+.dark {
+  background: #111;
+  color: #eee;
+}
+.card {
+  padding: 15px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 0 10px #0002;
+}
+.dark .card {
+  background: #222;
+  box-shadow: 0 0 10px #0005;
+}
+.value {
+  font-size: 2rem;
+  font-weight: bold;
+}
+button {
+  padding: 10px 20px;
+  margin-bottom: 20px;
+}
+</style>
 </head>
+
 <body>
+
+<button onclick="toggleDark()">Dark/Light</button>
 
 <h1>Wetterstation</h1>
 
-<div>
-  <p>Temperatur: <span id="temp"></span> °C</p>
-  <p>Luftfeuchte: <span id="hum"></span> %</p>
-  <p>Luftdruck: <span id="pres"></span> hPa</p>
+<div class="card">
+  <p>Temperatur: <span id="temp" class="value">--</span> °C</p>
+  <p>Luftfeuchte: <span id="hum" class="value">--</span> %</p>
+  <p>Luftdruck: <span id="pres" class="value">--</span> hPa</p>
 </div>
 
-<canvas id="chart" width="400" height="200"></canvas>
+<div class="card">
+  <h3>Temperaturverlauf heute</h3>
+  <canvas id="chart"></canvas>
+  <p>Min: <span id="min">--</span> °C</p>
+  <p>Max: <span id="max">--</span> °C</p>
+  <p>Avg: <span id="avg">--</span> °C</p>
+</div>
 
 <script>
-  // Firebase config
-  const firebaseConfig = {
-    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app"
-  };
-  firebase.initializeApp(firebaseConfig);
+// Firebase config
+const firebaseConfig = {
+  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app"
+};
+firebase.initializeApp(firebaseConfig);
 
-  const db = firebase.database();
+const db = firebase.database();
 
-  // Live-Daten
-  db.ref("weather").on("value", snap => {
-    const d = snap.val();
-    document.getElementById("temp").innerText = d.temperature.toFixed(1);
-    document.getElementById("hum").innerText  = d.humidity.toFixed(1);
-    document.getElementById("pres").innerText = d.pressure.toFixed(1);
-  });
+// ------------------------------
+// Live-Daten
+// ------------------------------
+db.ref("weather").on("value", snap => {
+  const d = snap.val();
+  document.getElementById("temp").innerText = d.temperature.toFixed(1);
+  document.getElementById("hum").innerText  = d.humidity.toFixed(1);
+  document.getElementById("pres").innerText = d.pressure.toFixed(1);
+});
 
-  // History-Daten
-  db.ref("history/2026/02/07").once("value", snap => {
-    const data = snap.val();
-    const labels = [];
-    const temps = [];
+// ------------------------------
+// History-Daten für heute
+// ------------------------------
+const today = new Date();
+const y = today.getFullYear();
+const m = String(today.getMonth()+1).padStart(2,"0");
+const d = String(today.getDate()).padStart(2,"0");
 
-    for (let key in data) {
-      labels.push(key);
-      temps.push(data[key].temperature);
+db.ref(`history/${y}/${m}/${d}`).on("value", snap => {
+  const data = snap.val();
+  if (!data) return;
+
+  const labels = [];
+  const temps = [];
+
+  for (let key in data) {
+    labels.push(key);
+    temps.push(data[key].temperature);
+  }
+
+  updateChart(labels, temps);
+  updateStats(temps);
+});
+
+// ------------------------------
+// Diagramm
+// ------------------------------
+let chart = null;
+
+function updateChart(labels, temps) {
+  if (chart) chart.destroy();
+
+  chart = new Chart(document.getElementById("chart"), {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Temperatur",
+        data: temps,
+        borderColor: "red",
+        fill: false
+      }]
     }
-
-    new Chart(document.getElementById("chart"), {
-      type: "line",
-      data: {
-        labels: labels,
-        datasets: [{
-          label: "Temperatur",
-          data: temps,
-          borderColor: "red"
-        }]
-      }
-    });
   });
+}
+
+// ------------------------------
+// Statistik
+// ------------------------------
+function updateStats(temps) {
+  const min = Math.min(...temps);
+  const max = Math.max(...temps);
+  const avg = temps.reduce((a,b)=>a+b,0) / temps.length;
+
+  document.getElementById("min").innerText = min.toFixed(1);
+  document.getElementById("max").innerText = max.toFixed(1);
+  document.getElementById("avg").innerText = avg.toFixed(1);
+}
+
+// ------------------------------
+// Dark Mode
+// ------------------------------
+function toggleDark() {
+  document.body.classList.toggle("dark");
+}
 </script>
 
 </body>
