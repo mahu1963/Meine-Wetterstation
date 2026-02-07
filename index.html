@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Wetterstation</title>
+<title>Wetterstation Dashboard</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
 <!-- Firebase -->
@@ -12,20 +12,48 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- externe Konfiguration -->
+<script src="config.js"></script>
+
 <style>
 body {
   font-family: Arial, sans-serif;
-  margin: 20px;
+  margin: 0;
   background: #f5f5f5;
   color: #222;
+  transition: background 0.3s, color 0.3s;
 }
 .dark {
   background: #111;
   color: #eee;
 }
-.card {
+header {
   padding: 15px;
-  margin-bottom: 20px;
+  background: #0078d4;
+  color: white;
+  text-align: center;
+  font-size: 1.5rem;
+}
+nav {
+  display: flex;
+  justify-content: space-around;
+  background: #ddd;
+}
+nav button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  background: #ddd;
+  font-size: 1rem;
+  cursor: pointer;
+}
+nav button.active {
+  background: #0078d4;
+  color: white;
+}
+.card {
+  margin: 20px;
+  padding: 15px;
   border-radius: 10px;
   background: white;
   box-shadow: 0 0 10px #0002;
@@ -38,109 +66,85 @@ body {
   font-size: 2rem;
   font-weight: bold;
 }
-button {
-  padding: 10px 20px;
-  margin-bottom: 20px;
+.hidden {
+  display: none;
 }
 </style>
 </head>
 
 <body>
 
-<button onclick="toggleDark()">Dark/Light</button>
+<header>
+  Wetterstation Dashboard
+  <button style="float:right;margin-top:-5px" onclick="toggleDark()">🌙</button>
+</header>
 
-<h1>Wetterstation</h1>
+<nav>
+  <button onclick="showTab('live')" class="active">Live</button>
+  <button onclick="showTab('today')">Heute</button>
+  <button onclick="showTab('week')">Woche</button>
+  <button onclick="showTab('year')">Jahr</button>
+  <button onclick="showTab('meta')">System</button>
+</nav>
 
-<div class="card">
-  <p>Temperatur: <span id="temp" class="value">--</span> °C</p>
-  <p>Luftfeuchte: <span id="hum" class="value">--</span> %</p>
-  <p>Luftdruck: <span id="pres" class="value">--</span> hPa</p>
+<!-- LIVE -->
+<div id="live" class="tab">
+  <div class="card">
+    <p>Temperatur: <span id="temp" class="value">--</span> °C</p>
+    <p>Luftfeuchte: <span id="hum" class="value">--</span> %</p>
+    <p>Luftdruck: <span id="pres" class="value">--</span> hPa</p>
+  </div>
 </div>
 
-<div class="card">
-  <h3>Temperaturverlauf heute</h3>
-  <canvas id="chart"></canvas>
-  <p>Min: <span id="min">--</span> °C</p>
-  <p>Max: <span id="max">--</span> °C</p>
-  <p>Avg: <span id="avg">--</span> °C</p>
+<!-- HEUTE -->
+<div id="today" class="tab hidden">
+  <div class="card">
+    <h3>Temperaturverlauf (24h)</h3>
+    <canvas id="chart24"></canvas>
+  </div>
+</div>
+
+<!-- WOCHE -->
+<div id="week" class="tab hidden">
+  <div class="card">
+    <h3>Wochendiagramm</h3>
+    <canvas id="chartWeek"></canvas>
+  </div>
+</div>
+
+<!-- JAHR -->
+<div id="year" class="tab hidden">
+  <div class="card">
+    <h3>Jahresübersicht</h3>
+    <canvas id="chartYear"></canvas>
+  </div>
+</div>
+
+<!-- META -->
+<div id="meta" class="tab hidden">
+  <div class="card">
+    <h3>Systeminformationen</h3>
+    <p>Gerät: <span id="metaDevice">--</span></p>
+    <p>Version: <span id="metaVersion">--</span></p>
+    <p>Letztes Update: <span id="metaTimestamp">--</span></p>
+    <p>Quelle: <span id="metaSource">--</span></p>
+  </div>
 </div>
 
 <script>
-// Firebase config
-const firebaseConfig = {
-  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app"
-};
+// Firebase initialisieren
 firebase.initializeApp(firebaseConfig);
-
 const db = firebase.database();
 
 // ------------------------------
-// Live-Daten
+// Tabs
 // ------------------------------
-db.ref("weather").on("value", snap => {
-  const d = snap.val();
-  document.getElementById("temp").innerText = d.temperature.toFixed(1);
-  document.getElementById("hum").innerText  = d.humidity.toFixed(1);
-  document.getElementById("pres").innerText = d.pressure.toFixed(1);
-});
+function showTab(id) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
 
-// ------------------------------
-// History-Daten für heute
-// ------------------------------
-const today = new Date();
-const y = today.getFullYear();
-const m = String(today.getMonth()+1).padStart(2,"0");
-const d = String(today.getDate()).padStart(2,"0");
-
-db.ref(`history/${y}/${m}/${d}`).on("value", snap => {
-  const data = snap.val();
-  if (!data) return;
-
-  const labels = [];
-  const temps = [];
-
-  for (let key in data) {
-    labels.push(key);
-    temps.push(data[key].temperature);
-  }
-
-  updateChart(labels, temps);
-  updateStats(temps);
-});
-
-// ------------------------------
-// Diagramm
-// ------------------------------
-let chart = null;
-
-function updateChart(labels, temps) {
-  if (chart) chart.destroy();
-
-  chart = new Chart(document.getElementById("chart"), {
-    type: "line",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "Temperatur",
-        data: temps,
-        borderColor: "red",
-        fill: false
-      }]
-    }
-  });
-}
-
-// ------------------------------
-// Statistik
-// ------------------------------
-function updateStats(temps) {
-  const min = Math.min(...temps);
-  const max = Math.max(...temps);
-  const avg = temps.reduce((a,b)=>a+b,0) / temps.length;
-
-  document.getElementById("min").innerText = min.toFixed(1);
-  document.getElementById("max").innerText = max.toFixed(1);
-  document.getElementById("avg").innerText = avg.toFixed(1);
+  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
+  event.target.classList.add("active");
 }
 
 // ------------------------------
@@ -148,6 +152,113 @@ function updateStats(temps) {
 // ------------------------------
 function toggleDark() {
   document.body.classList.toggle("dark");
+}
+
+// ------------------------------
+// Daten laden
+// ------------------------------
+db.ref("/").on("value", snap => {
+  const root = snap.val();
+  if (!root) return;
+
+  // LIVE
+  const c = root.current;
+  document.getElementById("temp").innerText = c.temperature.toFixed(1);
+  document.getElementById("hum").innerText  = c.humidity.toFixed(1);
+  document.getElementById("pres").innerText = c.pressure.toFixed(1);
+
+  // META
+  const m = root.meta;
+  document.getElementById("metaDevice").innerText = m.device;
+  document.getElementById("metaVersion").innerText = m.version;
+  document.getElementById("metaTimestamp").innerText = new Date(m.timestamp).toLocaleString();
+  document.getElementById("metaSource").innerText = m.source;
+
+  // 24h
+  update24h(root.history.last24h);
+
+  // Woche
+  updateWeek(root.history.week);
+
+  // Jahr
+  updateYear(root.history.year);
+});
+
+// ------------------------------
+// 24h Diagramm
+// ------------------------------
+let chart24 = null;
+function update24h(arr) {
+  if (!arr || arr.length === 0) return;
+
+  const labels = arr.map(e => new Date(e.timestamp).toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit"}));
+  const temps  = arr.map(e => e.temperature);
+
+  if (chart24) chart24.destroy();
+
+  chart24 = new Chart(document.getElementById("chart24"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Temperatur",
+        data: temps,
+        borderColor: "red",
+        tension: 0.2
+      }]
+    }
+  });
+}
+
+// ------------------------------
+// Wochen-Diagramm
+// ------------------------------
+let chartWeek = null;
+function updateWeek(arr) {
+  if (!arr || arr.length === 0) return;
+
+  const labels = arr.map(e => e.date);
+  const temps  = arr.map(e => e.temp_avg);
+
+  if (chartWeek) chartWeek.destroy();
+
+  chartWeek = new Chart(document.getElementById("chartWeek"), {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [{
+        label: "Ø Temperatur",
+        data: temps,
+        backgroundColor: "#0078d4"
+      }]
+    }
+  });
+}
+
+// ------------------------------
+// Jahres-Diagramm
+// ------------------------------
+let chartYear = null;
+function updateYear(arr) {
+  if (!arr || arr.length === 0) return;
+
+  const labels = arr.map(e => e.month);
+  const temps  = arr.map(e => e.temp_avg);
+
+  if (chartYear) chartYear.destroy();
+
+  chartYear = new Chart(document.getElementById("chartYear"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label: "Ø Temperatur",
+        data: temps,
+        borderColor: "#00a000",
+        tension: 0.2
+      }]
+    }
+  });
 }
 </script>
 
