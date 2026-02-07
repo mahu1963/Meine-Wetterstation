@@ -1,67 +1,65 @@
 <!DOCTYPE html>
-<html lang="de">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Meine Wetterstation</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #eef2f3;
-            margin: 0;
-            padding: 20px;
-        }
-        .card {
-            background: white;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        h2 {
-            margin-top: 0;
-        }
-        button {
-            padding: 10px 15px;
-            margin: 5px;
-            border: none;
-            background: #007bff;
-            color: white;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #0056c7;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Wetterstation</title>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-
 <body>
 
-    <div class="card">
-        <h2>Live‑Daten</h2>
-        <p>Temperatur: <span id="temp">--</span></p>
-        <p>Luftfeuchte: <span id="hum">--</span></p>
-        <p>Luftdruck: <span id="pres">--</span></p>
-        <p>Letztes Update: <span id="time">--</span></p>
-    </div>
+<h1>Wetterstation</h1>
 
-    <div class="card">
-        <h2>History</h2>
-        <button onclick="showToday()">Heute</button>
-        <button onclick="showWeek()">Woche</button>
-        <button onclick="showMonth()">Monat</button>
-        <button onclick="exportCSV()">CSV Export</button>
+<div>
+  <p>Temperatur: <span id="temp"></span> °C</p>
+  <p>Luftfeuchte: <span id="hum"></span> %</p>
+  <p>Luftdruck: <span id="pres"></span> hPa</p>
+</div>
 
-        <canvas id="chart" height="200"></canvas>
+<canvas id="chart" width="400" height="200"></canvas>
 
-        <div id="minmax"></div>
-    </div>
+<script>
+  // Firebase config
+  const firebaseConfig = {
+    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app"
+  };
+  firebase.initializeApp(firebaseConfig);
 
-    <script type="module" src="script.js"></script>
+  const db = firebase.database();
+
+  // Live-Daten
+  db.ref("weather").on("value", snap => {
+    const d = snap.val();
+    document.getElementById("temp").innerText = d.temperature.toFixed(1);
+    document.getElementById("hum").innerText  = d.humidity.toFixed(1);
+    document.getElementById("pres").innerText = d.pressure.toFixed(1);
+  });
+
+  // History-Daten
+  db.ref("history/2026/02/07").once("value", snap => {
+    const data = snap.val();
+    const labels = [];
+    const temps = [];
+
+    for (let key in data) {
+      labels.push(key);
+      temps.push(data[key].temperature);
+    }
+
+    new Chart(document.getElementById("chart"), {
+      type: "line",
+      data: {
+        labels: labels,
+        datasets: [{
+          label: "Temperatur",
+          data: temps,
+          borderColor: "red"
+        }]
+      }
+    });
+  });
+</script>
 
 </body>
 </html>
