@@ -2,17 +2,24 @@
   "meta": {
     "device": "ESP32-Weather",
     "version": 1,
-    "timestamp": 0,
-    "source": "backup"
+    "timestamp": 1736000000,
+    "source": "live"
   },
   "current": {
-    "temperature": 0,
-    "humidity": 0,
-    "pressure": 0
+    "temperature": 21.5,
+    "humidity": 45.2,
+    "pressure": 1013.2
   },
   "history": {
-    "last24h": [],
-    "week": [],
-    "year": []
+    "last24h": [
+      { "time": 1735960000, "temperature": 20.1, "humidity": 44.0, "pressure": 1012.8 },
+      { "time": 1735960900, "temperature": 20.3, "humidity": 44.2, "pressure": 1012.9 }
+    ],
+    "week": [
+      { "dayStamp": 1735862400, "min": 18.2, "max": 22.5 }
+    ],
+    "year": [
+      { "month": 0, "min": -2.1, "max": 8.3 }
+    ]
   }
 }
