@@ -1,48 +1,76 @@
 body {
-    margin: 0;
-    background: #0d0f12;
-    color: #e0e0e0;
-    font-family: Arial, sans-serif;
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  margin: 0;
+  padding: 10px;
+  -webkit-text-size-adjust: none;
 }
 
-nav {
-    display: flex;
-    gap: 10px;
-    padding: 10px;
-    background: #111418;
-    border-bottom: 2px solid #00eaff;
-}
-
-nav button {
-    background: #1a1d22;
-    color: #00eaff;
-    border: 1px solid #00eaff;
-    padding: 8px 14px;
-    cursor: pointer;
-    border-radius: 4px;
-}
-
-.page {
-    display: none;
-    padding: 20px;
+h1 {
+  margin-top: 0;
+  font-size: 1.6rem;
+  text-align: center;
 }
 
 .card {
-    background: #1a1d22;
-    border: 1px solid #00eaff;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 6px;
+  background: white;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
-.label {
-    font-size: 18px;
-    margin-bottom: 5px;
-    color: #00eaff;
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-#lastUpdate {
-    padding: 10px;
-    text-align: center;
-    color: #888;
+.tab-btn {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  background: #eee;
+  cursor: pointer;
+  font-size: 0.9rem;
+  flex: 1 1 calc(50% - 10px);
+  text-align: center;
+}
+
+.tab-btn.active {
+  background: #0078d4;
+  color: white;
+  border-color: #0078d4;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+canvas {
+  width: 100% !important;
+  height: auto !important;
+  max-height: 260px;
+}
+
+/* Mobile optimiert */
+@media (max-width: 480px) {
+  h1 {
+    font-size: 1.4rem;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .tab-btn {
+    font-size: 0.85rem;
+    padding: 8px;
+  }
 }
