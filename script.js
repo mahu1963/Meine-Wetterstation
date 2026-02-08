@@ -62,6 +62,9 @@ document.getElementById("btn-week").addEventListener("click", () => loadRange("w
 document.getElementById("btn-month").addEventListener("click", () => loadRange("month"));
 document.getElementById("btn-year").addEventListener("click", () => loadRange("year"));
 
+// Start immer mit Tag
+loadRange("day");
+
 // Dark/Light Mode
 const themeBtn = document.getElementById("btn-theme");
 themeBtn.addEventListener("click", () => {
