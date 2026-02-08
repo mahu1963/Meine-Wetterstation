@@ -78,7 +78,15 @@ function switchTab(btn) {
 // WebSocket verbinden
 // -------------------------------
 function connectWS() {
-  ws = new WebSocket("ws://" + location.hostname + "/ws");
+  let host = location.hostname;
+
+  // GitHub Pages / iOS Fix:
+  // Wenn die Seite NICHT vom ESP32 kommt → feste ESP32-IP verwenden
+  if (host.endsWith("github.io") || host === "" || host === "localhost") {
+      host = "192.168.178.22";   // <-- HIER deine ESP32-IP eintragen
+  }
+
+  ws = new WebSocket("ws://" + host + "/ws");
 
   ws.onmessage = (msg) => {
     const data = JSON.parse(msg.data);
@@ -227,3 +235,4 @@ window.addEventListener("resize", () => {
 
 </body>
 </html>
+
