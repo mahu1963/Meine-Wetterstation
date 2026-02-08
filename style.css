@@ -1,76 +1,48 @@
 body {
-  font-family: Arial, sans-serif;
-  background: #f4f4f4;
   margin: 0;
-  padding: 10px;
-  -webkit-text-size-adjust: none;
+  font-family: system-ui, sans-serif;
+  background: #111;
+  color: #eee;
 }
 
-h1 {
-  margin-top: 0;
-  font-size: 1.6rem;
+header {
   text-align: center;
+  padding: 1rem;
+  background: #222;
 }
 
-.card {
-  background: white;
-  padding: 15px;
-  margin-bottom: 15px;
-  border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+main {
+  padding: 1rem;
+  max-width: 900px;
+  margin: 0 auto;
 }
 
-.tabs {
+.buttons {
   display: flex;
-  gap: 8px;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-  justify-content: center;
+  gap: .5rem;
+  margin-bottom: 1rem;
 }
 
-.tab-btn {
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background: #eee;
+button {
+  padding: .4rem .8rem;
+  border: 1px solid #555;
+  background: #333;
+  color: #eee;
+  border-radius: 4px;
   cursor: pointer;
-  font-size: 0.9rem;
-  flex: 1 1 calc(50% - 10px);
-  text-align: center;
 }
 
-.tab-btn.active {
-  background: #0078d4;
-  color: white;
-  border-color: #0078d4;
-}
-
-.tab-content {
-  display: none;
-}
-
-.tab-content.active {
-  display: block;
+button.active {
+  background: #0a84ff;
+  border-color: #0a84ff;
 }
 
 canvas {
-  width: 100% !important;
-  height: auto !important;
-  max-height: 260px;
+  background: #181818;
+  border-radius: 6px;
 }
 
-/* Mobile optimiert */
-@media (max-width: 480px) {
-  h1 {
-    font-size: 1.4rem;
-  }
-
-  .card {
-    padding: 12px;
-  }
-
-  .tab-btn {
-    font-size: 0.85rem;
-    padding: 8px;
-  }
+#stats {
+  margin-top: .5rem;
+  color: #ccc;
 }
