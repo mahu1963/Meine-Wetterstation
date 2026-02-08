@@ -3,29 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <title>ESP32 Wetterstation</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
 
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    background: #f4f4f4;
-    margin: 0;
-    padding: 20px;
-  }
-  h1 { margin-top: 0; }
-  .card {
-    background: white;
-    padding: 15px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  }
-  canvas {
-    width: 100%;
-    height: 300px;
-  }
-</style>
-
+<link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
@@ -33,20 +13,66 @@
 <h1>ESP32 Wetterstation</h1>
 
 <div class="card">
-  <h2>Aktuelle Werte</h2>
-  <p><b>Temperatur:</b> <span id="t">--</span> °C</p>
-  <p><b>Luftfeuchtigkeit:</b> <span id="h">--</span> %</p>
-  <p><b>Luftdruck:</b> <span id="p">--</span> hPa</p>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="live">Live</button>
+    <button class="tab-btn" data-tab="last24">24h</button>
+    <button class="tab-btn" data-tab="week">Woche</button>
+    <button class="tab-btn" data-tab="year">Jahr</button>
+  </div>
 </div>
 
-<div class="card">
+<!-- LIVE -->
+<div class="card tab-content active" id="tab-live">
+  <h2>Live-Werte</h2>
+  <p><b>Temperatur:</b><br><span id="t" style="font-size:1.8rem;">--</span> °C</p>
+  <p><b>Luftfeuchtigkeit:</b><br><span id="h" style="font-size:1.8rem;">--</span> %</p>
+  <p><b>Luftdruck:</b><br><span id="p" style="font-size:1.8rem;">--</span> hPa</p>
+</div>
+
+<!-- 24H -->
+<div class="card tab-content" id="tab-last24">
   <h2>Verlauf – letzte 24 Stunden</h2>
-  <canvas id="chart24"></canvas>
+  <canvas id="chart24_temp"></canvas>
+  <canvas id="chart24_hum"></canvas>
+  <canvas id="chart24_pres"></canvas>
+</div>
+
+<!-- WOCHE -->
+<div class="card tab-content" id="tab-week">
+  <h2>Woche – Min/Max Temperatur</h2>
+  <canvas id="chartWeek_temp"></canvas>
+</div>
+
+<!-- JAHR -->
+<div class="card tab-content" id="tab-year">
+  <h2>Jahr – Min/Max Temperatur</h2>
+  <canvas id="chartYear_temp"></canvas>
 </div>
 
 <script>
 let ws;
-let chart24;
+
+// Charts
+let chart24Temp, chart24Hum, chart24Pres;
+let chartWeekTemp;
+let chartYearTemp;
+
+// -------------------------------
+// Tabs
+// -------------------------------
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("touchstart", () => switchTab(btn));
+  btn.addEventListener("click", () => switchTab(btn));
+});
+
+function switchTab(btn) {
+  document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
+  btn.classList.add("active");
+  const tabId = "tab-" + btn.dataset.tab;
+  document.getElementById(tabId).classList.add("active");
+}
 
 // -------------------------------
 // WebSocket verbinden
@@ -70,55 +96,133 @@ connectWS();
 // UI aktualisieren
 // -------------------------------
 function updateUI(data) {
+  // Live
   document.getElementById("t").textContent = data.current.temperature.toFixed(1);
   document.getElementById("h").textContent = data.current.humidity.toFixed(1);
   document.getElementById("p").textContent = data.current.pressure.toFixed(1);
 
-  updateChart24(data.history.last24h);
+  // Charts
+  update24hCharts(data.history.last24h);
+  updateWeekChart(data.history.week);
+  updateYearChart(data.history.year);
 }
 
 // -------------------------------
-// Chart initialisieren
+// Charts initialisieren
 // -------------------------------
-function initChart() {
-  const ctx = document.getElementById("chart24").getContext("2d");
+function initCharts() {
+  const c24t = document.getElementById("chart24_temp").getContext("2d");
+  const c24h = document.getElementById("chart24_hum").getContext("2d");
+  const c24p = document.getElementById("chart24_pres").getContext("2d");
+  const cWeek = document.getElementById("chartWeek_temp").getContext("2d");
+  const cYear = document.getElementById("chartYear_temp").getContext("2d");
 
-  chart24 = new Chart(ctx, {
+  chart24Temp = new Chart(c24t, {
     type: "line",
+    data: { labels: [], datasets: [{ label: "Temperatur (°C)", data: [], borderColor: "red", fill: false }] },
+    options: { responsive: true }
+  });
+
+  chart24Hum = new Chart(c24h, {
+    type: "line",
+    data: { labels: [], datasets: [{ label: "Luftfeuchtigkeit (%)", data: [], borderColor: "blue", fill: false }] },
+    options: { responsive: true }
+  });
+
+  chart24Pres = new Chart(c24p, {
+    type: "line",
+    data: { labels: [], datasets: [{ label: "Luftdruck (hPa)", data: [], borderColor: "green", fill: false }] },
+    options: { responsive: true }
+  });
+
+  chartWeekTemp = new Chart(cWeek, {
+    type: "bar",
     data: {
       labels: [],
       datasets: [
-        {
-          label: "Temperatur (°C)",
-          data: [],
-          borderColor: "red",
-          fill: false
-        }
+        { label: "Min (°C)", data: [], backgroundColor: "rgba(255,0,0,0.4)" },
+        { label: "Max (°C)", data: [], backgroundColor: "rgba(255,0,0,0.8)" }
       ]
     },
-    options: {
-      responsive: true,
-      scales: {
-        x: { display: false },
-        y: { beginAtZero: false }
-      }
-    }
+    options: { responsive: true }
+  });
+
+  chartYearTemp = new Chart(cYear, {
+    type: "bar",
+    data: {
+      labels: [],
+      datasets: [
+        { label: "Min (°C)", data: [], backgroundColor: "rgba(0,128,255,0.4)" },
+        { label: "Max (°C)", data: [], backgroundColor: "rgba(0,128,255,0.8)" }
+      ]
+    },
+    options: { responsive: true }
   });
 }
 
-initChart();
+initCharts();
 
 // -------------------------------
-// Chart aktualisieren
+// 24h Charts aktualisieren
 // -------------------------------
-function updateChart24(arr) {
+function update24hCharts(arr) {
   const labels = arr.map(e => new Date(e.time * 1000).toLocaleTimeString());
   const temps  = arr.map(e => e.temperature);
+  const hums   = arr.map(e => e.humidity);
+  const press  = arr.map(e => e.pressure);
 
-  chart24.data.labels = labels;
-  chart24.data.datasets[0].data = temps;
-  chart24.update();
+  chart24Temp.data.labels = labels;
+  chart24Temp.data.datasets[0].data = temps;
+  chart24Temp.update();
+
+  chart24Hum.data.labels = labels;
+  chart24Hum.data.datasets[0].data = hums;
+  chart24Hum.update();
+
+  chart24Pres.data.labels = labels;
+  chart24Pres.data.datasets[0].data = press;
+  chart24Pres.update();
 }
+
+// -------------------------------
+// Wochenchart aktualisieren
+// -------------------------------
+function updateWeekChart(arr) {
+  const labels = arr.map(e => new Date(e.dayStamp * 1000).toLocaleDateString());
+  const mins   = arr.map(e => e.min);
+  const maxs   = arr.map(e => e.max);
+
+  chartWeekTemp.data.labels = labels;
+  chartWeekTemp.data.datasets[0].data = mins;
+  chartWeekTemp.data.datasets[1].data = maxs;
+  chartWeekTemp.update();
+}
+
+// -------------------------------
+// Jahreschart aktualisieren
+// -------------------------------
+function updateYearChart(arr) {
+  const monthNames = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+  const labels = arr.map(e => monthNames[e.month]);
+  const mins   = arr.map(e => e.min);
+  const maxs   = arr.map(e => e.max);
+
+  chartYearTemp.data.labels = labels;
+  chartYearTemp.data.datasets[0].data = mins;
+  chartYearTemp.data.datasets[1].data = maxs;
+  chartYearTemp.update();
+}
+
+// -------------------------------
+// Charts bei Rotation neu skalieren
+// -------------------------------
+window.addEventListener("resize", () => {
+  if (chart24Temp) chart24Temp.resize();
+  if (chart24Hum)  chart24Hum.resize();
+  if (chart24Pres) chart24Pres.resize();
+  if (chartWeekTemp) chartWeekTemp.resize();
+  if (chartYearTemp) chartYearTemp.resize();
+});
 </script>
 
 </body>
