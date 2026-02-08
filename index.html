@@ -2,263 +2,122 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Wetterstation Dashboard</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- externe Konfiguration -->
-<script src="config.js"></script>
+<title>ESP32 Wetterstation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  background: #f5f5f5;
-  color: #222;
-  transition: background 0.3s, color 0.3s;
-}
-.dark {
-  background: #111;
-  color: #eee;
-}
-header {
-  padding: 15px;
-  background: #0078d4;
-  color: white;
-  text-align: center;
-  font-size: 1.5rem;
-}
-nav {
-  display: flex;
-  justify-content: space-around;
-  background: #ddd;
-}
-nav button {
-  flex: 1;
-  padding: 12px;
-  border: none;
-  background: #ddd;
-  font-size: 1rem;
-  cursor: pointer;
-}
-nav button.active {
-  background: #0078d4;
-  color: white;
-}
-.card {
-  margin: 20px;
-  padding: 15px;
-  border-radius: 10px;
-  background: white;
-  box-shadow: 0 0 10px #0002;
-}
-.dark .card {
-  background: #222;
-  box-shadow: 0 0 10px #0005;
-}
-.value {
-  font-size: 2rem;
-  font-weight: bold;
-}
-.hidden {
-  display: none;
-}
+  body {
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 { margin-top: 0; }
+  .card {
+    background: white;
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  canvas {
+    width: 100%;
+    height: 300px;
+  }
 </style>
-</head>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
 <body>
 
-<header>
-  Wetterstation Dashboard
-  <button style="float:right;margin-top:-5px" onclick="toggleDark()">🌙</button>
-</header>
+<h1>ESP32 Wetterstation</h1>
 
-<nav>
-  <button onclick="showTab('live')" class="active">Live</button>
-  <button onclick="showTab('today')">Heute</button>
-  <button onclick="showTab('week')">Woche</button>
-  <button onclick="showTab('year')">Jahr</button>
-  <button onclick="showTab('meta')">System</button>
-</nav>
-
-<!-- LIVE -->
-<div id="live" class="tab">
-  <div class="card">
-    <p>Temperatur: <span id="temp" class="value">--</span> °C</p>
-    <p>Luftfeuchte: <span id="hum" class="value">--</span> %</p>
-    <p>Luftdruck: <span id="pres" class="value">--</span> hPa</p>
-  </div>
+<div class="card">
+  <h2>Aktuelle Werte</h2>
+  <p><b>Temperatur:</b> <span id="t">--</span> °C</p>
+  <p><b>Luftfeuchtigkeit:</b> <span id="h">--</span> %</p>
+  <p><b>Luftdruck:</b> <span id="p">--</span> hPa</p>
 </div>
 
-<!-- HEUTE -->
-<div id="today" class="tab hidden">
-  <div class="card">
-    <h3>Temperaturverlauf (24h)</h3>
-    <canvas id="chart24"></canvas>
-  </div>
-</div>
-
-<!-- WOCHE -->
-<div id="week" class="tab hidden">
-  <div class="card">
-    <h3>Wochendiagramm</h3>
-    <canvas id="chartWeek"></canvas>
-  </div>
-</div>
-
-<!-- JAHR -->
-<div id="year" class="tab hidden">
-  <div class="card">
-    <h3>Jahresübersicht</h3>
-    <canvas id="chartYear"></canvas>
-  </div>
-</div>
-
-<!-- META -->
-<div id="meta" class="tab hidden">
-  <div class="card">
-    <h3>Systeminformationen</h3>
-    <p>Gerät: <span id="metaDevice">--</span></p>
-    <p>Version: <span id="metaVersion">--</span></p>
-    <p>Letztes Update: <span id="metaTimestamp">--</span></p>
-    <p>Quelle: <span id="metaSource">--</span></p>
-  </div>
+<div class="card">
+  <h2>Verlauf – letzte 24 Stunden</h2>
+  <canvas id="chart24"></canvas>
 </div>
 
 <script>
-// Firebase initialisieren
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+let ws;
+let chart24;
 
-// ------------------------------
-// Tabs
-// ------------------------------
-function showTab(id) {
-  document.querySelectorAll(".tab").forEach(t => t.classList.add("hidden"));
-  document.getElementById(id).classList.remove("hidden");
+// -------------------------------
+// WebSocket verbinden
+// -------------------------------
+function connectWS() {
+  ws = new WebSocket("ws://" + location.hostname + "/ws");
 
-  document.querySelectorAll("nav button").forEach(b => b.classList.remove("active"));
-  event.target.classList.add("active");
+  ws.onmessage = (msg) => {
+    const data = JSON.parse(msg.data);
+    updateUI(data);
+  };
+
+  ws.onclose = () => {
+    setTimeout(connectWS, 2000);
+  };
 }
 
-// ------------------------------
-// Dark Mode
-// ------------------------------
-function toggleDark() {
-  document.body.classList.toggle("dark");
+connectWS();
+
+// -------------------------------
+// UI aktualisieren
+// -------------------------------
+function updateUI(data) {
+  document.getElementById("t").textContent = data.current.temperature.toFixed(1);
+  document.getElementById("h").textContent = data.current.humidity.toFixed(1);
+  document.getElementById("p").textContent = data.current.pressure.toFixed(1);
+
+  updateChart24(data.history.last24h);
 }
 
-// ------------------------------
-// Daten laden
-// ------------------------------
-db.ref("/").on("value", snap => {
-  const root = snap.val();
-  if (!root) return;
+// -------------------------------
+// Chart initialisieren
+// -------------------------------
+function initChart() {
+  const ctx = document.getElementById("chart24").getContext("2d");
 
-  // LIVE
-  const c = root.current;
-  document.getElementById("temp").innerText = c.temperature.toFixed(1);
-  document.getElementById("hum").innerText  = c.humidity.toFixed(1);
-  document.getElementById("pres").innerText = c.pressure.toFixed(1);
+  chart24 = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [
+        {
+          label: "Temperatur (°C)",
+          data: [],
+          borderColor: "red",
+          fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { display: false },
+        y: { beginAtZero: false }
+      }
+    }
+  });
+}
 
-  // META
-  const m = root.meta;
-  document.getElementById("metaDevice").innerText = m.device;
-  document.getElementById("metaVersion").innerText = m.version;
-  document.getElementById("metaTimestamp").innerText = new Date(m.timestamp).toLocaleString();
-  document.getElementById("metaSource").innerText = m.source;
+initChart();
 
-  // 24h
-  update24h(root.history.last24h);
-
-  // Woche
-  updateWeek(root.history.week);
-
-  // Jahr
-  updateYear(root.history.year);
-});
-
-// ------------------------------
-// 24h Diagramm
-// ------------------------------
-let chart24 = null;
-function update24h(arr) {
-  if (!arr || arr.length === 0) return;
-
-  const labels = arr.map(e => new Date(e.timestamp).toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit"}));
+// -------------------------------
+// Chart aktualisieren
+// -------------------------------
+function updateChart24(arr) {
+  const labels = arr.map(e => new Date(e.time * 1000).toLocaleTimeString());
   const temps  = arr.map(e => e.temperature);
 
-  if (chart24) chart24.destroy();
-
-  chart24 = new Chart(document.getElementById("chart24"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [{
-        label: "Temperatur",
-        data: temps,
-        borderColor: "red",
-        tension: 0.2
-      }]
-    }
-  });
-}
-
-// ------------------------------
-// Wochen-Diagramm
-// ------------------------------
-let chartWeek = null;
-function updateWeek(arr) {
-  if (!arr || arr.length === 0) return;
-
-  const labels = arr.map(e => e.date);
-  const temps  = arr.map(e => e.temp_avg);
-
-  if (chartWeek) chartWeek.destroy();
-
-  chartWeek = new Chart(document.getElementById("chartWeek"), {
-    type: "bar",
-    data: {
-      labels,
-      datasets: [{
-        label: "Ø Temperatur",
-        data: temps,
-        backgroundColor: "#0078d4"
-      }]
-    }
-  });
-}
-
-// ------------------------------
-// Jahres-Diagramm
-// ------------------------------
-let chartYear = null;
-function updateYear(arr) {
-  if (!arr || arr.length === 0) return;
-
-  const labels = arr.map(e => e.month);
-  const temps  = arr.map(e => e.temp_avg);
-
-  if (chartYear) chartYear.destroy();
-
-  chartYear = new Chart(document.getElementById("chartYear"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [{
-        label: "Ø Temperatur",
-        data: temps,
-        borderColor: "#00a000",
-        tension: 0.2
-      }]
-    }
-  });
+  chart24.data.labels = labels;
+  chart24.data.datasets[0].data = temps;
+  chart24.update();
 }
 </script>
 
