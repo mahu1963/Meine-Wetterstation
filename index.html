@@ -18,14 +18,17 @@
 
 <header>
   <h1>Meine Wetterstation</h1>
-  <p>Temperaturverlauf aus Firebase</p>
+  <p>Diagramme aus Firebase</p>
 </header>
 
 <main>
   <div class="buttons">
+    <button id="btn-day">Tag</button>
     <button id="btn-week" class="active">Woche</button>
     <button id="btn-month">Monat</button>
     <button id="btn-year">Jahr</button>
+
+    <button id="btn-theme" class="theme-btn">🌞</button>
   </div>
 
   <canvas id="chart" height="120"></canvas>
