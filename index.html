@@ -3,45 +3,103 @@
 <head>
   <meta charset="UTF-8">
   <title>Meine Wetterstation</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#222222">
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-
-  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: sans-serif; background:#111; color:#eee; text-align:center; margin:0; padding:1rem; }
+    .cards { display:flex; justify-content:center; gap:1rem; margin:1rem; flex-wrap:wrap; }
+    .card { background:#222; padding:1rem 2rem; border-radius:10px; min-width:150px; }
+    canvas { max-width:900px; margin:1rem auto; background:#222; border-radius:10px; }
+  </style>
 </head>
 <body>
-
-<header>
   <h1>Meine Wetterstation</h1>
-  <p>Diagramme aus Firebase</p>
-</header>
-
-<main>
-  <div class="buttons">
-    <button id="btn-day">Tag</button>
-    <button id="btn-week" class="active">Woche</button>
-    <button id="btn-month">Monat</button>
-    <button id="btn-year">Jahr</button>
-
-    <button id="btn-theme" class="theme-btn">🌞</button>
+  <div class="cards">
+    <div class="card"><h2>Temperatur</h2><div id="temp">-- °C</div></div>
+    <div class="card"><h2>Feuchte</h2><div id="hum">-- %</div></div>
+    <div class="card"><h2>Druck</h2><div id="press">-- hPa</div></div>
   </div>
 
-  <canvas id="chart" height="120"></canvas>
-  <div id="stats"></div>
-</main>
+  <h2>Verlauf – heute</h2>
+  <canvas id="dayChart"></canvas>
 
-<script src="script.js"></script>
+  <script>
+    // >>> HIER deine firebaseConfig aus der Console einfügen <<<
+    const firebaseConfig = {
+      apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
+      authDomain: "meine-wetterstation.firebaseapp.com",
+      databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "meine-wetterstation",
+      storageBucket: "meine-wetterstation.appspot.com",
+      messagingSenderId: "593494014586",
+      appId: "DEINE_APP_ID"
+    };
 
-<script>
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("service-worker.js");
-}
-</script>
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
+    const tempEl  = document.getElementById('temp');
+    const humEl   = document.getElementById('hum');
+    const pressEl = document.getElementById('press');
+
+    // Live-Daten
+    db.ref('live').on('value', snap => {
+      const v = snap.val();
+      if (!v) return;
+      tempEl.textContent  = v.temperature.toFixed(1) + ' °C';
+      humEl.textContent   = v.humidity.toFixed(1) + ' %';
+      pressEl.textContent = v.pressure.toFixed(1) + ' hPa';
+    });
+
+    // Chart vorbereiten
+    const ctx = document.getElementById('dayChart').getContext('2d');
+    const dayData = {
+      labels: [],
+      datasets: [{
+        label: 'Temperatur (°C)',
+        data: [],
+        borderColor: 'orange',
+        tension: 0.2
+      }]
+    };
+    const dayChart = new Chart(ctx, {
+      type: 'line',
+      data: dayData,
+      options: {
+        scales: {
+          x: { ticks: { color:'#ccc' } },
+          y: { ticks: { color:'#ccc' } }
+        },
+        plugins: { legend: { labels:{ color:'#ccc' } } }
+      }
+    });
+
+    function loadToday() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth()+1).padStart(2,'0');
+      const dd = String(now.getDate()).padStart(2,'0');
+      const path = `day/${yyyy}-${mm}-${dd}`;
+
+      db.ref(path).once('value').then(snap => {
+        dayData.labels = [];
+        dayData.datasets[0].data = [];
+        snap.forEach(child => {
+          const v = child.val();
+          const t = new Date(v.timestamp * 1000);
+          const label =
+            t.getHours().toString().padStart(2,'0') + ':' +
+            t.getMinutes().toString().padStart(2,'0');
+          dayData.labels.push(label);
+          dayData.datasets[0].data.push(v.temperature);
+        });
+        dayChart.update();
+      });
+    }
+
+    loadToday();
+    setInterval(loadToday, 60000); // alle Minute aktualisieren
+  </script>
 </body>
 </html>
