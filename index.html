@@ -1,84 +1,86 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Meine Wetterstation</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌤️ Meine Wetterstation</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #eef2f3;
+      margin: 0;
       padding: 20px;
       text-align: center;
     }
+
     h1 {
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
+
     .card {
       background: white;
       padding: 20px;
-      margin: 15px auto;
-      width: 300px;
+      margin: 10px auto;
+      width: 250px;
       border-radius: 10px;
-      box-shadow: 0 0 10px #ccc;
-      font-size: 1.4em;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      font-size: 1.2rem;
     }
-    .value {
+
+    span {
       font-weight: bold;
-      font-size: 1.6em;
-      color: #0077cc;
     }
   </style>
 </head>
 <body>
 
-  <h1>🌤️ Test123 - Meine-Wetterstation</h1>
+  <h1>🌤️ Meine Wetterstation</h1>
 
-  <div class="card">
-    Temperatur: <span id="temp" class="value">–</span>
-  </div>
+  <div class="card">Temperatur: <span id="temp">–</span> °C</div>
+  <div class="card">Luftfeuchte: <span id="hum">–</span> %</div>
+  <div class="card">Luftdruck: <span id="pres">–</span> hPa</div>
 
-  <div class="card">
-    Luftfeuchte: <span id="hum" class="value">–</span>
-  </div>
-
-  <div class="card">
-    Luftdruck: <span id="pres" class="value">–</span>
-  </div>
-
-  <!-- Firebase compat SDK -->
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
   <script>
+    // Deine Firebase-Konfiguration
     const firebaseConfig = {
-      apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
+      apiKey: "DEIN_API_KEY",
       authDomain: "meine-wetterstation.firebaseapp.com",
-      databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app/",
+      databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "meine-wetterstation",
-      storageBucket: "meine-wetterstation.firebasestorage.app",
-      messagingSenderId: "593494014586",
-      appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
-      measurementId: "G-ST9RCRW888"
+      storageBucket: "meine-wetterstation.appspot.com",
+      messagingSenderId: "DEINE_SENDER_ID",
+      appId: "DEINE_APP_ID"
     };
 
+    // Firebase initialisieren
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    db.ref("weather/temperature").on("value", s => {
-      document.getElementById("temp").innerText = s.val() + " °C";
+    // HTML-Elemente referenzieren
+    const t = document.getElementById("temp");
+    const h = document.getElementById("hum");
+    const p = document.getElementById("pres");
+
+    // Listener für Temperatur
+    db.ref("weather/temperature").on("value", (snapshot) => {
+      t.textContent = snapshot.val();
     });
 
-    db.ref("weather/humidity").on("value", s => {
-      document.getElementById("hum").innerText = s.val() + " %";
+    // Listener für Luftfeuchte
+    db.ref("weather/humidity").on("value", (snapshot) => {
+      h.textContent = snapshot.val();
     });
 
-    db.ref("weather/pressure").on("value", s => {
-      document.getElementById("pres").innerText = s.val() + " hPa";
+    // Listener für Luftdruck
+    db.ref("weather/pressure").on("value", (snapshot) => {
+      p.textContent = snapshot.val();
     });
   </script>
 
 </body>
 </html>
-
-
