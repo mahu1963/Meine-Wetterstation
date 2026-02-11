@@ -35,7 +35,7 @@
 </head>
 <body>
 
-  <h1>🌤️ Meine Wetterstation</h1>
+  <h1>🌤️ test-Meine Wetterstation</h1>
 
   <div class="card">Temperatur: <span id="temp">–</span> °C</div>
   <div class="card">Luftfeuchte: <span id="hum">–</span> %</div>
@@ -46,7 +46,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
   <script>
-    // Deine Firebase-Konfiguration
+    // Firebase-Konfiguration
     const firebaseConfig = {
       apiKey: "DEIN_API_KEY",
       authDomain: "meine-wetterstation.firebaseapp.com",
@@ -61,7 +61,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // HTML-Elemente referenzieren
+    // HTML-Elemente referenzieren (DAS hat dir gefehlt!)
     const t = document.getElementById("temp");
     const h = document.getElementById("hum");
     const p = document.getElementById("pres");
