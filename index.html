@@ -47,47 +47,45 @@
         Luftdruck: <span id="pres" class="value">–</span>
     </div>
 
-    <!-- Firebase Script -->
-    <script type="module">
-  // Firebase Module Imports
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
-  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js";
+    <!-- Firebase compat SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
-  // Deine Firebase-Konfiguration
-  const firebaseConfig = {
-    apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
-    authDomain: "meine-wetterstation.firebaseapp.com",
-    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app/",
-    projectId: "meine-wetterstation",
-    storageBucket: "meine-wetterstation.firebasestorage.app",
-    messagingSenderId: "593494014586",
-    appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
-    measurementId: "G-ST9RCRW888"
-  };
+    <script>
+        // Firebase-Konfiguration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
+            authDomain: "meine-wetterstation.firebaseapp.com",
+            databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app/",
+            projectId: "meine-wetterstation",
+            storageBucket: "meine-wetterstation.firebasestorage.app",
+            messagingSenderId: "593494014586",
+            appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
+            measurementId: "G-ST9RCRW888"
+        };
 
-  // Firebase starten
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+        // Firebase starten
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-  // Referenzen zu deinen Daten
-  const tempRef = ref(db, "weather/temperature");
-  const humRef  = ref(db, "weather/humidity");
-  const presRef = ref(db, "weather/pressure");
+        // Datenpfade
+        const tempRef = db.ref("weather/temperature");
+        const humRef  = db.ref("weather/humidity");
+        const presRef = db.ref("weather/pressure");
 
-  // Live-Daten aus Firebase abrufen
-  onValue(tempRef, (snapshot) => {
-    document.getElementById("temp").innerText = snapshot.val() + " °C";
-  });
+        // Live-Daten abrufen
+        tempRef.on("value", (snapshot) => {
+            document.getElementById("temp").innerText = snapshot.val() + " °C";
+        });
 
-  onValue(humRef, (snapshot) => {
-    document.getElementById("hum").innerText = snapshot.val() + " %";
-  });
+        humRef.on("value", (snapshot) => {
+            document.getElementById("hum").innerText = snapshot.val() + " %";
+        });
 
-  onValue(presRef, (snapshot) => {
-    document.getElementById("pres").innerText = snapshot.val() + " hPa";
-  });
-</script>
+        presRef.on("value", (snapshot) => {
+            document.getElementById("pres").innerText = snapshot.val() + " hPa";
+        });
+    </script>
 
 </body>
 </html>
-
