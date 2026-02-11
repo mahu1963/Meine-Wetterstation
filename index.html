@@ -14,10 +14,6 @@
       text-align: center;
     }
 
-    h1 {
-      margin-bottom: 20px;
-    }
-
     .card {
       background: white;
       padding: 20px;
@@ -27,59 +23,45 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.2);
       font-size: 1.2rem;
     }
-
-    span {
-      font-weight: bold;
-    }
   </style>
 </head>
 <body>
 
-  <h1>🌤️ test-Meine Wetterstation</h1>
+  <h1>🌤️ Meine Wetterstation</h1>
 
   <div class="card">Temperatur: <span id="temp">–</span> °C</div>
   <div class="card">Luftfeuchte: <span id="hum">–</span> %</div>
   <div class="card">Luftdruck: <span id="pres">–</span> hPa</div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase COMPAT SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
   <script>
-    // Firebase-Konfiguration
     const firebaseConfig = {
-      apiKey: "DEIN_API_KEY",
+      apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
       authDomain: "meine-wetterstation.firebaseapp.com",
       databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "meine-wetterstation",
       storageBucket: "meine-wetterstation.appspot.com",
-      messagingSenderId: "DEINE_SENDER_ID",
-      appId: "DEINE_APP_ID"
+      messagingSenderId: "593494014586",
+      appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
+      measurementId: "G-ST9RCRW888"
     };
 
-    // Firebase initialisieren
+    // Firebase initialisieren (COMPAT!)
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // HTML-Elemente referenzieren (DAS hat dir gefehlt!)
+    // HTML-Elemente
     const t = document.getElementById("temp");
     const h = document.getElementById("hum");
     const p = document.getElementById("pres");
 
-    // Listener für Temperatur
-    db.ref("weather/temperature").on("value", (snapshot) => {
-      t.textContent = snapshot.val();
-    });
-
-    // Listener für Luftfeuchte
-    db.ref("weather/humidity").on("value", (snapshot) => {
-      h.textContent = snapshot.val();
-    });
-
-    // Listener für Luftdruck
-    db.ref("weather/pressure").on("value", (snapshot) => {
-      p.textContent = snapshot.val();
-    });
+    // Listener
+    db.ref("weather/temperature").on("value", snap => t.textContent = snap.val());
+    db.ref("weather/humidity").on("value", snap => h.textContent = snap.val());
+    db.ref("weather/pressure").on("value", snap => p.textContent = snap.val());
   </script>
 
 </body>
