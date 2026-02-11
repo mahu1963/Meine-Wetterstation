@@ -52,7 +52,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
     <script>
-        // Firebase-Konfiguration
         const firebaseConfig = {
             apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
             authDomain: "meine-wetterstation.firebaseapp.com",
@@ -64,26 +63,19 @@
             measurementId: "G-ST9RCRW888"
         };
 
-        // Firebase starten
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // Datenpfade
-        const tempRef = db.ref("weather/temperature");
-        const humRef  = db.ref("weather/humidity");
-        const presRef = db.ref("weather/pressure");
-
-        // Live-Daten abrufen
-        tempRef.on("value", (snapshot) => {
-            document.getElementById("temp").innerText = snapshot.val() + " °C";
+        db.ref("weather/temperature").on("value", s => {
+            document.getElementById("temp").innerText = s.val() + " °C";
         });
 
-        humRef.on("value", (snapshot) => {
-            document.getElementById("hum").innerText = snapshot.val() + " %";
+        db.ref("weather/humidity").on("value", s => {
+            document.getElementById("hum").innerText = s.val() + " %";
         });
 
-        presRef.on("value", (snapshot) => {
-            document.getElementById("pres").innerText = snapshot.val() + " hPa";
+        db.ref("weather/pressure").on("value", s => {
+            document.getElementById("pres").innerText = s.val() + " hPa";
         });
     </script>
 
