@@ -16,20 +16,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-    .glowbar {
-    width: 100%;
-    height: 6px;
-    background: linear-gradient(90deg, #00eaff, #00ff88, #aaff00, #ffcc00, #ff0044);
-    background-size: 400% 100%;
-    border-radius: 6px;
-    animation: glowmove 6s linear infinite;
-    margin-bottom: 10px;
-}
-
-@keyframes glowmove {
-    0% { background-position: 0% 0; }
-    100% { background-position: 400% 0; }
-}   
         /* Hintergrund */
         body {
             font-family: Arial, sans-serif;
@@ -37,16 +23,6 @@
             padding: 20px;
             background: linear-gradient(#b3e5ff, #e6f7ff);
             overflow-x: hidden;
-        }
-
-        .cloud:before,
-        .cloud:after {
-            content: "";
-            position: absolute;
-            background: white;
-            width: 120px;
-            height: 60px;
-            border-radius: 50px;
         }
 
         h1 {
@@ -60,7 +36,7 @@
             gap: 20px;
         }
 
-        /* Glas-Effekt */
+        /* Glas-Effekt-Karten */
         .wert {
             flex: 1 1 150px;
             background: rgba(255,255,255,0.35);
@@ -91,6 +67,22 @@
             text-shadow: 0 0 6px currentColor;
         }
 
+        /* Animierte Leiste über den Zahlen */
+        .glowbar {
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, #00eaff, #00ff88, #aaff00, #ffcc00, #ff0044);
+            background-size: 400% 100%;
+            border-radius: 6px;
+            animation: glowmove 6s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes glowmove {
+            0% { background-position: 0% 0; }
+            100% { background-position: 400% 0; }
+        }
+
         /* Charts */
         canvas {
             margin-top: 40px;
@@ -102,7 +94,7 @@
             filter: drop-shadow(0 0 6px rgba(255,255,255,0.6));
         }
 
-        /* Pop-Animation */
+        /* Pop-Animation für Zahlen */
         .value-animate {
             animation: pop 0.4s ease;
         }
@@ -129,18 +121,21 @@
 <!-- Live-Werte -->
 <div class="werte">
     <div class="wert">
+        <div class="glowbar"></div>
         <i class="fa-solid fa-temperature-three-quarters"></i>
         <span id="temp" class="fluo">–</span> °C
         <i id="tempTrend" class="trend"></i>
     </div>
 
     <div class="wert">
+        <div class="glowbar"></div>
         <i class="fa-solid fa-droplet"></i>
         <span id="hum" class="fluo">–</span> %
         <i id="humTrend" class="trend"></i>
     </div>
 
     <div class="wert">
+        <div class="glowbar"></div>
         <i class="fa-solid fa-gauge-high"></i>
         <span id="press" class="fluo">–</span> hPa
         <i id="pressTrend" class="trend"></i>
@@ -151,11 +146,13 @@
 <h2>Min/Max (24h)</h2>
 <div class="werte">
     <div class="wert">
+        <div class="glowbar"></div>
         <i class="fa-solid fa-arrow-up"></i>
         <span id="tempMax">–</span> °C (Max)
     </div>
 
     <div class="wert">
+        <div class="glowbar"></div>
         <i class="fa-solid fa-arrow-down"></i>
         <span id="tempMin">–</span> °C (Min)
     </div>
@@ -243,12 +240,6 @@
         animateValue("temp");
         updateTrend("tempTrend", v, lastTemp);
         lastTemp = v;
-    <div class="wert">
-    <div class="glowbar"></div>
-    <i class="fa-solid fa-temperature-three-quarters"></i>
-    <span id="temp" class="fluo">–</span> °C
-    <i id="tempTrend" class="trend"></i>
-</div>
     });
 
     db.ref("weather/humidity").on("value", s => {
@@ -257,12 +248,6 @@
         animateValue("hum");
         updateTrend("humTrend", v, lastHum);
         lastHum = v;
-    <div class="wert">
-    <div class="glowbar"></div>
-    <i class="fa-solid fa-temperature-three-quarters"></i>
-    <span id="temp" class="fluo">–</span> °C
-    <i id="tempTrend" class="trend"></i>
-</div>
     });
 
     db.ref("weather/pressure").on("value", s => {
@@ -271,12 +256,6 @@
         animateValue("press");
         updateTrend("pressTrend", v, lastPress);
         lastPress = v;
-    <div class="wert">
-    <div class="glowbar"></div>
-    <i class="fa-solid fa-temperature-three-quarters"></i>
-    <span id="temp" class="fluo">–</span> °C
-    <i id="tempTrend" class="trend"></i>
-</div>
     });
 
     /* Charts */
@@ -352,4 +331,3 @@
 
 </body>
 </html>
-
