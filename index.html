@@ -99,11 +99,11 @@
     gap:18px;
 ">
 
-    <!-- Icon-Cluster -->
-    <div style="display:flex; gap:12px; align-items:center;">
-        <i class="fa-solid fa-sun" style="font-size:2.8rem; color:#FFD700;"></i>
-        <i class="fa-solid fa-cloud" style="font-size:2.8rem; color:#888;"></i>
-        <i class="fa-solid fa-temperature-three-quarters" style="font-size:2.8rem; color:#ff3333;"></i>
+    <!-- Icon-Cluster (klein & übereinander) -->
+    <div style="display:flex; flex-direction:column; gap:6px; align-items:center;">
+        <i class="fa-solid fa-sun" style="font-size:1.8rem; color:#FFD700;"></i>
+        <i class="fa-solid fa-cloud" style="font-size:1.8rem; color:#888;"></i>
+        <i class="fa-solid fa-temperature-three-quarters" style="font-size:1.8rem; color:#ff3333;"></i>
     </div>
 
     <!-- Titel -->
@@ -113,6 +113,9 @@
         </div>
         <div style="font-size:1.4rem; color:#005599; margin-top:3px;">
             Martin Huber
+        </div>
+        <div id="location" style="font-size:1.1rem; color:#003366; margin-top:6px;">
+            Standort wird geladen…
         </div>
     </div>
 
@@ -161,6 +164,30 @@
 <canvas id="yearChart"></canvas>
 
 <script>
+
+<script>
+// Live-Ortserkennung
+if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+        pos => {
+            const lat = pos.coords.latitude.toFixed(5);
+            const lon = pos.coords.longitude.toFixed(5);
+
+            document.getElementById("location").textContent =
+                "📍 Standort: " + lat + ", " + lon;
+        },
+        err => {
+            document.getElementById("location").textContent =
+                "📍 Standort konnte nicht ermittelt werden";
+        }
+    );
+} else {
+    document.getElementById("location").textContent =
+        "📍 Standort nicht verfügbar";
+
+/* Firebase Config */
+const firebaseConfig = {
+    ...    
 /* Firebase Config */
 const firebaseConfig = {
     apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
@@ -321,3 +348,4 @@ loadYears();
 
 </body>
 </html>
+
