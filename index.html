@@ -23,18 +23,12 @@
             background: linear-gradient(#b3e5ff, #e6f7ff);
         }
 
-        h1 {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
         .werte {
             display: flex;
             flex-wrap: wrap;
             gap: 20px;
         }
 
-        /* Glas-Effekt-Karten */
         .wert {
             flex: 1 1 150px;
             background: rgba(255,255,255,0.45);
@@ -47,7 +41,6 @@
             color: #222;
         }
 
-        /* Farben */
         .tempColor { color: #ff3333; }
         .humColor { color: #ff8800; }
         .pressColor { color: #0033cc; }
@@ -57,17 +50,14 @@
             margin-left: 10px;
         }
 
-        /* Glowbar */
         .glowbar {
             width: 100%;
             height: 6px;
             background: linear-gradient(90deg, #ff9999, #ff3333);
-            background-size: 200% 100%;
             border-radius: 6px;
             margin-bottom: 10px;
         }
 
-        /* Charts */
         canvas {
             margin-top: 40px;
             background: rgba(255,255,255,0.45);
@@ -87,8 +77,32 @@
 </head>
 <body>
 
-<h1>Wetter Stuben-Bernstein 
- Martin Huber  </h1>
+<!-- Titelbox mit Glas-Effekt -->
+<div style="
+    width:100%;
+    background:rgba(255,255,255,0.45);
+    backdrop-filter:blur(6px);
+    padding:15px 20px;
+    border-radius:12px;
+    margin-bottom:25px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.1);
+    display:flex;
+    align-items:center;
+    gap:15px;
+">
+
+    <i class="fa-solid fa-cloud-sun" style="font-size:3rem; color:#ff8800;"></i>
+
+    <div>
+        <div style="font-size:2.2rem; font-weight:bold; color:#003366; margin:0;">
+            Wetter Stuben‑Bernstein
+        </div>
+        <div style="font-size:1.4rem; color:#005599; margin-top:3px;">
+            Martin Huber
+        </div>
+    </div>
+
+</div>
 
 <!-- Live-Werte -->
 <div class="werte">
@@ -293,8 +307,3 @@ loadYears();
 
 </body>
 </html>
-
-
-
-
-
