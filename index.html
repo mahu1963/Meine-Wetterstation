@@ -204,7 +204,10 @@ function addHistory(ref, chart, since, callback) {
 }
 
 /* Temperatur 24h */
-addHistory("history/temperature", tempChart, since24h, val => {
+addHistory("history/temperature", tempChart, since24h, val =>              
+addHistory("history/pressure", pressDay, since24h);  
+ addHistory("history/humidity", humDay, since24h);
+addHistory("history/pressure", pressDay, since24h);      
     tempValues.push(val);
     document.getElementById("tempMax").textContent = Math.max(...tempValues).toFixed(1);
     document.getElementById("tempMin").textContent = Math.min(...tempValues).toFixed(1);
@@ -287,5 +290,6 @@ loadYears();
 
 </body>
 </html>    
+
 
 
