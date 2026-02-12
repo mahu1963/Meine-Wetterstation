@@ -63,6 +63,36 @@
             border-radius: 12px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.1);
         }
+    canvas {
+    filter: drop-shadow(0 0 6px rgba(255,255,255,0.6));
+}
+
+        @media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 1.6rem;
+    }
+
+    .werte {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .wert {
+        font-size: 1.3rem;
+        padding: 15px;
+    }
+
+    canvas {
+        width: 100% !important;
+        height: auto !important;
+        padding: 10px;
+        margin-top: 25px;
+    }
+}   
     </style>
 </head>
 <body>
@@ -232,11 +262,30 @@
     }
 
     // Temperatur 24h + Min/Max
+    function applyTempGradient(chart) {
+    const ctx = chart.ctx;
+    const gradient = ctx.createLinearGradient(0, 0, 0, chart.height);
+
+    // Farbverlauf: heiß → warm → mild → kühl → kalt
+    gradient.addColorStop(0, "#ff0044");    // rot
+    gradient.addColorStop(0.25, "#ffcc00"); // gelb
+    gradient.addColorStop(0.5, "#aaff00");  // grün
+    gradient.addColorStop(0.75, "#00ff88"); // türkis
+    gradient.addColorStop(1, "#00e5ff");    // blau
+
+    chart.data.datasets[0].borderColor = gradient;
+    chart.data.datasets[0].backgroundColor = gradient;
+    chart.update();
+}
+    
     addHistory("history/temperature", tempChart, since24h, val => {
-        tempValues.push(val);
-        document.getElementById("tempMax").textContent = Math.max(...tempValues).toFixed(1);
-        document.getElementById("tempMin").textContent = Math.min(...tempValues).toFixed(1);
-    });
+    tempValues.push(val);
+
+    document.getElementById("tempMax").textContent = Math.max(...tempValues).toFixed(1);
+    document.getElementById("tempMin").textContent = Math.min(...tempValues).toFixed(1);
+
+    applyTempGradient(tempChart);
+});
 
     addHistory("history/humidity", humChart, since24h);
     addHistory("history/pressure", pressChart, since24h);
@@ -245,5 +294,32 @@
     addHistory("history/temperature", tempMonth, sinceMonth);
 </script>
 
+    <script>
+    function applyTempGradient(chart) {
+        const ctx = chart.ctx;
+        const gradient = ctx.createLinearGradient(0, 0, 0, chart.height);
+
+        gradient.addColorStop(0, "#ff0044");
+        gradient.addColorStop(0.25, "#ffcc00");
+        gradient.addColorStop(0.5, "#aaff00");
+        gradient.addColorStop(0.75, "#00ff88");
+        gradient.addColorStop(1, "#00e5ff");
+
+        chart.data.datasets[0].borderColor = gradient;
+        chart.data.datasets[0].backgroundColor = gradient;
+        chart.update();
+    }
+
+    addHistory("history/temperature", tempChart, since24h, val => {
+        tempValues.push(val);
+
+        document.getElementById("tempMax").textContent = Math.max(...tempValues).toFixed(1);
+        document.getElementById("tempMin").textContent = Math.min(...tempValues).toFixed(1);
+
+        applyTempGradient(tempChart);
+    });
+</script>
+    
 </body>
 </html>
+
