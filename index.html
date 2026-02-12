@@ -11,16 +11,46 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Firebase v8 (funktioniert im Browser ohne Module) -->
+    <!-- Firebase v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
+        /* Hintergrund */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
-            background: #f0f0f0;
+            background: linear-gradient(#b3e5ff, #e6f7ff);
+            overflow-x: hidden;
+        }
+
+        /* Wolken */
+        .cloud {
+            position: absolute;
+            width: 200px;
+            height: 60px;
+            background: white;
+            border-radius: 50px;
+            filter: blur(2px);
+            opacity: 0.8;
+            animation: moveClouds 60s linear infinite;
+        }
+        .cloud:before,
+        .cloud:after {
+            content: "";
+            position: absolute;
+            background: white;
+            width: 120px;
+            height: 60px;
+            border-radius: 50px;
+        }
+        .cloud:before { top: -20px; left: 20px; }
+        .cloud:after { top: 10px; left: 100px; }
+
+        @keyframes moveClouds {
+            from { transform: translateX(-300px); }
+            to { transform: translateX(120vw); }
         }
 
         h1 {
@@ -51,51 +81,54 @@
             color: #444;
         }
 
+        /* Fluoreszierende Werte */
+        .fluo {
+            color: #00fff2;
+            text-shadow: 0 0 8px #00fff2, 0 0 15px #00fff2;
+        }
+
         .trend {
             font-size: 1.4rem;
             margin-left: 10px;
+            text-shadow: 0 0 6px currentColor;
         }
 
+        /* Glow für Charts */
         canvas {
             margin-top: 40px;
             background: white;
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            filter: drop-shadow(0 0 6px rgba(255,255,255,0.6));
         }
-    canvas {
-    filter: drop-shadow(0 0 6px rgba(255,255,255,0.6));
-}
 
+        /* Pop-Animation */
+        .value-animate {
+            animation: pop 0.4s ease;
+        }
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.25); }
+            100% { transform: scale(1); }
+        }
+
+        /* Mobile */
         @media (max-width: 600px) {
-    body {
-        padding: 10px;
-    }
-
-    h1 {
-        font-size: 1.6rem;
-    }
-
-    .werte {
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .wert {
-        font-size: 1.3rem;
-        padding: 15px;
-    }
-
-    canvas {
-        width: 100% !important;
-        height: auto !important;
-        padding: 10px;
-        margin-top: 25px;
-    }
-}   
+            body { padding: 10px; }
+            h1 { font-size: 1.6rem; }
+            .werte { flex-direction: column; gap: 15px; }
+            .wert { font-size: 1.3rem; padding: 15px; }
+            canvas { width: 100% !important; height: auto !important; padding: 10px; margin-top: 25px; }
+        }
     </style>
 </head>
 <body>
+
+<!-- Wolken -->
+<div class="cloud" style="top:80px; animation-duration: 55s;"></div>
+<div class="cloud" style="top:150px; animation-duration: 70s;"></div>
+<div class="cloud" style="top:220px; animation-duration: 90s;"></div>
 
 <h1>Meine Wetterstation</h1>
 
@@ -103,19 +136,19 @@
 <div class="werte">
     <div class="wert">
         <i class="fa-solid fa-temperature-three-quarters"></i>
-        <span id="temp">–</span> °C
+        <span id="temp" class="fluo">–</span> °C
         <i id="tempTrend" class="trend"></i>
     </div>
 
     <div class="wert">
         <i class="fa-solid fa-droplet"></i>
-        <span id="hum">–</span> %
+        <span id="hum" class="fluo">–</span> %
         <i id="humTrend" class="trend"></i>
     </div>
 
     <div class="wert">
         <i class="fa-solid fa-gauge-high"></i>
-        <span id="press">–</span> hPa
+        <span id="press" class="fluo">–</span> hPa
         <i id="pressTrend" class="trend"></i>
     </div>
 </div>
@@ -151,7 +184,7 @@
 <canvas id="tempMonth"></canvas>
 
 <script>
-    // 🔥 KORREKTE Firebase-Konfiguration
+    /* Firebase Config */
     const firebaseConfig = {
         apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
         authDomain: "meine-wetterstation.firebaseapp.com",
@@ -166,11 +199,15 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // Trend-Variablen
-    let lastTemp = null;
-    let lastHum = null;
-    let lastPress = null;
+    /* Pop-Animation */
+    function animateValue(id) {
+        const el = document.getElementById(id);
+        el.classList.remove("value-animate");
+        void el.offsetWidth;
+        el.classList.add("value-animate");
+    }
 
+    /* Trend */
     function updateTrend(id, current, last) {
         const el = document.getElementById(id);
         if (last === null) return;
@@ -187,10 +224,29 @@
         }
     }
 
-    // Live-Werte
+    /* Farbverlauf für Temperaturdiagramm */
+    function applyTempGradient(chart) {
+        const ctx = chart.ctx;
+        const gradient = ctx.createLinearGradient(0, 0, 0, chart.height);
+
+        gradient.addColorStop(0, "#ff0044");
+        gradient.addColorStop(0.25, "#ffcc00");
+        gradient.addColorStop(0.5, "#aaff00");
+        gradient.addColorStop(0.75, "#00ff88");
+        gradient.addColorStop(1, "#00e5ff");
+
+        chart.data.datasets[0].borderColor = gradient;
+        chart.data.datasets[0].backgroundColor = gradient;
+        chart.update();
+    }
+
+    /* Live-Werte */
+    let lastTemp = null, lastHum = null, lastPress = null;
+
     db.ref("weather/temperature").on("value", s => {
         const v = s.val();
         document.getElementById("temp").textContent = v.toFixed(1);
+        animateValue("temp");
         updateTrend("tempTrend", v, lastTemp);
         lastTemp = v;
     });
@@ -198,6 +254,7 @@
     db.ref("weather/humidity").on("value", s => {
         const v = s.val();
         document.getElementById("hum").textContent = v.toFixed(1);
+        animateValue("hum");
         updateTrend("humTrend", v, lastHum);
         lastHum = v;
     });
@@ -205,11 +262,12 @@
     db.ref("weather/pressure").on("value", s => {
         const v = s.val();
         document.getElementById("press").textContent = v.toFixed(1);
+        animateValue("press");
         updateTrend("pressTrend", v, lastPress);
         lastPress = v;
     });
 
-    // Chart.js Setup
+    /* Charts */
     function createChart(id, label, color) {
         return new Chart(document.getElementById(id).getContext('2d'), {
             type: 'line',
@@ -220,8 +278,12 @@
                     data: [],
                     borderColor: color,
                     backgroundColor: color + "33",
-                    tension: 0.2
+                    tension: 0.3
                 }]
+            },
+            options: {
+                animation: { duration: 1200, easing: "easeInOutQuart" },
+                elements: { point: { radius: 0 } }
             }
         });
     }
@@ -232,7 +294,7 @@
     const tempWeek = createChart("tempWeek", "Temp (°C)", "orange");
     const tempMonth = createChart("tempMonth", "Temp (°C)", "purple");
 
-    // History-Daten
+    /* History */
     const now = Math.floor(Date.now() / 1000);
     const since24h = now - 86400;
     const sinceWeek = now - 7 * 86400;
@@ -261,31 +323,13 @@
             });
     }
 
-    // Temperatur 24h + Min/Max
-    function applyTempGradient(chart) {
-    const ctx = chart.ctx;
-    const gradient = ctx.createLinearGradient(0, 0, 0, chart.height);
-
-    // Farbverlauf: heiß → warm → mild → kühl → kalt
-    gradient.addColorStop(0, "#ff0044");    // rot
-    gradient.addColorStop(0.25, "#ffcc00"); // gelb
-    gradient.addColorStop(0.5, "#aaff00");  // grün
-    gradient.addColorStop(0.75, "#00ff88"); // türkis
-    gradient.addColorStop(1, "#00e5ff");    // blau
-
-    chart.data.datasets[0].borderColor = gradient;
-    chart.data.datasets[0].backgroundColor = gradient;
-    chart.update();
-}
-    
+    /* Temperatur 24h + Farbverlauf */
     addHistory("history/temperature", tempChart, since24h, val => {
-    tempValues.push(val);
-
-    document.getElementById("tempMax").textContent = Math.max(...tempValues).toFixed(1);
-    document.getElementById("tempMin").textContent = Math.min(...tempValues).toFixed(1);
-
-    applyTempGradient(tempChart);
-});
+        tempValues.push(val);
+        document.getElementById("tempMax").textContent = Math.max(...tempValues).toFixed(1);
+        document.getElementById("tempMin").textContent = Math.min(...tempValues).toFixed(1);
+        applyTempGradient(tempChart);
+    });
 
     addHistory("history/humidity", humChart, since24h);
     addHistory("history/pressure", pressChart, since24h);
@@ -294,32 +338,5 @@
     addHistory("history/temperature", tempMonth, sinceMonth);
 </script>
 
-    <script>
-    function applyTempGradient(chart) {
-        const ctx = chart.ctx;
-        const gradient = ctx.createLinearGradient(0, 0, 0, chart.height);
-
-        gradient.addColorStop(0, "#ff0044");
-        gradient.addColorStop(0.25, "#ffcc00");
-        gradient.addColorStop(0.5, "#aaff00");
-        gradient.addColorStop(0.75, "#00ff88");
-        gradient.addColorStop(1, "#00e5ff");
-
-        chart.data.datasets[0].borderColor = gradient;
-        chart.data.datasets[0].backgroundColor = gradient;
-        chart.update();
-    }
-
-    addHistory("history/temperature", tempChart, since24h, val => {
-        tempValues.push(val);
-
-        document.getElementById("tempMax").textContent = Math.max(...tempValues).toFixed(1);
-        document.getElementById("tempMin").textContent = Math.min(...tempValues).toFixed(1);
-
-        applyTempGradient(tempChart);
-    });
-</script>
-    
 </body>
 </html>
-
