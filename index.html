@@ -19,8 +19,15 @@
         body {
             font-family: Arial, sans-serif;
             margin: 0;
-            padding: 20px;
-            background: linear-gradient(#b3e5ff, #e6f7ff);
+            padding: 15px;
+            background: linear-gradient(#cfe9ff, #eaf6ff);
+        }
+
+        /* Mobile Optimierung */
+        @media (max-width: 600px) {
+            body { padding: 10px; }
+            .werte { flex-direction: column; gap: 15px; }
+            canvas { width: 100% !important; height: auto !important; }
         }
 
         .werte {
@@ -31,16 +38,17 @@
 
         .wert {
             flex: 1 1 150px;
-            background: rgba(255,255,255,0.45);
-            backdrop-filter: blur(6px);
+            background: rgba(255,255,255,0.55);
+            backdrop-filter: blur(8px);
             padding: 20px;
-            border-radius: 12px;
+            border-radius: 14px;
             text-align: center;
             font-size: 1.6rem;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
             color: #222;
         }
 
+        /* Farben */
         .tempColor { color: #ff3333; }
         .humColor { color: #ff8800; }
         .pressColor { color: #0033cc; }
@@ -53,18 +61,18 @@
         .glowbar {
             width: 100%;
             height: 6px;
-            background: linear-gradient(90deg, #ff9999, #ff3333);
+            background: linear-gradient(90deg, #ffcccc, #ff3333);
             border-radius: 6px;
             margin-bottom: 10px;
         }
 
         canvas {
             margin-top: 40px;
-            background: rgba(255,255,255,0.45);
-            backdrop-filter: blur(6px);
+            background: rgba(255,255,255,0.55);
+            backdrop-filter: blur(8px);
             padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            border-radius: 14px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
         }
 
         #yearSelect {
@@ -80,19 +88,25 @@
 <!-- Titelbox mit Glas-Effekt -->
 <div style="
     width:100%;
-    background:rgba(255,255,255,0.45);
-    backdrop-filter:blur(6px);
-    padding:15px 20px;
-    border-radius:12px;
+    background:rgba(255,255,255,0.55);
+    backdrop-filter:blur(8px);
+    padding:18px 20px;
+    border-radius:14px;
     margin-bottom:25px;
-    box-shadow:0 3px 8px rgba(0,0,0,0.1);
+    box-shadow:0 4px 10px rgba(0,0,0,0.12);
     display:flex;
     align-items:center;
-    gap:15px;
+    gap:18px;
 ">
 
-    <i class="fa-solid fa-cloud-sun" style="font-size:3rem; color:#ff8800;"></i>
+    <!-- Icon-Cluster -->
+    <div style="display:flex; gap:12px; align-items:center;">
+        <i class="fa-solid fa-sun" style="font-size:2.8rem; color:#FFD700;"></i>
+        <i class="fa-solid fa-cloud" style="font-size:2.8rem; color:#888;"></i>
+        <i class="fa-solid fa-temperature-three-quarters" style="font-size:2.8rem; color:#ff3333;"></i>
+    </div>
 
+    <!-- Titel -->
     <div>
         <div style="font-size:2.2rem; font-weight:bold; color:#003366; margin:0;">
             Wetter Stuben‑Bernstein
