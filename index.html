@@ -64,9 +64,11 @@
             gap: 20px;
         }
 
+        /* Glas-Effekt */
         .wert {
             flex: 1 1 150px;
-            background: white;
+            background: rgba(255,255,255,0.35);
+            backdrop-filter: blur(6px);
             padding: 20px;
             border-radius: 12px;
             text-align: center;
@@ -93,10 +95,11 @@
             text-shadow: 0 0 6px currentColor;
         }
 
-        /* Glow für Charts */
+        /* Charts */
         canvas {
             margin-top: 40px;
-            background: white;
+            background: rgba(255,255,255,0.35);
+            backdrop-filter: blur(6px);
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.1);
