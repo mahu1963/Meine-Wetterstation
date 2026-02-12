@@ -16,13 +16,11 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        /* Hintergrund */
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 20px;
             background: linear-gradient(#b3e5ff, #e6f7ff);
-            overflow-x: hidden;
         }
 
         h1 {
@@ -49,17 +47,8 @@
             color: #222;
         }
 
-        .wert i {
-            display: block;
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
         /* Farben */
         .tempColor { color: #ff3333; }
-        .humColor { color: #ff8800; }
-        .pressColor { color: #0033cc; }
 
         .trend {
             font-size: 1.4rem;
@@ -70,7 +59,7 @@
         .glowbar {
             width: 100%;
             height: 6px;
-            background: linear-gradient(90deg, #66ccff, #99ddff);
+            background: linear-gradient(90deg, #ff9999, #ff3333);
             background-size: 200% 100%;
             border-radius: 6px;
             margin-bottom: 10px;
@@ -86,13 +75,12 @@
             box-shadow: 0 3px 8px rgba(0,0,0,0.1);
         }
 
-        /* Mobile */
-        @media (max-width: 600px) {
-            body { padding: 10px; }
-            h1 { font-size: 1.6rem; }
-            .werte { flex-direction: column; gap: 15px; }
-            .wert { font-size: 1.3rem; padding: 15px; }
-            canvas { width: 100% !important; height: auto !important; padding: 10px; margin-top: 25px; }
+        /* Dropdown */
+        #yearSelect {
+            padding: 10px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -111,24 +99,6 @@
 
     <div class="wert">
         <div class="glowbar"></div>
-        <i class="fa-solid fa-droplet humColor"></i>
-        <span id="hum" class="humColor">–</span> %
-        <i id="humTrend" class="trend humColor"></i>
-    </div>
-
-    <div class="wert">
-        <div class="glowbar"></div>
-        <i class="fa-solid fa-gauge-high pressColor"></i>
-        <span id="press" class="pressColor">–</span> hPa
-        <i id="pressTrend" class="trend pressColor"></i>
-    </div>
-</div>
-
-<!-- Min/Max -->
-<h2>Min/Max (24h)</h2>
-<div class="werte">
-    <div class="wert">
-        <div class="glowbar"></div>
         <i class="fa-solid fa-arrow-up tempColor"></i>
         <span id="tempMax" class="tempColor">–</span> °C (Max)
     </div>
@@ -144,138 +114,168 @@
 <h2>Temperaturverlauf (24h)</h2>
 <canvas id="tempChart"></canvas>
 
-<h2>Feuchteverlauf (24h)</h2>
-<canvas id="humChart"></canvas>
-
-<h2>Druckverlauf (24h)</h2>
-<canvas id="pressChart"></canvas>
-
 <h2>Temperatur – letzte 7 Tage</h2>
 <canvas id="tempWeek"></canvas>
 
 <h2>Temperatur – letzter Monat</h2>
 <canvas id="tempMonth"></canvas>
 
+<h2>Jahresdiagramm</h2>
+<select id="yearSelect"></select>
+<canvas id="yearChart"></canvas>
+
 <script>
-    /* Firebase Config */
-    const firebaseConfig = {
-        apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
-        authDomain: "meine-wetterstation.firebaseapp.com",
-        databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "meine-wetterstation",
-        storageBucket: "meine-wetterstation.firebasestorage.app",
-        messagingSenderId: "593494014586",
-        appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
-        measurementId: "G-ST9RCRW888"
-    };
+/* Firebase Config */
+const firebaseConfig = {
+    apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
+    authDomain: "meine-wetterstation.firebaseapp.com",
+    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "meine-wetterstation",
+    storageBucket: "meine-wetterstation.firebasestorage.app",
+    messagingSenderId: "593494014586",
+    appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
+    measurementId: "G-ST9RCRW888"
+};
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
 
-    /* Trend */
-    function updateTrend(id, current, last, color) {
-        const el = document.getElementById(id);
-        if (last === null) return;
+/* Trend */
+function updateTrend(id, current, last) {
+    const el = document.getElementById(id);
+    if (last === null) return;
 
-        if (current > last) {
-            el.className = "fa-solid fa-arrow-up trend";
-        } else if (current < last) {
-            el.className = "fa-solid fa-arrow-down trend";
-        } else {
-            el.className = "fa-solid fa-minus trend";
-        }
-        el.style.color = color;
-    }
+    if (current > last) el.className = "fa-solid fa-arrow-up trend tempColor";
+    else if (current < last) el.className = "fa-solid fa-arrow-down trend tempColor";
+    else el.className = "fa-solid fa-minus trend tempColor";
+}
 
-    /* Live-Werte */
-    let lastTemp = null, lastHum = null, lastPress = null;
+/* Live-Werte */
+let lastTemp = null;
 
-    db.ref("weather/temperature").on("value", s => {
-        const v = s.val();
-        document.getElementById("temp").textContent = v.toFixed(1);
-        updateTrend("tempTrend", v, lastTemp, "#ff3333");
-        lastTemp = v;
+db.ref("weather/temperature").on("value", s => {
+    const v = s.val();
+    document.getElementById("temp").textContent = v.toFixed(1);
+    updateTrend("tempTrend", v, lastTemp);
+    lastTemp = v;
+});
+
+/* Charts */
+function createChart(id, label, color) {
+    return new Chart(document.getElementById(id).getContext('2d'), {
+        type: 'line',
+        data: { labels: [], datasets: [{ label, data: [], borderColor: color, backgroundColor: color + "33", tension: 0.3 }] }
     });
+}
 
-    db.ref("weather/humidity").on("value", s => {
-        const v = s.val();
-        document.getElementById("hum").textContent = v.toFixed(1);
-        updateTrend("humTrend", v, lastHum, "#ff8800");
-        lastHum = v;
+const tempChart = createChart("tempChart", "Temperatur (°C)", "#ff3333");
+const tempWeek = createChart("tempWeek", "Temperatur (°C)", "#ff3333");
+const tempMonth = createChart("tempMonth", "Temperatur (°C)", "#ff3333");
+
+/* History */
+const now = Math.floor(Date.now() / 1000);
+const since24h = now - 86400;
+const sinceWeek = now - 7 * 86400;
+const sinceMonth = now - 30 * 86400;
+
+let tempValues = [];
+
+function addHistory(ref, chart, since, callback) {
+    db.ref(ref).orderByKey().startAt(String(since)).on("child_added", snap => {
+        const ts = snap.key;
+        const val = snap.val();
+
+        const time = new Date(ts * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+
+        chart.data.labels.push(time);
+        chart.data.datasets[0].data.push(val);
+        chart.update();
+
+        if (callback) callback(val);
     });
+}
 
-    db.ref("weather/pressure").on("value", s => {
-        const v = s.val();
-        document.getElementById("press").textContent = v.toFixed(1);
-        updateTrend("pressTrend", v, lastPress, "#0033cc");
-        lastPress = v;
+/* Temperatur 24h */
+addHistory("history/temperature", tempChart, since24h, val => {
+    tempValues.push(val);
+    document.getElementById("tempMax").textContent = Math.max(...tempValues).toFixed(1);
+    document.getElementById("tempMin").textContent = Math.min(...tempValues).toFixed(1);
+});
+
+/* Woche & Monat */
+addHistory("history/temperature", tempWeek, sinceWeek);
+addHistory("history/temperature", tempMonth, sinceMonth);
+
+/* Jahresdiagramm */
+let yearChart = null;
+
+function loadYears() {
+    db.ref("history/year").once("value", snap => {
+        const years = Object.keys(snap.val() || {});
+        const select = document.getElementById("yearSelect");
+
+        years.forEach(y => {
+            const opt = document.createElement("option");
+            opt.value = y;
+            opt.textContent = y;
+            select.appendChild(opt);
+        });
+
+        loadYearData(years[years.length - 1]); // letztes Jahr automatisch
     });
+}
 
-    /* Charts */
-    function createChart(id, label, color) {
-        return new Chart(document.getElementById(id).getContext('2d'), {
-            type: 'line',
+function loadYearData(year) {
+    if (yearChart) yearChart.destroy();
+
+    const monthsMin = Array(12).fill(null);
+    const monthsMax = Array(12).fill(null);
+
+    db.ref("history/year/" + year + "/temperature").once("value", snap => {
+        snap.forEach(child => {
+            const ts = Number(child.key);
+            const val = child.val();
+            const m = new Date(ts * 1000).getMonth();
+
+            if (monthsMin[m] === null || val < monthsMin[m]) monthsMin[m] = val;
+            if (monthsMax[m] === null || val > monthsMax[m]) monthsMax[m] = val;
+        });
+
+        const ctx = document.getElementById("yearChart").getContext("2d");
+
+        yearChart = new Chart(ctx, {
+            type: "bar",
             data: {
-                labels: [],
-                datasets: [{
-                    label: label,
-                    data: [],
-                    borderColor: color,
-                    backgroundColor: color + "33",
-                    tension: 0.3
-                }]
+                labels: ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"],
+                datasets: [
+                    {
+                        label: "Min",
+                        data: monthsMin,
+                        backgroundColor: "#99ccff",
+                        borderColor: "#3399ff",
+                        borderWidth: 1
+                    },
+                    {
+                        label: "Max",
+                        data: monthsMax,
+                        type: "line",
+                        borderColor: "#ff3333",
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.3
+                    }
+                ]
             }
         });
-    }
-
-    const tempChart = createChart("tempChart", "Temperatur (°C)", "#ff3333");
-    const humChart = createChart("humChart", "Feuchte (%)", "#ff8800");
-    const pressChart = createChart("pressChart", "Druck (hPa)", "#0033cc");
-    const tempWeek = createChart("tempWeek", "Temp (°C)", "#ff3333");
-    const tempMonth = createChart("tempMonth", "Temp (°C)", "#ff3333");
-
-    /* History */
-    const now = Math.floor(Date.now() / 1000);
-    const since24h = now - 86400;
-    const sinceWeek = now - 7 * 86400;
-    const sinceMonth = now - 30 * 86400;
-
-    let tempValues = [];
-
-    function addHistory(ref, chart, since, callback) {
-        db.ref(ref)
-            .orderByKey()
-            .startAt(String(since))
-            .on("child_added", snap => {
-                const ts = snap.key;
-                const val = snap.val();
-
-                const time = new Date(ts * 1000).toLocaleTimeString("de-DE", {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                });
-
-                chart.data.labels.push(time);
-                chart.data.datasets[0].data.push(val);
-                chart.update();
-
-                if (callback) callback(val);
-            });
-    }
-
-    /* Temperatur 24h */
-    addHistory("history/temperature", tempChart, since24h, val => {
-        tempValues.push(val);
-        document.getElementById("tempMax").textContent = Math.max(...tempValues).toFixed(1);
-        document.getElementById("tempMin").textContent = Math.min(...tempValues).toFixed(1);
     });
+}
 
-    addHistory("history/humidity", humChart, since24h);
-    addHistory("history/pressure", pressChart, since24h);
+document.getElementById("yearSelect").addEventListener("change", e => {
+    loadYearData(e.target.value);
+});
 
-    addHistory("history/temperature", tempWeek, sinceWeek);
-    addHistory("history/temperature", tempMonth, sinceMonth);
+loadYears();
 </script>
 
 </body>
-</html>
+</html>    
