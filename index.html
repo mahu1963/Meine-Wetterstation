@@ -114,7 +114,13 @@
 <h2>Temperaturverlauf (24h)</h2>
 <canvas id="tempChart"></canvas>
 
-<h2>Temperatur – letzte 7 Tage</h2>
+<h2>Feuchteverlauf (24h)</h2>
+<canvas id="humDay"></canvas>
+
+<h2>Druckverlauf (24h)</h2>
+<canvas id="pressDay"></canvas>
+    
+    <h2>Temperatur – letzte 7 Tage</h2>
 <canvas id="tempWeek"></canvas>
 
 <h2>Temperatur – letzter Monat</h2>
@@ -169,10 +175,12 @@ function createChart(id, label, color) {
 }
 
 const tempChart = createChart("tempChart", "Temperatur (°C)", "#ff3333");
+const humDay = createChart("humDay", "Feuchte (%)", "#ff8800");
+const pressDay = createChart("pressDay", "Druck (hPa)", "#0033cc");
 const tempWeek = createChart("tempWeek", "Temperatur (°C)", "#ff3333");
 const tempMonth = createChart("tempMonth", "Temperatur (°C)", "#ff3333");
-
-/* History */
+    
+    /* History */
 const now = Math.floor(Date.now() / 1000);
 const since24h = now - 86400;
 const sinceWeek = now - 7 * 86400;
@@ -279,3 +287,4 @@ loadYears();
 
 </body>
 </html>    
+
