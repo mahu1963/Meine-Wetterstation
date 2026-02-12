@@ -16,6 +16,20 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
+    .glowbar {
+    width: 100%;
+    height: 6px;
+    background: linear-gradient(90deg, #00eaff, #00ff88, #aaff00, #ffcc00, #ff0044);
+    background-size: 400% 100%;
+    border-radius: 6px;
+    animation: glowmove 6s linear infinite;
+    margin-bottom: 10px;
+}
+
+@keyframes glowmove {
+    0% { background-position: 0% 0; }
+    100% { background-position: 400% 0; }
+}   
         /* Hintergrund */
         body {
             font-family: Arial, sans-serif;
@@ -25,17 +39,6 @@
             overflow-x: hidden;
         }
 
-        /* Wolken */
-        .cloud {
-            position: absolute;
-            width: 200px;
-            height: 60px;
-            background: white;
-            border-radius: 50px;
-            filter: blur(2px);
-            opacity: 0.8;
-            animation: moveClouds 60s linear infinite;
-        }
         .cloud:before,
         .cloud:after {
             content: "";
@@ -44,13 +47,6 @@
             width: 120px;
             height: 60px;
             border-radius: 50px;
-        }
-        .cloud:before { top: -20px; left: 20px; }
-        .cloud:after { top: 10px; left: 100px; }
-
-        @keyframes moveClouds {
-            from { transform: translateX(-300px); }
-            to { transform: translateX(120vw); }
         }
 
         h1 {
@@ -127,11 +123,6 @@
     </style>
 </head>
 <body>
-
-<!-- Wolken -->
-<div class="cloud" style="top:80px; animation-duration: 55s;"></div>
-<div class="cloud" style="top:150px; animation-duration: 70s;"></div>
-<div class="cloud" style="top:220px; animation-duration: 90s;"></div>
 
 <h1>Meine Wetterstation</h1>
 
@@ -252,6 +243,12 @@
         animateValue("temp");
         updateTrend("tempTrend", v, lastTemp);
         lastTemp = v;
+    <div class="wert">
+    <div class="glowbar"></div>
+    <i class="fa-solid fa-temperature-three-quarters"></i>
+    <span id="temp" class="fluo">–</span> °C
+    <i id="tempTrend" class="trend"></i>
+</div>
     });
 
     db.ref("weather/humidity").on("value", s => {
@@ -260,6 +257,12 @@
         animateValue("hum");
         updateTrend("humTrend", v, lastHum);
         lastHum = v;
+    <div class="wert">
+    <div class="glowbar"></div>
+    <i class="fa-solid fa-temperature-three-quarters"></i>
+    <span id="temp" class="fluo">–</span> °C
+    <i id="tempTrend" class="trend"></i>
+</div>
     });
 
     db.ref("weather/pressure").on("value", s => {
@@ -268,6 +271,12 @@
         animateValue("press");
         updateTrend("pressTrend", v, lastPress);
         lastPress = v;
+    <div class="wert">
+    <div class="glowbar"></div>
+    <i class="fa-solid fa-temperature-three-quarters"></i>
+    <span id="temp" class="fluo">–</span> °C
+    <i id="tempTrend" class="trend"></i>
+</div>
     });
 
     /* Charts */
@@ -343,3 +352,4 @@
 
 </body>
 </html>
+
