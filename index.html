@@ -39,69 +39,51 @@
         /* Glas-Effekt-Karten */
         .wert {
             flex: 1 1 150px;
-            background: rgba(255,255,255,0.35);
+            background: rgba(255,255,255,0.45);
             backdrop-filter: blur(6px);
             padding: 20px;
             border-radius: 12px;
             text-align: center;
             font-size: 1.6rem;
             box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+            color: #222;
         }
 
         .wert i {
             display: block;
             font-size: 2.5rem;
             margin-bottom: 10px;
-            color: #444;
+            color: #333;
         }
 
-        /* Fluoreszierende Werte */
-        .fluo {
-            color: #00fff2;
-            text-shadow: 0 0 8px #00fff2, 0 0 15px #00fff2;
-        }
+        /* Farben */
+        .tempColor { color: #ff3333; }
+        .humColor { color: #ff8800; }
+        .pressColor { color: #0033cc; }
 
         .trend {
             font-size: 1.4rem;
             margin-left: 10px;
-            text-shadow: 0 0 6px currentColor;
         }
 
-        /* Animierte Leiste über den Zahlen */
+        /* Glowbar */
         .glowbar {
             width: 100%;
             height: 6px;
-            background: linear-gradient(90deg, #00eaff, #00ff88, #aaff00, #ffcc00, #ff0044);
-            background-size: 400% 100%;
+            background: linear-gradient(90deg, #66ccff, #99ddff);
+            background-size: 200% 100%;
             border-radius: 6px;
-            animation: glowmove 6s linear infinite;
             margin-bottom: 10px;
-        }
-
-        @keyframes glowmove {
-            0% { background-position: 0% 0; }
-            100% { background-position: 400% 0; }
         }
 
         /* Charts */
         canvas {
             margin-top: 40px;
-            background: rgba(255,255,255,0.35);
+            background: rgba(255,255,255,0.45);
             backdrop-filter: blur(6px);
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-            filter: drop-shadow(0 0 6px rgba(255,255,255,0.6));
-        }
-
-        /* Pop-Animation für Zahlen */
-        .value-animate {
-            animation: pop 0.4s ease;
-        }
-        @keyframes pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.25); }
-            100% { transform: scale(1); }
         }
 
         /* Mobile */
@@ -122,23 +104,23 @@
 <div class="werte">
     <div class="wert">
         <div class="glowbar"></div>
-        <i class="fa-solid fa-temperature-three-quarters"></i>
-        <span id="temp" class="fluo">–</span> °C
-        <i id="tempTrend" class="trend"></i>
+        <i class="fa-solid fa-temperature-three-quarters tempColor"></i>
+        <span id="temp" class="tempColor">–</span> °C
+        <i id="tempTrend" class="trend tempColor"></i>
     </div>
 
     <div class="wert">
         <div class="glowbar"></div>
-        <i class="fa-solid fa-droplet"></i>
-        <span id="hum" class="fluo">–</span> %
-        <i id="humTrend" class="trend"></i>
+        <i class="fa-solid fa-droplet humColor"></i>
+        <span id="hum" class="humColor">–</span> %
+        <i id="humTrend" class="trend humColor"></i>
     </div>
 
     <div class="wert">
         <div class="glowbar"></div>
-        <i class="fa-solid fa-gauge-high"></i>
-        <span id="press" class="fluo">–</span> hPa
-        <i id="pressTrend" class="trend"></i>
+        <i class="fa-solid fa-gauge-high pressColor"></i>
+        <span id="press" class="pressColor">–</span> hPa
+        <i id="pressTrend" class="trend pressColor"></i>
     </div>
 </div>
 
@@ -147,14 +129,14 @@
 <div class="werte">
     <div class="wert">
         <div class="glowbar"></div>
-        <i class="fa-solid fa-arrow-up"></i>
-        <span id="tempMax">–</span> °C (Max)
+        <i class="fa-solid fa-arrow-up tempColor"></i>
+        <span id="tempMax" class="tempColor">–</span> °C (Max)
     </div>
 
     <div class="wert">
         <div class="glowbar"></div>
-        <i class="fa-solid fa-arrow-down"></i>
-        <span id="tempMin">–</span> °C (Min)
+        <i class="fa-solid fa-arrow-down tempColor"></i>
+        <span id="tempMin" class="tempColor">–</span> °C (Min)
     </div>
 </div>
 
@@ -190,45 +172,19 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    /* Pop-Animation */
-    function animateValue(id) {
-        const el = document.getElementById(id);
-        el.classList.remove("value-animate");
-        void el.offsetWidth;
-        el.classList.add("value-animate");
-    }
-
     /* Trend */
-    function updateTrend(id, current, last) {
+    function updateTrend(id, current, last, color) {
         const el = document.getElementById(id);
         if (last === null) return;
 
         if (current > last) {
             el.className = "fa-solid fa-arrow-up trend";
-            el.style.color = "red";
         } else if (current < last) {
             el.className = "fa-solid fa-arrow-down trend";
-            el.style.color = "blue";
         } else {
             el.className = "fa-solid fa-minus trend";
-            el.style.color = "gray";
         }
-    }
-
-    /* Farbverlauf für Temperaturdiagramm */
-    function applyTempGradient(chart) {
-        const ctx = chart.ctx;
-        const gradient = ctx.createLinearGradient(0, 0, 0, chart.height);
-
-        gradient.addColorStop(0, "#ff0044");
-        gradient.addColorStop(0.25, "#ffcc00");
-        gradient.addColorStop(0.5, "#aaff00");
-        gradient.addColorStop(0.75, "#00ff88");
-        gradient.addColorStop(1, "#00e5ff");
-
-        chart.data.datasets[0].borderColor = gradient;
-        chart.data.datasets[0].backgroundColor = gradient;
-        chart.update();
+        el.style.color = color;
     }
 
     /* Live-Werte */
@@ -237,24 +193,21 @@
     db.ref("weather/temperature").on("value", s => {
         const v = s.val();
         document.getElementById("temp").textContent = v.toFixed(1);
-        animateValue("temp");
-        updateTrend("tempTrend", v, lastTemp);
+        updateTrend("tempTrend", v, lastTemp, "#ff3333");
         lastTemp = v;
     });
 
     db.ref("weather/humidity").on("value", s => {
         const v = s.val();
         document.getElementById("hum").textContent = v.toFixed(1);
-        animateValue("hum");
-        updateTrend("humTrend", v, lastHum);
+        updateTrend("humTrend", v, lastHum, "#ff8800");
         lastHum = v;
     });
 
     db.ref("weather/pressure").on("value", s => {
         const v = s.val();
         document.getElementById("press").textContent = v.toFixed(1);
-        animateValue("press");
-        updateTrend("pressTrend", v, lastPress);
+        updateTrend("pressTrend", v, lastPress, "#0033cc");
         lastPress = v;
     });
 
@@ -271,19 +224,15 @@
                     backgroundColor: color + "33",
                     tension: 0.3
                 }]
-            },
-            options: {
-                animation: { duration: 1200, easing: "easeInOutQuart" },
-                elements: { point: { radius: 0 } }
             }
         });
     }
 
-    const tempChart = createChart("tempChart", "Temperatur (°C)", "red");
-    const humChart = createChart("humChart", "Feuchte (%)", "blue");
-    const pressChart = createChart("pressChart", "Druck (hPa)", "green");
-    const tempWeek = createChart("tempWeek", "Temp (°C)", "orange");
-    const tempMonth = createChart("tempMonth", "Temp (°C)", "purple");
+    const tempChart = createChart("tempChart", "Temperatur (°C)", "#ff3333");
+    const humChart = createChart("humChart", "Feuchte (%)", "#ff8800");
+    const pressChart = createChart("pressChart", "Druck (hPa)", "#0033cc");
+    const tempWeek = createChart("tempWeek", "Temp (°C)", "#ff3333");
+    const tempMonth = createChart("tempMonth", "Temp (°C)", "#ff3333");
 
     /* History */
     const now = Math.floor(Date.now() / 1000);
@@ -314,12 +263,11 @@
             });
     }
 
-    /* Temperatur 24h + Farbverlauf */
+    /* Temperatur 24h */
     addHistory("history/temperature", tempChart, since24h, val => {
         tempValues.push(val);
         document.getElementById("tempMax").textContent = Math.max(...tempValues).toFixed(1);
         document.getElementById("tempMin").textContent = Math.min(...tempValues).toFixed(1);
-        applyTempGradient(tempChart);
     });
 
     addHistory("history/humidity", humChart, since24h);
