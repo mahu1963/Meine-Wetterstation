@@ -84,7 +84,7 @@
 </head>
 <body>
 
-<!-- Titelbox mit Glas-Effekt -->
+<!-- Titelbox -->
 <div style="
     width:100%;
     background:rgba(255,255,255,0.55);
@@ -114,6 +114,9 @@
         <div id="location" style="font-size:1.1rem; color:#003366; margin-top:6px;">
             📍 Standort wird geladen…
         </div>
+        <div id="datetime" style="font-size:1.1rem; color:#003366; margin-top:4px;">
+            🕒 Datum & Uhrzeit werden geladen…
+        </div>
     </div>
 
 </div>
@@ -138,8 +141,32 @@ if (navigator.geolocation) {
     document.getElementById("location").textContent =
         "📍 Standort nicht verfügbar";
 }
+
+// Datum & Uhrzeit
+function updateDateTime() {
+    const now = new Date();
+
+    const dateStr = now.toLocaleDateString("de-DE", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    });
+
+    const timeStr = now.toLocaleTimeString("de-DE", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+    });
+
+    document.getElementById("datetime").textContent =
+        "🕒 " + dateStr + " – " + timeStr;
+}
+setInterval(updateDateTime, 1000);
+updateDateTime();
 </script>
-<!-- Live-Werte & Diagramme -->
+
+<!-- Live-Werte -->
 <div class="werte">
     <div class="wert">
         <div class="glowbar"></div>
@@ -196,38 +223,60 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* Dynamisches Wetter-Icon */
-function updateWeatherIcon(temp, hum) {
-    const iconDiv = document.getElementById("weatherIcon");
-    if (!iconDiv) return;
+/* Smart Weather Icon */
+let lastPressure = null;
+let lastPressureTime = null;
 
+function updateWeatherIcon(temp, hum, pressure) {
+    const iconDiv = document.getElementById("weatherIcon");
     iconDiv.innerHTML = "";
 
-    let iconClass = "fa-cloud";
+    let icon = "fa-cloud";
     let color = "#888";
 
-    if (temp !== null && hum !== null) {
-        if (temp < 0) {
-            iconClass = "fa-snowflake";
-            color = "#00bfff";
-        } else if (hum > 85) {
-            iconClass = "fa-cloud-showers-heavy";
-            color = "#0077cc";
-        } else if (temp > 20 && hum < 70) {
-            iconClass = "fa-sun";
-            color = "#FFD700";
-        } else {
-            iconClass = "fa-cloud";
-            color = "#888";
+    // Nebel
+    if (hum > 95 && temp > -2 && temp < 10) {
+        icon = "fa-smog";
+        color = "#999";
+    }
+    // Schneesturm
+    else if (temp < -5 && hum > 80) {
+        icon = "fa-snowflake";
+        color = "#00aaff";
+    }
+    // Schnee
+    else if (temp < 0 && hum > 70) {
+        icon = "fa-snowflake";
+        color = "#66ccff";
+    }
+    // Regen
+    else if (hum > 85) {
+        icon = "fa-cloud-showers-heavy";
+        color = "#0077cc";
+    }
+    // Sonne
+    else if (temp > 20 && hum < 70) {
+        icon = "fa-sun";
+        color = "#FFD700";
+    }
+    // Wind (Druck fällt stark)
+    else if (lastPressure !== null && pressure !== null) {
+        const dt = Date.now() - lastPressureTime;
+        if (dt < 30 * 60 * 1000 && lastPressure - pressure > 3) {
+            icon = "fa-wind";
+            color = "#00aaff";
         }
     }
 
     const i = document.createElement("i");
-    i.className = "fa-solid " + iconClass;
+    i.className = "fa-solid " + icon;
     i.style.fontSize = "2.2rem";
     i.style.color = color;
 
     iconDiv.appendChild(i);
+
+    lastPressure = pressure;
+    lastPressureTime = Date.now();
 }
 
 /* Trend */
@@ -243,19 +292,24 @@ function updateTrend(id, current, last) {
 /* Live-Werte */
 let lastTemp = null;
 let lastHum = null;
+let lastPress = null;
 
 db.ref("weather/temperature").on("value", s => {
     const v = s.val();
     document.getElementById("temp").textContent = v.toFixed(1);
     updateTrend("tempTrend", v, lastTemp);
     lastTemp = v;
-    updateWeatherIcon(lastTemp, lastHum);
+    updateWeatherIcon(lastTemp, lastHum, lastPress);
 });
 
 db.ref("weather/humidity").on("value", s => {
-    const v = s.val();
-    lastHum = v;
-    updateWeatherIcon(lastTemp, lastHum);
+    lastHum = s.val();
+    updateWeatherIcon(lastTemp, lastHum, lastPress);
+});
+
+db.ref("weather/pressure").on("value", s => {
+    lastPress = s.val();
+    updateWeatherIcon(lastTemp, lastHum, lastPress);
 });
 
 /* Charts */
