@@ -1,22 +1,12 @@
-<!DOCTYPE html>
+a<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meine Wetterstation</title>
 
-    <!-- App Icon für Browser & Home Screen -->
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="apple-touch-icon" href="icon.png">
-
-    <!-- Web App Manifest -->
-    <link rel="manifest" href="manifest.json">
-
-    <!-- PWA Farben -->
-    <meta name="theme-color" content="#ffffff">
-
-    <!-- Font Awesome – stabiler Handy‑Fix -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous">
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -33,6 +23,7 @@
             background: linear-gradient(#cfe9ff, #eaf6ff);
         }
 
+        /* Mobile Optimierung */
         @media (max-width: 600px) {
             body { padding: 10px; }
             .werte { flex-direction: column; gap: 15px; }
@@ -91,7 +82,6 @@
         }
     </style>
 </head>
-
 <body>
 
 <!-- Titelbox -->
@@ -108,10 +98,12 @@
     gap:18px;
 ">
 
+    <!-- Dynamisches Icon -->
     <div id="weatherIcon" style="display:flex; flex-direction:column; gap:6px; align-items:center;">
-        <i class="fa-solid fa-sun" style="font-size:32px; color:#FFD700;"></i>
+        <i class="fa-solid fa-sun" style="font-size:1.8rem; color:#FFD700;"></i>
     </div>
 
+    <!-- Titel -->
     <div>
         <div style="font-size:2.2rem; font-weight:bold; color:#003366; margin:0;">
             Wetter Stuben‑Bernstein
@@ -129,16 +121,14 @@
 
 </div>
 
-<!-- Der Rest deiner Seite bleibt unverändert -->
-<!-- (Charts, Firebase, Smart‑Icon‑System usw.) -->
-
 <script>
-/* Live-Ortserkennung */
+// Live-Ortserkennung
 if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
         pos => {
             const lat = pos.coords.latitude.toFixed(5);
             const lon = pos.coords.longitude.toFixed(5);
+
             document.getElementById("location").textContent =
                 "📍 Standort: " + lat + ", " + lon;
         },
@@ -147,27 +137,304 @@ if (navigator.geolocation) {
                 "📍 Standort konnte nicht ermittelt werden";
         }
     );
+} else {
+    document.getElementById("location").textContent =
+        "📍 Standort nicht verfügbar";
 }
 
-/* Datum & Uhrzeit */
+// Datum & Uhrzeit
 function updateDateTime() {
     const now = new Date();
+
     const dateStr = now.toLocaleDateString("de-DE", {
         weekday: "long",
         year: "numeric",
         month: "long",
         day: "numeric"
     });
+
     const timeStr = now.toLocaleTimeString("de-DE", {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit"
     });
+
     document.getElementById("datetime").textContent =
         "🕒 " + dateStr + " – " + timeStr;
 }
 setInterval(updateDateTime, 1000);
 updateDateTime();
+</script>
+
+<!-- Live-Werte -->
+<div class="werte">
+    <div class="wert">
+        <div class="glowbar"></div>
+        <i class="fa-solid fa-temperature-three-quarters tempColor"></i>
+        <span id="temp" class="tempColor">–</span> °C
+        <i id="tempTrend" class="trend tempColor"></i>
+    </div>
+
+    <div class="wert">
+        <div class="glowbar"></div>
+        <i class="fa-solid fa-arrow-up tempColor"></i>
+        <span id="tempMax" class="tempColor">–</span> °C (Max)
+    </div>
+
+    <div class="wert">
+        <div class="glowbar"></div>
+        <i class="fa-solid fa-arrow-down" style="color:#0033cc;"></i>
+        <span id="tempMin" class="tempColor">–</span> °C (Min)
+    </div>
+</div>
+
+<h2>Temperaturverlauf (24h)</h2>
+<canvas id="tempChart"></canvas>
+
+<h2>Feuchteverlauf (24h)</h2>
+<canvas id="humDay"></canvas>
+
+<h2>Druckverlauf (24h)</h2>
+<canvas id="pressDay"></canvas>
+
+<h2>Temperatur – letzte 7 Tage</h2>
+<canvas id="tempWeek"></canvas>
+
+<h2>Temperatur – letzter Monat</h2>
+<canvas id="tempMonth"></canvas>
+
+<h2>Jahresdiagramm</h2>
+<select id="yearSelect"></select>
+<canvas id="yearChart"></canvas>
+
+<script>
+/* Firebase Config */
+const firebaseConfig = {
+    apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
+    authDomain: "meine-wetterstation.firebaseapp.com",
+    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "meine-wetterstation",
+    storageBucket: "meine-wetterstation.firebasestorage.app",
+    messagingSenderId: "593494014586",
+    appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
+    measurementId: "G-ST9RCRW888"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* Smart Weather Icon */
+let lastPressure = null;
+let lastPressureTime = null;
+
+function updateWeatherIcon(temp, hum, pressure) {
+    const iconDiv = document.getElementById("weatherIcon");
+    iconDiv.innerHTML = "";
+
+    let icon = "fa-cloud";
+    let color = "#888";
+
+    // Nebel
+    if (hum > 95 && temp > -2 && temp < 10) {
+        icon = "fa-smog";
+        color = "#999";
+    }
+    // Schneesturm
+    else if (temp < -5 && hum > 80) {
+        icon = "fa-snowflake";
+        color = "#00aaff";
+    }
+    // Schnee
+    else if (temp < 0 && hum > 70) {
+        icon = "fa-snowflake";
+        color = "#66ccff";
+    }
+    // Regen
+    else if (hum > 85) {
+        icon = "fa-cloud-showers-heavy";
+        color = "#0077cc";
+    }
+    // Sonne
+    else if (temp > 20 && hum < 70) {
+        icon = "fa-sun";
+        color = "#FFD700";
+    }
+    // Wind (Druck fällt stark)
+    else if (lastPressure !== null && pressure !== null) {
+        const dt = Date.now() - lastPressureTime;
+        if (dt < 30 * 60 * 1000 && lastPressure - pressure > 3) {
+            icon = "fa-wind";
+            color = "#00aaff";
+        }
+    }
+
+    const i = document.createElement("i");
+    i.className = "fa-solid " + icon;
+    i.style.fontSize = "2.2rem";
+    i.style.color = color;
+
+    iconDiv.appendChild(i);
+
+    lastPressure = pressure;
+    lastPressureTime = Date.now();
+}
+
+/* Trend */
+function updateTrend(id, current, last) {
+    const el = document.getElementById(id);
+    if (last === null) return;
+
+    if (current > last) el.className = "fa-solid fa-arrow-up trend tempColor";
+    else if (current < last) el.className = "fa-solid fa-arrow-down trend tempColor";
+    else el.className = "fa-solid fa-minus trend tempColor";
+}
+
+/* Live-Werte */
+let lastTemp = null;
+let lastHum = null;
+let lastPress = null;
+
+db.ref("weather/temperature").on("value", s => {
+    const v = s.val();
+    document.getElementById("temp").textContent = v.toFixed(1);
+    updateTrend("tempTrend", v, lastTemp);
+    lastTemp = v;
+    updateWeatherIcon(lastTemp, lastHum, lastPress);
+});
+
+db.ref("weather/humidity").on("value", s => {
+    lastHum = s.val();
+    updateWeatherIcon(lastTemp, lastHum, lastPress);
+});
+
+db.ref("weather/pressure").on("value", s => {
+    lastPress = s.val();
+    updateWeatherIcon(lastTemp, lastHum, lastPress);
+});
+
+/* Charts */
+function createChart(id, label, color) {
+    return new Chart(document.getElementById(id).getContext('2d'), {
+        type: 'line',
+        data: { labels: [], datasets: [{ label, data: [], borderColor: color, backgroundColor: color + "33", tension: 0.3 }] }
+    });
+}
+
+const tempChart = createChart("tempChart", "Temperatur (°C)", "#ff3333");
+const humDay = createChart("humDay", "Feuchte (%)", "#ff8800");
+const pressDay = createChart("pressDay", "Druck (hPa)", "#0033cc");
+const tempWeek = createChart("tempWeek", "Temperatur (°C)", "#ff3333");
+const tempMonth = createChart("tempMonth", "Temperatur (°C)", "#ff3333");
+
+/* History */
+const now = Math.floor(Date.now() / 1000);
+const since24h = now - 86400;
+const sinceWeek = now - 7 * 86400;
+const sinceMonth = now - 30 * 86400;
+
+let tempValues = [];
+
+function addHistory(ref, chart, since, callback) {
+    db.ref(ref).orderByKey().startAt(String(since)).on("child_added", snap => {
+        const ts = snap.key;
+        const val = snap.val();
+
+        const time = new Date(ts * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+
+        chart.data.labels.push(time);
+        chart.data.datasets[0].data.push(val);
+        chart.update();
+
+        if (callback) callback(val);
+    });
+}
+
+/* Temperatur 24h */
+addHistory("history/temperature", tempChart, since24h, val => {
+    tempValues.push(val);
+    document.getElementById("tempMax").textContent = Math.max(...tempValues).toFixed(1);
+    document.getElementById("tempMin").textContent = Math.min(...tempValues).toFixed(1);
+});
+
+/* Feuchte & Druck 24h */
+addHistory("history/humidity", humDay, since24h);
+addHistory("history/pressure", pressDay, since24h);
+
+/* Woche & Monat */
+addHistory("history/temperature", tempWeek, sinceWeek);
+addHistory("history/temperature", tempMonth, sinceMonth);
+
+/* Jahresdiagramm */
+let yearChart = null;
+
+function loadYears() {
+    db.ref("history/year").once("value", snap => {
+        const years = Object.keys(snap.val() || {});
+        const select = document.getElementById("yearSelect");
+
+        years.forEach(y => {
+            const opt = document.createElement("option");
+            opt.value = y;
+            opt.textContent = y;
+            select.appendChild(opt);
+        });
+
+        if (years.length > 0) {
+            loadYearData(years[years.length - 1]);
+        }
+    });
+}
+
+function loadYearData(year) {
+    if (yearChart) yearChart.destroy();
+
+    const monthsMin = Array(12).fill(null);
+    const monthsMax = Array(12).fill(null);
+
+    db.ref("history/year/" + year + "/temperature").once("value", snap => {
+        snap.forEach(child => {
+            const ts = Number(child.key);
+            const val = child.val();
+            const m = new Date(ts * 1000).getMonth();
+
+            if (monthsMin[m] === null || val < monthsMin[m]) monthsMin[m] = val;
+            if (monthsMax[m] === null || val > monthsMax[m]) monthsMax[m] = val;
+        });
+
+        const ctx = document.getElementById("yearChart").getContext("2d");
+
+        yearChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"],
+                datasets: [
+                    {
+                        label: "Min",
+                        data: monthsMin,
+                        backgroundColor: "#99ccff",
+                        borderColor: "#3399ff",
+                        borderWidth: 1
+                    },
+                    {
+                        label: "Max",
+                        data: monthsMax,
+                        type: "line",
+                        borderColor: "#ff3333",
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.3
+                    }
+                ]
+            }
+        });
+    });
+}
+
+document.getElementById("yearSelect").addEventListener("change", e => {
+    loadYearData(e.target.value);
+});
+
+loadYears();
 </script>
 
 </body>
