@@ -12,8 +12,24 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <!-- Firebase v8 -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+  // Deine Firebase-Konfiguration
+  const firebaseConfig = {
+    apiKey: "AIzaSyAfIU041dyNC_ywpJiwf8mABJVsT-lw",
+    authDomain: "meine-wetterstation.firebaseapp.com",
+    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "meine-wetterstation",
+    storageBucket: "meine-wetterstation.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:abcdef123456"
+  };
+
+  // Firebase starten
+  firebase.initializeApp(firebaseConfig);
+
+  // Referenz zur Datenbank
+  const db = firebase.database();
+</script>
 
     <style>
         body {
@@ -439,3 +455,4 @@ loadYears();
 
 </body>
 </html>
+
