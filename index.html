@@ -2,226 +2,93 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meine Wetterstation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!-- Icons -->
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Firebase v8 -->
-    <script>
-  // Deine Firebase-Konfiguration
-  const firebaseConfig = {
-    apiKey: "AIzaSyAfIU041dyNC_ywpJiwf8mABJVsT-lw",
-    authDomain: "meine-wetterstation.firebaseapp.com",
-    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "meine-wetterstation",
-    storageBucket: "meine-wetterstation.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:abcdef123456"
-  };
-
-  // Firebase starten
-  firebase.initializeApp(firebaseConfig);
-
-  // Referenz zur Datenbank
-  const db = firebase.database();
-</script>
-
     <style>
         body {
             font-family: Arial, sans-serif;
+            background: #eef2f7;
             margin: 0;
+            padding: 20px;
+        }
+        .card {
+            background: white;
             padding: 15px;
-            background: linear-gradient(#cfe9ff, #eaf6ff);
-        }
-
-        /* Mobile Optimierung */
-        @media (max-width: 600px) {
-            body { padding: 10px; }
-            .werte { flex-direction: column; gap: 15px; }
-            canvas { width: 100% !important; height: auto !important; }
-        }
-
-        .werte {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-
-        .wert {
-            flex: 1 1 150px;
-            background: rgba(255,255,255,0.55);
-            backdrop-filter: blur(8px);
-            padding: 20px;
-            border-radius: 14px;
-            text-align: center;
-            font-size: 1.6rem;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-            color: #222;
-        }
-
-        .tempColor { color: #ff3333; }
-        .humColor { color: #ff8800; }
-        .pressColor { color: #0033cc; }
-
-        .trend {
-            font-size: 1.4rem;
-            margin-left: 10px;
-        }
-
-        .glowbar {
-            width: 100%;
-            height: 6px;
-            background: linear-gradient(90deg, #ffcccc, #ff3333);
-            border-radius: 6px;
-            margin-bottom: 10px;
-        }
-
-        canvas {
-            margin-top: 40px;
-            background: rgba(255,255,255,0.55);
-            backdrop-filter: blur(8px);
-            padding: 20px;
-            border-radius: 14px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.12);
-        }
-
-        #yearSelect {
-            padding: 10px;
-            font-size: 1.1rem;
-            border-radius: 8px;
             margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px #0002;
+        }
+        .value {
+            font-size: 2.2rem;
+            font-weight: bold;
+        }
+        .trend {
+            margin-left: 10px;
+            font-size: 1.4rem;
+        }
+        #weatherIcon {
+            font-size: 3rem;
+            margin-top: 10px;
         }
     </style>
 </head>
+
 <body>
 
-<!-- Titelbox -->
-<div style="
-    width:100%;
-    background:rgba(255,255,255,0.55);
-    backdrop-filter:blur(8px);
-    padding:18px 20px;
-    border-radius:14px;
-    margin-bottom:25px;
-    box-shadow:0 4px 10px rgba(0,0,0,0.12);
-    display:flex;
-    align-items:center;
-    gap:18px;
-">
+<h1>🌤️ Meine Wetterstation</h1>
 
-    <!-- Dynamisches Icon -->
-    <div id="weatherIcon" style="display:flex; flex-direction:column; gap:6px; align-items:center;">
-        <i class="fa-solid fa-sun" style="font-size:1.8rem; color:#FFD700;"></i>
+<div class="card">
+    <div>Temperatur: <span id="temp" class="value">–</span> °C
+        <i id="tempTrend" class="trend"></i>
     </div>
-
-    <!-- Titel -->
-    <div>
-        <div style="font-size:2.2rem; font-weight:bold; color:#003366; margin:0;">
-            Wetter Stuben‑Bernstein
-        </div>
-        <div style="font-size:1.4rem; color:#005599; margin-top:3px;">
-            Martin Huber
-        </div>
-        <div id="location" style="font-size:1.1rem; color:#003366; margin-top:6px;">
-            📍 Standort wird geladen…
-        </div>
-        <div id="datetime" style="font-size:1.1rem; color:#003366; margin-top:4px;">
-            🕒 Datum & Uhrzeit werden geladen…
-        </div>
-    </div>
-
+    <div>Feuchte: <span id="hum" class="value">–</span> %</div>
+    <div>Druck: <span id="press" class="value">–</span> hPa</div>
+    <div id="weatherIcon"></div>
 </div>
 
-<script>
-// Live-Ortserkennung
-if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-        pos => {
-            const lat = pos.coords.latitude.toFixed(5);
-            const lon = pos.coords.longitude.toFixed(5);
-
-            document.getElementById("location").textContent =
-                "📍 Standort: " + lat + ", " + lon;
-        },
-        err => {
-            document.getElementById("location").textContent =
-                "📍 Standort konnte nicht ermittelt werden";
-        }
-    );
-} else {
-    document.getElementById("location").textContent =
-        "📍 Standort nicht verfügbar";
-}
-
-// Datum & Uhrzeit
-function updateDateTime() {
-    const now = new Date();
-
-    const dateStr = now.toLocaleDateString("de-DE", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-    });
-
-    const timeStr = now.toLocaleTimeString("de-DE", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
-    });
-
-    document.getElementById("datetime").textContent =
-        "🕒 " + dateStr + " – " + timeStr;
-}
-setInterval(updateDateTime, 1000);
-updateDateTime();
-</script>
-
-<!-- Live-Werte -->
-<div class="werte">
-    <div class="wert">
-        <div class="glowbar"></div>
-        <i class="fa-solid fa-temperature-three-quarters tempColor"></i>
-        <span id="temp" class="tempColor">–</span> °C
-        <i id="tempTrend" class="trend tempColor"></i>
-    </div>
-
-    <div class="wert">
-        <div class="glowbar"></div>
-        <i class="fa-solid fa-arrow-up tempColor"></i>
-        <span id="tempMax" class="tempColor">–</span> °C (Max)
-    </div>
-
-    <div class="wert">
-        <div class="glowbar"></div>
-        <i class="fa-solid fa-arrow-down" style="color:#0033cc;"></i>
-        <span id="tempMin" class="tempColor">–</span> °C (Min)
-    </div>
+<div class="card">
+    <h3>Temperatur – letzte 24h</h3>
+    <canvas id="tempChart"></canvas>
+    Max: <span id="tempMax">–</span> °C  
+    Min: <span id="tempMin">–</span> °C
 </div>
 
-<h2>Temperaturverlauf (24h)</h2>
-<canvas id="tempChart"></canvas>
+<div class="card">
+    <h3>Feuchte – letzte 24h</h3>
+    <canvas id="humDay"></canvas>
+</div>
 
-<h2>Feuchteverlauf (24h)</h2>
-<canvas id="humDay"></canvas>
+<div class="card">
+    <h3>Druck – letzte 24h</h3>
+    <canvas id="pressDay"></canvas>
+</div>
 
-<h2>Druckverlauf (24h)</h2>
-<canvas id="pressDay"></canvas>
+<div class="card">
+    <h3>Temperatur – Woche</h3>
+    <canvas id="tempWeek"></canvas>
+</div>
 
-<h2>Temperatur – letzte 7 Tage</h2>
-<canvas id="tempWeek"></canvas>
+<div class="card">
+    <h3>Temperatur – Monat</h3>
+    <canvas id="tempMonth"></canvas>
+</div>
 
-<h2>Temperatur – letzter Monat</h2>
-<canvas id="tempMonth"></canvas>
+<div class="card">
+    <h3>Jahresübersicht</h3>
+    <select id="yearSelect"></select>
+    <canvas id="yearChart"></canvas>
+</div>
 
-<h2>Jahresdiagramm</h2>
-<select id="yearSelect"></select>
-<canvas id="yearChart"></canvas>
+<!-- Firebase v8 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
 <script>
 /* Firebase Config */
@@ -230,7 +97,7 @@ const firebaseConfig = {
     authDomain: "meine-wetterstation.firebaseapp.com",
     databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "meine-wetterstation",
-    storageBucket: "meine-wetterstation.firebasestorage.app",
+    storageBucket: "meine-wetterstation.appspot.com",
     messagingSenderId: "593494014586",
     appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
     measurementId: "G-ST9RCRW888"
@@ -250,33 +117,22 @@ function updateWeatherIcon(temp, hum, pressure) {
     let icon = "fa-cloud";
     let color = "#888";
 
-    // Nebel
     if (hum > 95 && temp > -2 && temp < 10) {
         icon = "fa-smog";
         color = "#999";
-    }
-    // Schneesturm
-    else if (temp < -5 && hum > 80) {
+    } else if (temp < -5 && hum > 80) {
         icon = "fa-snowflake";
         color = "#00aaff";
-    }
-    // Schnee
-    else if (temp < 0 && hum > 70) {
+    } else if (temp < 0 && hum > 70) {
         icon = "fa-snowflake";
         color = "#66ccff";
-    }
-    // Regen
-    else if (hum > 85) {
+    } else if (hum > 85) {
         icon = "fa-cloud-showers-heavy";
         color = "#0077cc";
-    }
-    // Sonne
-    else if (temp > 20 && hum < 70) {
+    } else if (temp > 20 && hum < 70) {
         icon = "fa-sun";
         color = "#FFD700";
-    }
-    // Wind (Druck fällt stark)
-    else if (lastPressure !== null && pressure !== null) {
+    } else if (lastPressure !== null && pressure !== null) {
         const dt = Date.now() - lastPressureTime;
         if (dt < 30 * 60 * 1000 && lastPressure - pressure > 3) {
             icon = "fa-wind";
@@ -300,9 +156,9 @@ function updateTrend(id, current, last) {
     const el = document.getElementById(id);
     if (last === null) return;
 
-    if (current > last) el.className = "fa-solid fa-arrow-up trend tempColor";
-    else if (current < last) el.className = "fa-solid fa-arrow-down trend tempColor";
-    else el.className = "fa-solid fa-minus trend tempColor";
+    if (current > last) el.className = "fa-solid fa-arrow-up trend";
+    else if (current < last) el.className = "fa-solid fa-arrow-down trend";
+    else el.className = "fa-solid fa-minus trend";
 }
 
 /* Live-Werte */
@@ -320,11 +176,13 @@ db.ref("weather/temperature").on("value", s => {
 
 db.ref("weather/humidity").on("value", s => {
     lastHum = s.val();
+    document.getElementById("hum").textContent = lastHum;
     updateWeatherIcon(lastTemp, lastHum, lastPress);
 });
 
 db.ref("weather/pressure").on("value", s => {
     lastPress = s.val();
+    document.getElementById("press").textContent = lastPress;
     updateWeatherIcon(lastTemp, lastHum, lastPress);
 });
 
@@ -365,18 +223,15 @@ function addHistory(ref, chart, since, callback) {
     });
 }
 
-/* Temperatur 24h */
 addHistory("history/temperature", tempChart, since24h, val => {
     tempValues.push(val);
     document.getElementById("tempMax").textContent = Math.max(...tempValues).toFixed(1);
     document.getElementById("tempMin").textContent = Math.min(...tempValues).toFixed(1);
 });
 
-/* Feuchte & Druck 24h */
 addHistory("history/humidity", humDay, since24h);
 addHistory("history/pressure", pressDay, since24h);
 
-/* Woche & Monat */
 addHistory("history/temperature", tempWeek, sinceWeek);
 addHistory("history/temperature", tempMonth, sinceMonth);
 
@@ -455,4 +310,3 @@ loadYears();
 
 </body>
 </html>
-
