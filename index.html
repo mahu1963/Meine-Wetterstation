@@ -20,8 +20,6 @@
       --accent-soft: rgba(56,189,248,0.2);
       --text: #e5e7eb;
       --text-soft: #9ca3af;
-      --danger: #f97373;
-      --success: #4ade80;
     }
 
     * {
@@ -265,27 +263,28 @@
 
   <script>
     // ------------------------------------------------------------
-    // Firebase-Konfiguration – HIER DEINE DATEN EINTRAGEN
+    // Firebase-Konfiguration – HIER DEINE PROJEKT-DATEN EINTRAGEN
     // ------------------------------------------------------------
     const firebaseConfig = {
-      apiKey: "DEIN_API_KEY",
-      authDomain: "DEIN_PROJEKT.firebaseapp.com",
+      apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
+      authDomain: "meine-wetterstation.firebaseapp.com",
       databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "DEIN_PROJEKT",
-      storageBucket: "DEIN_PROJEKT.appspot.com",
-      messagingSenderId: "DEINE_SENDER_ID",
-      appId: "DEINE_APP_ID"
+      projectId: "meine-wetterstation",
+      storageBucket: "meine-wetterstation.appspot.com",
+      messagingSenderId: "123456789000",
+      appId: "1:123456789000:web:abcdef1234567890"
     };
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
     // ------------------------------------------------------------
-    // Live-Werte aus /weather
+    // LIVE-WERTE AUS /weather
     // ------------------------------------------------------------
     function subscribeLiveValues() {
       db.ref("/weather").on("value", snap => {
         const v = snap.val() || {};
+
         if (v.temperature !== undefined) {
           document.getElementById("liveTemp").textContent = v.temperature.toFixed(1);
         }
@@ -299,7 +298,7 @@
     }
 
     // ------------------------------------------------------------
-    // Tagesdiagramm
+    // TAGESDIAGRAMM (24h)
     // ------------------------------------------------------------
     function loadDayChart() {
       const now = new Date();
@@ -342,7 +341,7 @@
     }
 
     // ------------------------------------------------------------
-    // Wochendiagramm (7 Tage)
+    // WOCHENDIAGRAMM (7 Tage)
     // ------------------------------------------------------------
     function loadWeekChart() {
       const now = new Date();
@@ -400,7 +399,7 @@
     }
 
     // ------------------------------------------------------------
-    // Jahresdiagramm (Monatsmittel)
+    // JAHRESDIAGRAMM (Monatsmittel)
     // ------------------------------------------------------------
     function loadYearChart() {
       const now = new Date();
@@ -456,12 +455,229 @@
     }
 
     // ------------------------------------------------------------
-    // Initialisierung
+    // INITIALISIERUNG
     // ------------------------------------------------------------
     subscribeLiveValues();
     loadDayChart();
     loadWeekChart();
     loadYearChart();
   </script>
+</body>
+</html>
+<script>
+  // ------------------------------------------------------------
+  // Firebase-Konfiguration – DEINE DATEN SIND BEREITS EINGETRAGEN
+  // ------------------------------------------------------------
+  const firebaseConfig = {
+    apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
+    authDomain: "meine-wetterstation.firebaseapp.com",
+    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "meine-wetterstation",
+    storageBucket: "meine-wetterstation.appspot.com",
+    messagingSenderId: "123456789000",
+    appId: "1:123456789000:web:abcdef1234567890"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // ------------------------------------------------------------
+  // LIVE-WERTE AUS /weather
+  // ------------------------------------------------------------
+  function subscribeLiveValues() {
+    db.ref("/weather").on("value", snap => {
+      const v = snap.val() || {};
+
+      if (v.temperature !== undefined) {
+        document.getElementById("liveTemp").textContent = v.temperature.toFixed(1);
+      }
+      if (v.humidity !== undefined) {
+        document.getElementById("liveHum").textContent = v.humidity.toFixed(1);
+      }
+      if (v.pressure !== undefined) {
+        document.getElementById("livePres").textContent = v.pressure.toFixed(1);
+      }
+    });
+  }
+
+  // ------------------------------------------------------------
+  // TAGESDIAGRAMM (24h)
+  // ------------------------------------------------------------
+  function loadDayChart() {
+    const now = new Date();
+    const path = `history/${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+
+    db.ref(path).once("value").then(snapshot => {
+      const labels = [];
+      const temp = [];
+      const hum = [];
+      const pres = [];
+
+      snapshot.forEach(entry => {
+        labels.push(entry.key);
+        temp.push(entry.val().t);
+        hum.push(entry.val().f);
+        pres.push(entry.val().d);
+      });
+
+      new Chart(document.getElementById("chartDay"), {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            { label: "Temperatur (°C)", data: temp, borderColor: "#f97316", tension: 0.3 },
+            { label: "Feuchte (%)", data: hum, borderColor: "#38bdf8", tension: 0.3 },
+            { label: "Druck (hPa)", data: pres, borderColor: "#4ade80", tension: 0.3 }
+          ]
+        },
+        options: {
+          plugins: {
+            legend: { labels: { color: "#e5e7eb" } }
+          },
+          scales: {
+            x: { ticks: { color: "#9ca3af" }, grid: { color: "rgba(148,163,184,0.2)" } },
+            y: { ticks: { color: "#9ca3af" }, grid: { color: "rgba(148,163,184,0.2)" } }
+          }
+        }
+      });
+    });
+  }
+
+  // ------------------------------------------------------------
+  // WOCHENDIAGRAMM (7 Tage)
+  // ------------------------------------------------------------
+  function loadWeekChart() {
+    const now = new Date();
+    const labels = [];
+    const temp = [];
+    const hum = [];
+    const pres = [];
+    const promises = [];
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now - i * 86400000);
+      const path = `history/${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+
+      promises.push(
+        db.ref(path).once("value").then(snapshot => {
+          let t = 0, f = 0, p = 0, count = 0;
+
+          snapshot.forEach(entry => {
+            t += entry.val().t;
+            f += entry.val().f;
+            p += entry.val().d;
+            count++;
+          });
+
+          labels.unshift(`${d.getDate()}.${d.getMonth()+1}.`);
+          temp.unshift(count ? t / count : 0);
+          hum.unshift(count ? f / count : 0);
+          pres.unshift(count ? p / count : 0);
+        })
+      );
+    }
+
+    Promise.all(promises).then(() => {
+      new Chart(document.getElementById("chartWeek"), {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            { label: "Temperatur (°C)", data: temp, borderColor: "#f97316", tension: 0.3 },
+            { label: "Feuchte (%)", data: hum, borderColor: "#38bdf8", tension: 0.3 },
+            { label: "Druck (hPa)", data: pres, borderColor: "#4ade80", tension: 0.3 }
+          ]
+        },
+        options: {
+          plugins: {
+            legend: { labels: { color: "#e5e7eb", font: { size: 10 } } }
+          },
+          scales: {
+            x: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } },
+            y: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } }
+          }
+        }
+      });
+    });
+  }
+
+  // ------------------------------------------------------------
+  // JAHRESDIAGRAMM (Monatsmittel)
+  // ------------------------------------------------------------
+  function loadYearChart() {
+    const now = new Date();
+    const year = now.getFullYear();
+
+    const labels = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+    const temp = Array(12).fill(0);
+    const hum = Array(12).fill(0);
+    const pres = Array(12).fill(0);
+    const count = Array(12).fill(0);
+
+    db.ref(`history/${year}`).once("value").then(snapshot => {
+      snapshot.forEach((monthSnap, idx) => {
+        monthSnap.forEach(daySnap => {
+          daySnap.forEach(entry => {
+            temp[idx] += entry.val().t;
+            hum[idx] += entry.val().f;
+            pres[idx] += entry.val().d;
+            count[idx]++;
+          });
+        });
+      });
+
+      for (let i = 0; i < 12; i++) {
+        if (count[i] > 0) {
+          temp[i] /= count[i];
+          hum[i] /= count[i];
+          pres[i] /= count[i];
+        }
+      }
+
+      new Chart(document.getElementById("chartYear"), {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            { label: "Temperatur (°C)", data: temp, backgroundColor: "rgba(249,115,22,0.7)" },
+            { label: "Feuchte (%)", data: hum, backgroundColor: "rgba(56,189,248,0.7)" },
+            { label: "Druck (hPa)", data: pres, backgroundColor: "rgba(74,222,128,0.7)" }
+          ]
+        },
+        options: {
+          plugins: {
+            legend: { labels: { color: "#e5e7eb", font: { size: 10 } } }
+          },
+          scales: {
+            x: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } },
+            y: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } }
+          }
+        }
+      });
+    });
+  }
+</script>
+<script>
+  // ------------------------------------------------------------
+  // INITIALISIERUNG – ALLES STARTEN
+  // ------------------------------------------------------------
+
+  // Live-Werte abonnieren
+  subscribeLiveValues();
+
+  // Diagramme laden
+  loadDayChart();
+  loadWeekChart();
+  loadYearChart();
+
+  // Optional: Diagramme automatisch alle 5 Minuten aktualisieren
+  setInterval(() => {
+    loadDayChart();
+    loadWeekChart();
+    loadYearChart();
+  }, 5 * 60 * 1000);
+
+</script>
+
 </body>
 </html>
