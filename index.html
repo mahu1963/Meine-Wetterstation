@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Wetterstation Dashboard</title>
 
-<!-- Firebase -->
+<!-- Firebase v8 (kompatibel mit deinem Dashboard-Code) -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -171,16 +171,17 @@
 
 <script>
 // ------------------------------------------------------------
-// Firebase KONFIGURATION — HIER EINTRAGEN
+// Firebase KONFIGURATION (DEINE ECHTEN DATEN)
 // ------------------------------------------------------------
 const firebaseConfig = {
-    apiKey: "DEIN_API_KEY",
-    authDomain: "DEINE_DOMAIN",
-    databaseURL: "DEINE_DATABASE_URL",
-    projectId: "DEIN_PROJECT_ID",
-    storageBucket: "DEIN_BUCKET",
-    messagingSenderId: "DEINE_SENDER_ID",
-    appId: "DEINE_APP_ID"
+  apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
+  authDomain: "meine-wetterstation.firebaseapp.com",
+  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "meine-wetterstation",
+  storageBucket: "meine-wetterstation.appspot.com",
+  messagingSenderId: "593494014586",
+  appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
+  measurementId: "G-ST9RCRW888"
 };
 
 firebase.initializeApp(firebaseConfig);
