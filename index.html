@@ -1,312 +1,467 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <title>Meine Wetterstation</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <title>Wetterstation Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #eef2f7;
-            margin: 0;
-            padding: 20px;
-        }
-        .card {
-            background: white;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 6px #0002;
-        }
-        .value {
-            font-size: 2.2rem;
-            font-weight: bold;
-        }
-        .trend {
-            margin-left: 10px;
-            font-size: 1.4rem;
-        }
-        #weatherIcon {
-            font-size: 3rem;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-
-<body>
-
-<h1>🌤️ Meine Wetterstation</h1>
-
-<div class="card">
-    <div>Temperatur: <span id="temp" class="value">–</span> °C
-        <i id="tempTrend" class="trend"></i>
-    </div>
-    <div>Feuchte: <span id="hum" class="value">–</span> %</div>
-    <div>Druck: <span id="press" class="value">–</span> hPa</div>
-    <div id="weatherIcon"></div>
-</div>
-
-<div class="card">
-    <h3>Temperatur – letzte 24h</h3>
-    <canvas id="tempChart"></canvas>
-    Max: <span id="tempMax">–</span> °C  
-    Min: <span id="tempMin">–</span> °C
-</div>
-
-<div class="card">
-    <h3>Feuchte – letzte 24h</h3>
-    <canvas id="humDay"></canvas>
-</div>
-
-<div class="card">
-    <h3>Druck – letzte 24h</h3>
-    <canvas id="pressDay"></canvas>
-</div>
-
-<div class="card">
-    <h3>Temperatur – Woche</h3>
-    <canvas id="tempWeek"></canvas>
-</div>
-
-<div class="card">
-    <h3>Temperatur – Monat</h3>
-    <canvas id="tempMonth"></canvas>
-</div>
-
-<div class="card">
-    <h3>Jahresübersicht</h3>
-    <select id="yearSelect"></select>
-    <canvas id="yearChart"></canvas>
-</div>
-
-<!-- Firebase v8 -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-<script>
-/* Firebase Config */
-const firebaseConfig = {
-    apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
-    authDomain: "meine-wetterstation.firebaseapp.com",
-    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "meine-wetterstation",
-    storageBucket: "meine-wetterstation.appspot.com",
-    messagingSenderId: "593494014586",
-    appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
-    measurementId: "G-ST9RCRW888"
-};
-
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-
-/* Smart Weather Icon */
-let lastPressure = null;
-let lastPressureTime = null;
-
-function updateWeatherIcon(temp, hum, pressure) {
-    const iconDiv = document.getElementById("weatherIcon");
-    iconDiv.innerHTML = "";
-
-    let icon = "fa-cloud";
-    let color = "#888";
-
-    if (hum > 95 && temp > -2 && temp < 10) {
-        icon = "fa-smog";
-        color = "#999";
-    } else if (temp < -5 && hum > 80) {
-        icon = "fa-snowflake";
-        color = "#00aaff";
-    } else if (temp < 0 && hum > 70) {
-        icon = "fa-snowflake";
-        color = "#66ccff";
-    } else if (hum > 85) {
-        icon = "fa-cloud-showers-heavy";
-        color = "#0077cc";
-    } else if (temp > 20 && hum < 70) {
-        icon = "fa-sun";
-        color = "#FFD700";
-    } else if (lastPressure !== null && pressure !== null) {
-        const dt = Date.now() - lastPressureTime;
-        if (dt < 30 * 60 * 1000 && lastPressure - pressure > 3) {
-            icon = "fa-wind";
-            color = "#00aaff";
-        }
+  <style>
+    :root {
+      --bg: #0f172a;
+      --bg-card: #111827;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56,189,248,0.2);
+      --text: #e5e7eb;
+      --text-soft: #9ca3af;
+      --danger: #f97373;
+      --success: #4ade80;
     }
 
-    const i = document.createElement("i");
-    i.className = "fa-solid " + icon;
-    i.style.fontSize = "2.2rem";
-    i.style.color = color;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
 
-    iconDiv.appendChild(i);
+    body {
+      background: radial-gradient(circle at top, #1f2937 0, #020617 55%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: center;
+    }
 
-    lastPressure = pressure;
-    lastPressureTime = Date.now();
-}
+    .container {
+      width: 100%;
+      max-width: 1200px;
+    }
 
-/* Trend */
-function updateTrend(id, current, last) {
-    const el = document.getElementById(id);
-    if (last === null) return;
+    header {
+      margin-bottom: 1.5rem;
+    }
 
-    if (current > last) el.className = "fa-solid fa-arrow-up trend";
-    else if (current < last) el.className = "fa-solid fa-arrow-down trend";
-    else el.className = "fa-solid fa-minus trend";
-}
+    .title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
 
-/* Live-Werte */
-let lastTemp = null;
-let lastHum = null;
-let lastPress = null;
+    .title span.logo {
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #facc15, #f97316);
+      display: inline-block;
+    }
 
-db.ref("weather/temperature").on("value", s => {
-    const v = s.val();
-    document.getElementById("temp").textContent = v.toFixed(1);
-    updateTrend("tempTrend", v, lastTemp);
-    lastTemp = v;
-    updateWeatherIcon(lastTemp, lastHum, lastPress);
-});
+    .subtitle {
+      margin-top: 0.25rem;
+      color: var(--text-soft);
+      font-size: 0.9rem;
+    }
 
-db.ref("weather/humidity").on("value", s => {
-    lastHum = s.val();
-    document.getElementById("hum").textContent = lastHum;
-    updateWeatherIcon(lastTemp, lastHum, lastPress);
-});
+    .grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 1.5rem;
+    }
 
-db.ref("weather/pressure").on("value", s => {
-    lastPress = s.val();
-    document.getElementById("press").textContent = lastPress;
-    updateWeatherIcon(lastTemp, lastHum, lastPress);
-});
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
 
-/* Charts */
-function createChart(id, label, color) {
-    return new Chart(document.getElementById(id).getContext('2d'), {
-        type: 'line',
-        data: { labels: [], datasets: [{ label, data: [], borderColor: color, backgroundColor: color + "33", tension: 0.3 }] }
-    });
-}
+    .card {
+      background: linear-gradient(145deg, rgba(15,23,42,0.95), rgba(15,23,42,0.8));
+      border-radius: 1rem;
+      padding: 1rem 1.2rem;
+      box-shadow: 0 18px 40px rgba(0,0,0,0.5);
+      border: 1px solid rgba(148,163,184,0.15);
+      backdrop-filter: blur(12px);
+    }
 
-const tempChart = createChart("tempChart", "Temperatur (°C)", "#ff3333");
-const humDay = createChart("humDay", "Feuchte (%)", "#ff8800");
-const pressDay = createChart("pressDay", "Druck (hPa)", "#0033cc");
-const tempWeek = createChart("tempWeek", "Temperatur (°C)", "#ff3333");
-const tempMonth = createChart("tempMonth", "Temperatur (°C)", "#ff3333");
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 0.75rem;
+    }
 
-/* History */
-const now = Math.floor(Date.now() / 1000);
-const since24h = now - 86400;
-const sinceWeek = now - 7 * 86400;
-const sinceMonth = now - 30 * 86400;
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
 
-let tempValues = [];
+    .card-title span.dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+    }
 
-function addHistory(ref, chart, since, callback) {
-    db.ref(ref).orderByKey().startAt(String(since)).on("child_added", snap => {
-        const ts = snap.key;
-        const val = snap.val();
+    .card-subtitle {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+    }
 
-        const time = new Date(ts * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    .metrics {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
 
-        chart.data.labels.push(time);
-        chart.data.datasets[0].data.push(val);
-        chart.update();
+    .metric {
+      flex: 1;
+      min-width: 90px;
+      background: radial-gradient(circle at top, rgba(56,189,248,0.18), rgba(15,23,42,0.9));
+      border-radius: 0.75rem;
+      padding: 0.6rem 0.7rem;
+      border: 1px solid rgba(148,163,184,0.2);
+    }
 
-        if (callback) callback(val);
-    });
-}
+    .metric-label {
+      font-size: 0.7rem;
+      color: var(--text-soft);
+    }
 
-addHistory("history/temperature", tempChart, since24h, val => {
-    tempValues.push(val);
-    document.getElementById("tempMax").textContent = Math.max(...tempValues).toFixed(1);
-    document.getElementById("tempMin").textContent = Math.min(...tempValues).toFixed(1);
-});
+    .metric-value {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-top: 0.1rem;
+    }
 
-addHistory("history/humidity", humDay, since24h);
-addHistory("history/pressure", pressDay, since24h);
+    .metric-unit {
+      font-size: 0.8rem;
+      color: var(--text-soft);
+      margin-left: 0.25rem;
+    }
 
-addHistory("history/temperature", tempWeek, sinceWeek);
-addHistory("history/temperature", tempMonth, sinceMonth);
+    canvas {
+      width: 100% !important;
+      height: 260px !important;
+    }
 
-/* Jahresdiagramm */
-let yearChart = null;
+    .small canvas {
+      height: 200px !important;
+    }
 
-function loadYears() {
-    db.ref("history/year").once("value", snap => {
-        const years = Object.keys(snap.val() || {});
-        const select = document.getElementById("yearSelect");
+    .badge {
+      font-size: 0.7rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(56,189,248,0.4);
+    }
 
-        years.forEach(y => {
-            const opt = document.createElement("option");
-            opt.value = y;
-            opt.textContent = y;
-            select.appendChild(opt);
-        });
+    .footer {
+      margin-top: 1.5rem;
+      font-size: 0.75rem;
+      color: var(--text-soft);
+      text-align: center;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title">
+        <span class="logo"></span>
+        Wetterstation Dashboard
+      </div>
+      <div class="subtitle">
+        Live‑Daten, Tages‑, Wochen‑ und Jahresübersicht – direkt aus deiner Firebase‑Realtime‑Database.
+      </div>
+    </header>
 
-        if (years.length > 0) {
-            loadYearData(years[years.length - 1]);
+    <div class="grid">
+      <!-- Linke Spalte: Tagesdiagramm + Live-Werte -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              <span class="dot"></span>
+              Heute (24 h)
+            </div>
+            <div class="card-subtitle">Temperatur, Luftfeuchte und Luftdruck im Tagesverlauf</div>
+          </div>
+          <span class="badge">Live</span>
+        </div>
+
+        <div class="metrics">
+          <div class="metric">
+            <div class="metric-label">Temperatur</div>
+            <div class="metric-value">
+              <span id="liveTemp">–</span><span class="metric-unit">°C</span>
+            </div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Luftfeuchte</div>
+            <div class="metric-value">
+              <span id="liveHum">–</span><span class="metric-unit">%</span>
+            </div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Luftdruck</div>
+            <div class="metric-value">
+              <span id="livePres">–</span><span class="metric-unit">hPa</span>
+            </div>
+          </div>
+        </div>
+
+        <canvas id="chartDay"></canvas>
+      </div>
+
+      <!-- Rechte Spalte: Woche + Jahr -->
+      <div class="card small" style="margin-bottom:1rem;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              <span class="dot"></span>
+              Woche
+            </div>
+            <div class="card-subtitle">Durchschnittswerte der letzten 7 Tage</div>
+          </div>
+        </div>
+        <canvas id="chartWeek"></canvas>
+      </div>
+
+      <div class="card small">
+        <div class="card-header">
+          <div>
+            <div class="card-title">
+              <span class="dot"></span>
+              Jahr
+            </div>
+            <div class="card-subtitle">Monatsmittelwerte des aktuellen Jahres</div>
+          </div>
+        </div>
+        <canvas id="chartYear"></canvas>
+      </div>
+    </div>
+
+    <div class="footer">
+      Wetterstation · Firebase · ESP32 · MQTT · OTA · © Dein Projekt
+    </div>
+  </div>
+
+  <script>
+    // ------------------------------------------------------------
+    // Firebase-Konfiguration – HIER DEINE DATEN EINTRAGEN
+    // ------------------------------------------------------------
+    const firebaseConfig = {
+      apiKey: "DEIN_API_KEY",
+      authDomain: "DEIN_PROJEKT.firebaseapp.com",
+      databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "DEIN_PROJEKT",
+      storageBucket: "DEIN_PROJEKT.appspot.com",
+      messagingSenderId: "DEINE_SENDER_ID",
+      appId: "DEINE_APP_ID"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    // ------------------------------------------------------------
+    // Live-Werte aus /weather
+    // ------------------------------------------------------------
+    function subscribeLiveValues() {
+      db.ref("/weather").on("value", snap => {
+        const v = snap.val() || {};
+        if (v.temperature !== undefined) {
+          document.getElementById("liveTemp").textContent = v.temperature.toFixed(1);
         }
-    });
-}
+        if (v.humidity !== undefined) {
+          document.getElementById("liveHum").textContent = v.humidity.toFixed(1);
+        }
+        if (v.pressure !== undefined) {
+          document.getElementById("livePres").textContent = v.pressure.toFixed(1);
+        }
+      });
+    }
 
-function loadYearData(year) {
-    if (yearChart) yearChart.destroy();
+    // ------------------------------------------------------------
+    // Tagesdiagramm
+    // ------------------------------------------------------------
+    function loadDayChart() {
+      const now = new Date();
+      const path = `history/${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
 
-    const monthsMin = Array(12).fill(null);
-    const monthsMax = Array(12).fill(null);
+      db.ref(path).once("value").then(snapshot => {
+        const labels = [];
+        const temp = [];
+        const hum = [];
+        const pres = [];
 
-    db.ref("history/year/" + year + "/temperature").once("value", snap => {
-        snap.forEach(child => {
-            const ts = Number(child.key);
-            const val = child.val();
-            const m = new Date(ts * 1000).getMonth();
-
-            if (monthsMin[m] === null || val < monthsMin[m]) monthsMin[m] = val;
-            if (monthsMax[m] === null || val > monthsMax[m]) monthsMax[m] = val;
+        snapshot.forEach(entry => {
+          labels.push(entry.key);
+          temp.push(entry.val().t);
+          hum.push(entry.val().f);
+          pres.push(entry.val().d);
         });
 
-        const ctx = document.getElementById("yearChart").getContext("2d");
-
-        yearChart = new Chart(ctx, {
-            type: "bar",
-            data: {
-                labels: ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"],
-                datasets: [
-                    {
-                        label: "Min",
-                        data: monthsMin,
-                        backgroundColor: "#99ccff",
-                        borderColor: "#3399ff",
-                        borderWidth: 1
-                    },
-                    {
-                        label: "Max",
-                        data: monthsMax,
-                        type: "line",
-                        borderColor: "#ff3333",
-                        borderWidth: 3,
-                        fill: false,
-                        tension: 0.3
-                    }
-                ]
+        new Chart(document.getElementById("chartDay"), {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              { label: "Temperatur (°C)", data: temp, borderColor: "#f97316", tension: 0.3 },
+              { label: "Feuchte (%)", data: hum, borderColor: "#38bdf8", tension: 0.3 },
+              { label: "Druck (hPa)", data: pres, borderColor: "#4ade80", tension: 0.3 }
+            ]
+          },
+          options: {
+            plugins: {
+              legend: { labels: { color: "#e5e7eb" } }
+            },
+            scales: {
+              x: { ticks: { color: "#9ca3af" }, grid: { color: "rgba(148,163,184,0.2)" } },
+              y: { ticks: { color: "#9ca3af" }, grid: { color: "rgba(148,163,184,0.2)" } }
             }
+          }
         });
-    });
-}
+      });
+    }
 
-document.getElementById("yearSelect").addEventListener("change", e => {
-    loadYearData(e.target.value);
-});
+    // ------------------------------------------------------------
+    // Wochendiagramm (7 Tage)
+    // ------------------------------------------------------------
+    function loadWeekChart() {
+      const now = new Date();
+      const labels = [];
+      const temp = [];
+      const hum = [];
+      const pres = [];
+      const promises = [];
 
-loadYears();
-</script>
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(now - i * 86400000);
+        const path = `history/${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
 
+        promises.push(
+          db.ref(path).once("value").then(snapshot => {
+            let t = 0, f = 0, p = 0, count = 0;
+
+            snapshot.forEach(entry => {
+              t += entry.val().t;
+              f += entry.val().f;
+              p += entry.val().d;
+              count++;
+            });
+
+            labels.unshift(`${d.getDate()}.${d.getMonth()+1}.`);
+            temp.unshift(count ? t / count : 0);
+            hum.unshift(count ? f / count : 0);
+            pres.unshift(count ? p / count : 0);
+          })
+        );
+      }
+
+      Promise.all(promises).then(() => {
+        new Chart(document.getElementById("chartWeek"), {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              { label: "Temperatur (°C)", data: temp, borderColor: "#f97316", tension: 0.3 },
+              { label: "Feuchte (%)", data: hum, borderColor: "#38bdf8", tension: 0.3 },
+              { label: "Druck (hPa)", data: pres, borderColor: "#4ade80", tension: 0.3 }
+            ]
+          },
+          options: {
+            plugins: {
+              legend: { labels: { color: "#e5e7eb", font: { size: 10 } } }
+            },
+            scales: {
+              x: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } },
+              y: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } }
+            }
+          }
+        });
+      });
+    }
+
+    // ------------------------------------------------------------
+    // Jahresdiagramm (Monatsmittel)
+    // ------------------------------------------------------------
+    function loadYearChart() {
+      const now = new Date();
+      const year = now.getFullYear();
+
+      const labels = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+      const temp = Array(12).fill(0);
+      const hum = Array(12).fill(0);
+      const pres = Array(12).fill(0);
+      const count = Array(12).fill(0);
+
+      db.ref(`history/${year}`).once("value").then(snapshot => {
+        snapshot.forEach((monthSnap, idx) => {
+          monthSnap.forEach(daySnap => {
+            daySnap.forEach(entry => {
+              temp[idx] += entry.val().t;
+              hum[idx] += entry.val().f;
+              pres[idx] += entry.val().d;
+              count[idx]++;
+            });
+          });
+        });
+
+        for (let i = 0; i < 12; i++) {
+          if (count[i] > 0) {
+            temp[i] /= count[i];
+            hum[i] /= count[i];
+            pres[i] /= count[i];
+          }
+        }
+
+        new Chart(document.getElementById("chartYear"), {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [
+              { label: "Temperatur (°C)", data: temp, backgroundColor: "rgba(249,115,22,0.7)" },
+              { label: "Feuchte (%)", data: hum, backgroundColor: "rgba(56,189,248,0.7)" },
+              { label: "Druck (hPa)", data: pres, backgroundColor: "rgba(74,222,128,0.7)" }
+            ]
+          },
+          options: {
+            plugins: {
+              legend: { labels: { color: "#e5e7eb", font: { size: 10 } } }
+            },
+            scales: {
+              x: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } },
+              y: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } }
+            }
+          }
+        });
+      });
+    }
+
+    // ------------------------------------------------------------
+    // Initialisierung
+    // ------------------------------------------------------------
+    subscribeLiveValues();
+    loadDayChart();
+    loadWeekChart();
+    loadYearChart();
+  </script>
 </body>
 </html>
