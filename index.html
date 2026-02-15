@@ -1,683 +1,297 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <title>Wetterstation Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="UTF-8">
+<title>Wetterstation Dashboard</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-  <style>
-    :root {
-      --bg: #0f172a;
-      --bg-card: #111827;
-      --accent: #38bdf8;
-      --accent-soft: rgba(56,189,248,0.2);
-      --text: #e5e7eb;
-      --text-soft: #9ca3af;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    }
-
+<style>
     body {
-      background: radial-gradient(circle at top, #1f2937 0, #020617 55%);
-      color: var(--text);
-      min-height: 100vh;
-      padding: 1.5rem;
-      display: flex;
-      justify-content: center;
+        font-family: Arial, sans-serif;
+        background: #f0f0f0;
+        margin: 20px;
     }
-
-    .container {
-      width: 100%;
-      max-width: 1200px;
+    h1 {
+        text-align: center;
     }
-
-    header {
-      margin-bottom: 1.5rem;
+    #live {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        margin-bottom: 30px;
+        font-size: 22px;
     }
-
-    .title {
-      font-size: 1.8rem;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+    button {
+        padding: 10px 20px;
+        margin: 5px;
+        font-size: 16px;
+        cursor: pointer;
     }
-
-    .title span.logo {
-      width: 32px;
-      height: 32px;
-      border-radius: 999px;
-      background: radial-gradient(circle at 30% 30%, #facc15, #f97316);
-      display: inline-block;
+    #chart-container {
+        width: 90%;
+        margin: auto;
     }
-
-    .subtitle {
-      margin-top: 0.25rem;
-      color: var(--text-soft);
-      font-size: 0.9rem;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 2fr 1fr;
-      gap: 1.5rem;
-    }
-
-    @media (max-width: 900px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .card {
-      background: linear-gradient(145deg, rgba(15,23,42,0.95), rgba(15,23,42,0.8));
-      border-radius: 1rem;
-      padding: 1rem 1.2rem;
-      box-shadow: 0 18px 40px rgba(0,0,0,0.5);
-      border: 1px solid rgba(148,163,184,0.15);
-      backdrop-filter: blur(12px);
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 0.75rem;
-    }
-
-    .card-title {
-      font-size: 1rem;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-    }
-
-    .card-title span.dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: var(--accent);
-      box-shadow: 0 0 10px var(--accent);
-    }
-
-    .card-subtitle {
-      font-size: 0.8rem;
-      color: var(--text-soft);
-    }
-
-    .metrics {
-      display: flex;
-      gap: 0.75rem;
-      margin-bottom: 0.75rem;
-      flex-wrap: wrap;
-    }
-
-    .metric {
-      flex: 1;
-      min-width: 90px;
-      background: radial-gradient(circle at top, rgba(56,189,248,0.18), rgba(15,23,42,0.9));
-      border-radius: 0.75rem;
-      padding: 0.6rem 0.7rem;
-      border: 1px solid rgba(148,163,184,0.2);
-    }
-
-    .metric-label {
-      font-size: 0.7rem;
-      color: var(--text-soft);
-    }
-
-    .metric-value {
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin-top: 0.1rem;
-    }
-
-    .metric-unit {
-      font-size: 0.8rem;
-      color: var(--text-soft);
-      margin-left: 0.25rem;
-    }
-
-    canvas {
-      width: 100% !important;
-      height: 260px !important;
-    }
-
-    .small canvas {
-      height: 200px !important;
-    }
-
-    .badge {
-      font-size: 0.7rem;
-      padding: 0.15rem 0.5rem;
-      border-radius: 999px;
-      background: var(--accent-soft);
-      color: var(--accent);
-      border: 1px solid rgba(56,189,248,0.4);
-    }
-
-    .footer {
-      margin-top: 1.5rem;
-      font-size: 0.75rem;
-      color: var(--text-soft);
-      text-align: center;
-      opacity: 0.7;
-    }
-  </style>
+</style>
 </head>
+
 <body>
-  <div class="container">
-    <header>
-      <div class="title">
-        <span class="logo"></span>
-        Wetterstation Dashboard
-      </div>
-      <div class="subtitle">
-        Live‑Daten, Tages‑, Wochen‑ und Jahresübersicht – direkt aus deiner Firebase‑Realtime‑Database.
-      </div>
-    </header>
 
-    <div class="grid">
-      <!-- Linke Spalte: Tagesdiagramm + Live-Werte -->
-      <div class="card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">
-              <span class="dot"></span>
-              Heute (24 h)
-            </div>
-            <div class="card-subtitle">Temperatur, Luftfeuchte und Luftdruck im Tagesverlauf</div>
-          </div>
-          <span class="badge">Live</span>
-        </div>
+<h1>Wetterstation Dashboard</h1>
 
-        <div class="metrics">
-          <div class="metric">
-            <div class="metric-label">Temperatur</div>
-            <div class="metric-value">
-              <span id="liveTemp">–</span><span class="metric-unit">°C</span>
-            </div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Luftfeuchte</div>
-            <div class="metric-value">
-              <span id="liveHum">–</span><span class="metric-unit">%</span>
-            </div>
-          </div>
-          <div class="metric">
-            <div class="metric-label">Luftdruck</div>
-            <div class="metric-value">
-              <span id="livePres">–</span><span class="metric-unit">hPa</span>
-            </div>
-          </div>
-        </div>
+<div id="live">
+    <div>🌡 Temperatur: <span id="temp">--</span> °C</div>
+    <div>💧 Feuchte: <span id="hum">--</span> %</div>
+    <div>🌬 Druck: <span id="pres">--</span> hPa</div>
+</div>
 
-        <canvas id="chartDay"></canvas>
-      </div>
+<div style="text-align:center;">
+    <button onclick="loadTodayHistory()">Heute</button>
+    <button onclick="loadWeekHistory()">Woche</button>
+    <button onclick="loadMonthHistory()">Monat</button>
+    <button onclick="loadYearHistory()">Jahr</button>
+</div>
 
-      <!-- Rechte Spalte: Woche + Jahr -->
-      <div class="card small" style="margin-bottom:1rem;">
-        <div class="card-header">
-          <div>
-            <div class="card-title">
-              <span class="dot"></span>
-              Woche
-            </div>
-            <div class="card-subtitle">Durchschnittswerte der letzten 7 Tage</div>
-          </div>
-        </div>
-        <canvas id="chartWeek"></canvas>
-      </div>
+<div id="chart-container">
+    <canvas id="chart"></canvas>
+</div>
 
-      <div class="card small">
-        <div class="card-header">
-          <div>
-            <div class="card-title">
-              <span class="dot"></span>
-              Jahr
-            </div>
-            <div class="card-subtitle">Monatsmittelwerte des aktuellen Jahres</div>
-          </div>
-        </div>
-        <canvas id="chartYear"></canvas>
-      </div>
-    </div>
-
-    <div class="footer">
-      Wetterstation · Firebase · ESP32 · MQTT · OTA · © Dein Projekt
-    </div>
-  </div>
-
-  <script>
-    // ------------------------------------------------------------
-    // Firebase-Konfiguration – HIER DEINE PROJEKT-DATEN EINTRAGEN
-    // ------------------------------------------------------------
-    const firebaseConfig = {
-      apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
-      authDomain: "meine-wetterstation.firebaseapp.com",
-      databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "meine-wetterstation",
-      storageBucket: "meine-wetterstation.appspot.com",
-      messagingSenderId: "123456789000",
-      appId: "1:123456789000:web:abcdef1234567890"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // ------------------------------------------------------------
-    // LIVE-WERTE AUS /weather
-    // ------------------------------------------------------------
-    function subscribeLiveValues() {
-      db.ref("/weather").on("value", snap => {
-        const v = snap.val() || {};
-
-        if (v.temperature !== undefined) {
-          document.getElementById("liveTemp").textContent = v.temperature.toFixed(1);
-        }
-        if (v.humidity !== undefined) {
-          document.getElementById("liveHum").textContent = v.humidity.toFixed(1);
-        }
-        if (v.pressure !== undefined) {
-          document.getElementById("livePres").textContent = v.pressure.toFixed(1);
-        }
-      });
-    }
-
-    // ------------------------------------------------------------
-    // TAGESDIAGRAMM (24h)
-    // ------------------------------------------------------------
-    function loadDayChart() {
-      const now = new Date();
-      const path = `history/${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
-
-      db.ref(path).once("value").then(snapshot => {
-        const labels = [];
-        const temp = [];
-        const hum = [];
-        const pres = [];
-
-        snapshot.forEach(entry => {
-          labels.push(entry.key);
-          temp.push(entry.val().t);
-          hum.push(entry.val().f);
-          pres.push(entry.val().d);
-        });
-
-        new Chart(document.getElementById("chartDay"), {
-          type: "line",
-          data: {
-            labels,
-            datasets: [
-              { label: "Temperatur (°C)", data: temp, borderColor: "#f97316", tension: 0.3 },
-              { label: "Feuchte (%)", data: hum, borderColor: "#38bdf8", tension: 0.3 },
-              { label: "Druck (hPa)", data: pres, borderColor: "#4ade80", tension: 0.3 }
-            ]
-          },
-          options: {
-            plugins: {
-              legend: { labels: { color: "#e5e7eb" } }
-            },
-            scales: {
-              x: { ticks: { color: "#9ca3af" }, grid: { color: "rgba(148,163,184,0.2)" } },
-              y: { ticks: { color: "#9ca3af" }, grid: { color: "rgba(148,163,184,0.2)" } }
-            }
-          }
-        });
-      });
-    }
-
-    // ------------------------------------------------------------
-    // WOCHENDIAGRAMM (7 Tage)
-    // ------------------------------------------------------------
-    function loadWeekChart() {
-      const now = new Date();
-      const labels = [];
-      const temp = [];
-      const hum = [];
-      const pres = [];
-      const promises = [];
-
-      for (let i = 0; i < 7; i++) {
-        const d = new Date(now - i * 86400000);
-        const path = `history/${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
-
-        promises.push(
-          db.ref(path).once("value").then(snapshot => {
-            let t = 0, f = 0, p = 0, count = 0;
-
-            snapshot.forEach(entry => {
-              t += entry.val().t;
-              f += entry.val().f;
-              p += entry.val().d;
-              count++;
-            });
-
-            labels.unshift(`${d.getDate()}.${d.getMonth()+1}.`);
-            temp.unshift(count ? t / count : 0);
-            hum.unshift(count ? f / count : 0);
-            pres.unshift(count ? p / count : 0);
-          })
-        );
-      }
-
-      Promise.all(promises).then(() => {
-        new Chart(document.getElementById("chartWeek"), {
-          type: "line",
-          data: {
-            labels,
-            datasets: [
-              { label: "Temperatur (°C)", data: temp, borderColor: "#f97316", tension: 0.3 },
-              { label: "Feuchte (%)", data: hum, borderColor: "#38bdf8", tension: 0.3 },
-              { label: "Druck (hPa)", data: pres, borderColor: "#4ade80", tension: 0.3 }
-            ]
-          },
-          options: {
-            plugins: {
-              legend: { labels: { color: "#e5e7eb", font: { size: 10 } } }
-            },
-            scales: {
-              x: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } },
-              y: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } }
-            }
-          }
-        });
-      });
-    }
-
-    // ------------------------------------------------------------
-    // JAHRESDIAGRAMM (Monatsmittel)
-    // ------------------------------------------------------------
-    function loadYearChart() {
-      const now = new Date();
-      const year = now.getFullYear();
-
-      const labels = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
-      const temp = Array(12).fill(0);
-      const hum = Array(12).fill(0);
-      const pres = Array(12).fill(0);
-      const count = Array(12).fill(0);
-
-      db.ref(`history/${year}`).once("value").then(snapshot => {
-        snapshot.forEach((monthSnap, idx) => {
-          monthSnap.forEach(daySnap => {
-            daySnap.forEach(entry => {
-              temp[idx] += entry.val().t;
-              hum[idx] += entry.val().f;
-              pres[idx] += entry.val().d;
-              count[idx]++;
-            });
-          });
-        });
-
-        for (let i = 0; i < 12; i++) {
-          if (count[i] > 0) {
-            temp[i] /= count[i];
-            hum[i] /= count[i];
-            pres[i] /= count[i];
-          }
-        }
-
-        new Chart(document.getElementById("chartYear"), {
-          type: "bar",
-          data: {
-            labels,
-            datasets: [
-              { label: "Temperatur (°C)", data: temp, backgroundColor: "rgba(249,115,22,0.7)" },
-              { label: "Feuchte (%)", data: hum, backgroundColor: "rgba(56,189,248,0.7)" },
-              { label: "Druck (hPa)", data: pres, backgroundColor: "rgba(74,222,128,0.7)" }
-            ]
-          },
-          options: {
-            plugins: {
-              legend: { labels: { color: "#e5e7eb", font: { size: 10 } } }
-            },
-            scales: {
-              x: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } },
-              y: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } }
-            }
-          }
-        });
-      });
-    }
-
-    // ------------------------------------------------------------
-    // INITIALISIERUNG
-    // ------------------------------------------------------------
-    subscribeLiveValues();
-    loadDayChart();
-    loadWeekChart();
-    loadYearChart();
-  </script>
-</body>
-</html>
 <script>
-  // ------------------------------------------------------------
-  // Firebase-Konfiguration – DEINE DATEN SIND BEREITS EINGETRAGEN
-  // ------------------------------------------------------------
-  const firebaseConfig = {
-    apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
-    authDomain: "meine-wetterstation.firebaseapp.com",
-    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "meine-wetterstation",
-    storageBucket: "meine-wetterstation.appspot.com",
-    messagingSenderId: "123456789000",
-    appId: "1:123456789000:web:abcdef1234567890"
-  };
+// ------------------------------------------------------------
+// Firebase KONFIGURATION — HIER EINTRAGEN
+// ------------------------------------------------------------
+const firebaseConfig = {
+    apiKey: "DEIN_API_KEY",
+    authDomain: "DEINE_DOMAIN",
+    databaseURL: "DEINE_DATABASE_URL",
+    projectId: "DEIN_PROJECT_ID",
+    storageBucket: "DEIN_BUCKET",
+    messagingSenderId: "DEINE_SENDER_ID",
+    appId: "DEINE_APP_ID"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+firebase.initializeApp(firebaseConfig);
 
-  // ------------------------------------------------------------
-  // LIVE-WERTE AUS /weather
-  // ------------------------------------------------------------
-  function subscribeLiveValues() {
-    db.ref("/weather").on("value", snap => {
-      const v = snap.val() || {};
+// ------------------------------------------------------------
+// LIVE-WERTE LADEN
+// ------------------------------------------------------------
+firebase.database().ref("weather").on("value", snap => {
+    const d = snap.val();
+    if (!d) return;
 
-      if (v.temperature !== undefined) {
-        document.getElementById("liveTemp").textContent = v.temperature.toFixed(1);
-      }
-      if (v.humidity !== undefined) {
-        document.getElementById("liveHum").textContent = v.humidity.toFixed(1);
-      }
-      if (v.pressure !== undefined) {
-        document.getElementById("livePres").textContent = v.pressure.toFixed(1);
-      }
+    document.getElementById("temp").innerText = d.temperature.toFixed(1);
+    document.getElementById("hum").innerText  = d.humidity.toFixed(1);
+    document.getElementById("pres").innerText = d.pressure.toFixed(1);
+});
+
+// ------------------------------------------------------------
+// HISTORY LADEN (Hilfsfunktion)
+// ------------------------------------------------------------
+function loadHistoryPath(path, callback) {
+    firebase.database().ref(path).once("value", snapshot => {
+        const data = snapshot.val();
+        if (!data) {
+            callback([], [], [], []);
+            return;
+        }
+
+        const times = [];
+        const temps = [];
+        const hums = [];
+        const press = [];
+
+        const keys = Object.keys(data).sort();
+
+        keys.forEach(key => {
+            const entry = data[key];
+            if (!entry) return;
+
+            times.push(key);
+            temps.push(entry.temperature);
+            hums.push(entry.humidity);
+            press.push(entry.pressure);
+        });
+
+        callback(times, temps, hums, press);
     });
-  }
+}
 
-  // ------------------------------------------------------------
-  // TAGESDIAGRAMM (24h)
-  // ------------------------------------------------------------
-  function loadDayChart() {
-    const now = new Date();
-    const path = `history/${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}`;
+// ------------------------------------------------------------
+// CHART AKTUALISIEREN
+// ------------------------------------------------------------
+let chart;
 
-    db.ref(path).once("value").then(snapshot => {
-      const labels = [];
-      const temp = [];
-      const hum = [];
-      const pres = [];
+function updateChart(times, temps, hums, press) {
+    const ctx = document.getElementById("chart").getContext("2d");
 
-      snapshot.forEach(entry => {
-        labels.push(entry.key);
-        temp.push(entry.val().t);
-        hum.push(entry.val().f);
-        pres.push(entry.val().d);
-      });
+    if (chart) chart.destroy();
 
-      new Chart(document.getElementById("chartDay"), {
+    chart = new Chart(ctx, {
         type: "line",
         data: {
-          labels,
-          datasets: [
-            { label: "Temperatur (°C)", data: temp, borderColor: "#f97316", tension: 0.3 },
-            { label: "Feuchte (%)", data: hum, borderColor: "#38bdf8", tension: 0.3 },
-            { label: "Druck (hPa)", data: pres, borderColor: "#4ade80", tension: 0.3 }
-          ]
-        },
-        options: {
-          plugins: {
-            legend: { labels: { color: "#e5e7eb" } }
-          },
-          scales: {
-            x: { ticks: { color: "#9ca3af" }, grid: { color: "rgba(148,163,184,0.2)" } },
-            y: { ticks: { color: "#9ca3af" }, grid: { color: "rgba(148,163,184,0.2)" } }
-          }
+            labels: times,
+            datasets: [
+                {
+                    label: "Temperatur (°C)",
+                    data: temps,
+                    borderColor: "orange",
+                    fill: false
+                },
+                {
+                    label: "Feuchte (%)",
+                    data: hums,
+                    borderColor: "blue",
+                    fill: false
+                },
+                {
+                    label: "Druck (hPa)",
+                    data: press,
+                    borderColor: "green",
+                    fill: false
+                }
+            ]
         }
-      });
     });
-  }
+}
 
-  // ------------------------------------------------------------
-  // WOCHENDIAGRAMM (7 Tage)
-  // ------------------------------------------------------------
-  function loadWeekChart() {
+// ------------------------------------------------------------
+// TAGESVERLAUF
+// ------------------------------------------------------------
+function loadTodayHistory() {
     const now = new Date();
-    const labels = [];
-    const temp = [];
-    const hum = [];
-    const pres = [];
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+
+    loadHistoryPath(`history/${y}/${m}/${d}`, updateChart);
+}
+
+// ------------------------------------------------------------
+// WOCHENVERLAUF
+// ------------------------------------------------------------
+function loadWeekHistory() {
+    const now = new Date();
     const promises = [];
 
     for (let i = 0; i < 7; i++) {
-      const d = new Date(now - i * 86400000);
-      const path = `history/${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()}`;
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
 
-      promises.push(
-        db.ref(path).once("value").then(snapshot => {
-          let t = 0, f = 0, p = 0, count = 0;
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const da = String(d.getDate()).padStart(2, "0");
 
-          snapshot.forEach(entry => {
-            t += entry.val().t;
-            f += entry.val().f;
-            p += entry.val().d;
-            count++;
-          });
+        const path = `history/${y}/${m}/${da}`;
 
-          labels.unshift(`${d.getDate()}.${d.getMonth()+1}.`);
-          temp.unshift(count ? t / count : 0);
-          hum.unshift(count ? f / count : 0);
-          pres.unshift(count ? p / count : 0);
-        })
-      );
+        promises.push(
+            new Promise(resolve => {
+                loadHistoryPath(path, (t, te, h, p) => resolve({ t, te, h, p }));
+            })
+        );
     }
 
-    Promise.all(promises).then(() => {
-      new Chart(document.getElementById("chartWeek"), {
-        type: "line",
-        data: {
-          labels,
-          datasets: [
-            { label: "Temperatur (°C)", data: temp, borderColor: "#f97316", tension: 0.3 },
-            { label: "Feuchte (%)", data: hum, borderColor: "#38bdf8", tension: 0.3 },
-            { label: "Druck (hPa)", data: pres, borderColor: "#4ade80", tension: 0.3 }
-          ]
-        },
-        options: {
-          plugins: {
-            legend: { labels: { color: "#e5e7eb", font: { size: 10 } } }
-          },
-          scales: {
-            x: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } },
-            y: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } }
-          }
-        }
-      });
-    });
-  }
+    Promise.all(promises).then(days => {
+        const times = [], temps = [], hums = [], press = [];
 
-  // ------------------------------------------------------------
-  // JAHRESDIAGRAMM (Monatsmittel)
-  // ------------------------------------------------------------
-  function loadYearChart() {
-    const now = new Date();
-    const year = now.getFullYear();
-
-    const labels = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
-    const temp = Array(12).fill(0);
-    const hum = Array(12).fill(0);
-    const pres = Array(12).fill(0);
-    const count = Array(12).fill(0);
-
-    db.ref(`history/${year}`).once("value").then(snapshot => {
-      snapshot.forEach((monthSnap, idx) => {
-        monthSnap.forEach(daySnap => {
-          daySnap.forEach(entry => {
-            temp[idx] += entry.val().t;
-            hum[idx] += entry.val().f;
-            pres[idx] += entry.val().d;
-            count[idx]++;
-          });
+        days.reverse().forEach(day => {
+            day.t.forEach((time, i) => {
+                times.push(time);
+                temps.push(day.te[i]);
+                hums.push(day.h[i]);
+                press.push(day.p[i]);
+            });
         });
-      });
 
-      for (let i = 0; i < 12; i++) {
-        if (count[i] > 0) {
-          temp[i] /= count[i];
-          hum[i] /= count[i];
-          pres[i] /= count[i];
-        }
-      }
-
-      new Chart(document.getElementById("chartYear"), {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            { label: "Temperatur (°C)", data: temp, backgroundColor: "rgba(249,115,22,0.7)" },
-            { label: "Feuchte (%)", data: hum, backgroundColor: "rgba(56,189,248,0.7)" },
-            { label: "Druck (hPa)", data: pres, backgroundColor: "rgba(74,222,128,0.7)" }
-          ]
-        },
-        options: {
-          plugins: {
-            legend: { labels: { color: "#e5e7eb", font: { size: 10 } } }
-          },
-          scales: {
-            x: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } },
-            y: { ticks: { color: "#9ca3af", font: { size: 10 } }, grid: { color: "rgba(148,163,184,0.2)" } }
-          }
-        }
-      });
+        updateChart(times, temps, hums, press);
     });
-  }
+}
+
+// ------------------------------------------------------------
+// MONATSVERLAUF (30 Tage)
+// ------------------------------------------------------------
+function loadMonthHistory() {
+    const now = new Date();
+    const promises = [];
+
+    for (let i = 0; i < 30; i++) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const da = String(d.getDate()).padStart(2, "0");
+
+        const path = `history/${y}/${m}/${da}`;
+
+        promises.push(
+            new Promise(resolve => {
+                loadHistoryPath(path, (t, te, h, p) => resolve({ t, te, h, p }));
+            })
+        );
+    }
+
+    Promise.all(promises).then(days => {
+        const times = [], temps = [], hums = [], press = [];
+
+        days.reverse().forEach(day => {
+            day.t.forEach((time, i) => {
+                times.push(time);
+                temps.push(day.te[i]);
+                hums.push(day.h[i]);
+                press.push(day.p[i]);
+            });
+        });
+
+        updateChart(times, temps, hums, press);
+    });
+}
+
+// ------------------------------------------------------------
+// JAHRESVERLAUF (365 Tage)
+// ------------------------------------------------------------
+function loadYearHistory() {
+    const now = new Date();
+    const promises = [];
+
+    for (let i = 0; i < 365; i++) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const da = String(d.getDate()).padStart(2, "0");
+
+        const path = `history/${y}/${m}/${da}`;
+
+        promises.push(
+            new Promise(resolve => {
+                loadHistoryPath(path, (t, te, h, p) => resolve({ t, te, h, p }));
+            })
+        );
+    }
+
+    Promise.all(promises).then(days => {
+        const times = [], temps = [], hums = [], press = [];
+
+        days.reverse().forEach(day => {
+            day.t.forEach((time, i) => {
+                times.push(time);
+                temps.push(day.te[i]);
+                hums.push(day.h[i]);
+                press.push(day.p[i]);
+            });
+        });
+
+        updateChart(times, temps, hums, press);
+    });
+}
+
+// ------------------------------------------------------------
+// STANDARD: Tagesverlauf beim Start
+// ------------------------------------------------------------
+loadTodayHistory();
+
 </script>
-<script>
-  // ------------------------------------------------------------
-  // INITIALISIERUNG – ALLES STARTEN
-  // ------------------------------------------------------------
-
-  // Live-Werte abonnieren
-  subscribeLiveValues();
-
-  // Diagramme laden
-  loadDayChart();
-  loadWeekChart();
-  loadYearChart();
-
-  // Optional: Diagramme automatisch alle 5 Minuten aktualisieren
-  setInterval(() => {
-    loadDayChart();
-    loadWeekChart();
-    loadYearChart();
-  }, 5 * 60 * 1000);
-
-</script>
-
 </body>
 </html>
