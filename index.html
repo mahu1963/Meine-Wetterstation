@@ -7,10 +7,6 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Wetterstation</title>
 
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -291,13 +287,35 @@ body {
 </div>
 
 <!-- ----------------------------------------------------
-     JAVASCRIPT – KOMPLETTE LOGIK
+     JAVASCRIPT – FIREBASE SDK 9
 ---------------------------------------------------- -->
-<script>
-function toggleSidebar() {
-    document.getElementById("sidebar").classList.toggle("open");
-}
+<script type="module">
 
+/* Firebase SDK 9 */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getDatabase, ref, onValue, get }
+    from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+/* Deine Firebase-Konfiguration */
+const firebaseConfig = {
+  apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
+  authDomain: "meine-wetterstation.firebaseapp.com",
+  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "meine-wetterstation",
+  storageBucket: "meine-wetterstation.appspot.com",
+  messagingSenderId: "593494014586",
+  appId: "1:593494014586:web:a05ed68495b1b16d6059c3"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* Sidebar */
+window.toggleSidebar = function () {
+    document.getElementById("sidebar").classList.toggle("open");
+};
+
+/* Datum & Uhrzeit */
 function updateDateTime() {
     const now = new Date();
     document.getElementById("datetime").innerText =
@@ -306,6 +324,7 @@ function updateDateTime() {
 setInterval(updateDateTime, 1000);
 updateDateTime();
 
+/* GPS */
 function loadGPS() {
     if (!navigator.geolocation) {
         document.getElementById("gps").innerText = "GPS nicht verfügbar";
@@ -321,149 +340,171 @@ function loadGPS() {
 }
 loadGPS();
 
-const firebaseConfig = {
-  apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
-  authDomain: "meine-wetterstation.firebaseapp.com",
-  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "meine-wetterstation",
-  storageBucket: "meine-wetterstation.appspot.com",
-  messagingSenderId: "593494014586",
-  appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
-  measurementId: "G-ST9RCRW888"
-};
+/* Trendpfeile */
+let lastTemp = null, lastHum = null, lastPres = null;
 
-firebase.initializeApp(firebaseConfig);
-
-let lastTemp=null,lastHum=null,lastPres=null;
-
-function updateTrend(id,last,current){
-    const el=document.getElementById(id);
-    if(last===null){el.innerHTML="";return current;}
-    if(current>last){
-        el.innerHTML=`<svg width="24" height="24"><polygon points="12,4 20,20 4,20" fill="#4fc3f7"/></svg>`;
-    } else if(current<last){
-        el.innerHTML=`<svg width="24" height="24"><polygon points="12,20 20,4 4,4" fill="#ff5252"/></svg>`;
-    } else el.innerHTML="";
+function updateTrend(id, last, current) {
+    const el = document.getElementById(id);
+    if (last === null) {
+        el.innerHTML = "";
+        return current;
+    }
+    if (current > last) {
+        el.innerHTML = `<svg width="24" height="24"><polygon points="12,4 20,20 4,20" fill="#4fc3f7"/></svg>`;
+    } else if (current < last) {
+        el.innerHTML = `<svg width="24" height="24"><polygon points="12,20 20,4 4,4" fill="#ff5252"/></svg>`;
+    } else {
+        el.innerHTML = "";
+    }
     return current;
 }
 
-firebase.database().ref("weather").on("value", snap => {
-    const d=snap.val(); if(!d) return;
-    document.getElementById("temp").innerText=d.temperature.toFixed(1);
-    document.getElementById("hum").innerText=d.humidity.toFixed(1);
-    document.getElementById("pres").innerText=d.pressure.toFixed(1);
+/* LIVE-DATEN */
+onValue(ref(db, "weather"), snap => {
+    const d = snap.val();
+    if (!d) return;
 
-    lastTemp=updateTrend("trend-temp",lastTemp,d.temperature);
-    lastHum=updateTrend("trend-hum",lastHum,d.humidity);
-    lastPres=updateTrend("trend-pres",lastPres,d.pressure);
+    document.getElementById("temp").innerText = d.temperature.toFixed(1);
+    document.getElementById("hum").innerText = d.humidity.toFixed(1);
+    document.getElementById("pres").innerText = d.pressure.toFixed(1);
+
+    lastTemp = updateTrend("trend-temp", lastTemp, d.temperature);
+    lastHum  = updateTrend("trend-hum", lastHum, d.humidity);
+    lastPres = updateTrend("trend-pres", lastPres, d.pressure);
 });
 
+/* CHARTS */
 let chart;
-let chartType="temp";
+let chartType = "temp";
 
-function setChartType(type){
-    chartType=type;
-    document.querySelectorAll(".chart-tab").forEach(t=>t.classList.remove("active"));
+window.setChartType = function(type) {
+    chartType = type;
+    document.querySelectorAll(".chart-tab").forEach(t => t.classList.remove("active"));
     document.getElementById(`tab-${type}`).classList.add("active");
     loadMode();
-}
+};
 
-function updateChart(times,temps,hums,press){
-    const ctx=document.getElementById("chart").getContext("2d");
-    if(chart) chart.destroy();
+function updateChart(times, temps, hums, press) {
+    const ctx = document.getElementById("chart").getContext("2d");
+    if (chart) chart.destroy();
 
-    let data,color;
-    if(chartType==="temp"){data=temps;color="#ff9800";}
-    else if(chartType==="hum"){data=hums;color="#4fc3f7";}
-    else {data=press;color="#81c784";}
+    let data, color;
+    if (chartType === "temp") { data = temps; color = "#ff9800"; }
+    else if (chartType === "hum") { data = hums; color = "#4fc3f7"; }
+    else { data = press; color = "#81c784"; }
 
-    chart=new Chart(ctx,{
-        type:"line",
-        data:{labels:times,datasets:[{label:"",data:data,borderColor:color,fill:false}]},
-        options:{responsive:true,animation:false}
+    chart = new Chart(ctx, {
+        type: "line",
+        data: { labels: times, datasets: [{ data, borderColor: color, fill: false }] },
+        options: { responsive: true, animation: false }
     });
 
-    updateMinMax(temps,hums,press);
+    updateMinMax(temps, hums, press);
 }
 
-function updateMinMax(temps,hums,press){
-    if(temps.length===0){
-        document.getElementById("minmax").innerText="Keine Daten";
+function updateMinMax(temps, hums, press) {
+    if (temps.length === 0) {
+        document.getElementById("minmax").innerText = "Keine Daten";
         return;
     }
-    document.getElementById("minmax").innerText=
-        `Temp: ${Math.min(...temps).toFixed(1)} – ${Math.max(...temps).toFixed(1)} °C | `+
-        `Feuchte: ${Math.min(...hums).toFixed(1)} – ${Math.max(...hums).toFixed(1)} % | `+
+    document.getElementById("minmax").innerText =
+        `Temp: ${Math.min(...temps).toFixed(1)} – ${Math.max(...temps).toFixed(1)} °C | ` +
+        `Feuchte: ${Math.min(...hums).toFixed(1)} – ${Math.max(...hums).toFixed(1)} % | ` +
         `Druck: ${Math.min(...press).toFixed(1)} – ${Math.max(...press).toFixed(1)} hPa`;
 }
 
-function loadHistoryPath(path,cb){
-    firebase.database().ref(path).once("value",snap=>{
-        const data=snap.val(); if(!data){cb([],[],[],[]);return;}
-        const times=[],temps=[],hums=[],press=[];
-        const keys=Object.keys(data).sort();
-        keys.forEach(k=>{
-            const e=data[k]; if(!e) return;
-            times.push(k); temps.push(e.temperature); hums.push(e.humidity); press.push(e.pressure);
-        });
-        cb(times,temps,hums,press);
-    });
-}
+/* HISTORY */
+async function loadHistoryPath(path, cb) {
+    const snap = await get(ref(db, path));
+    const data = snap.val();
 
-function loadTodayHistory(){
-    const d=new Date();
-    const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),da=String(d.getDate()).padStart(2,"0");
-    loadHistoryPath(`history/${y}/${m}/${da}`,updateChart);
-}
-
-function loadRange(days,cb){
-    const now=new Date();
-    const promises=[];
-    for(let i=0;i<days;i++){
-        const d=new Date(now); d.setDate(now.getDate()-i);
-        const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),da=String(d.getDate()).padStart(2,"0");
-        promises.push(new Promise(res=>{
-            loadHistoryPath(`history/${y}/${m}/${da}`,(t,te,h,p)=>res({t,te,h,p}));
-        }));
+    if (!data) {
+        cb([], [], [], []);
+        return;
     }
-    Promise.all(promises).then(days=>{
-        const times=[],temps=[],hums=[],press=[];
-        days.reverse().forEach(day=>{
-            day.t.forEach((time,i)=>{
-                times.push(time);
-                temps.push(day.te[i]);
-                hums.push(day.h[i]);
-                press.push(day.p[i]);
-            });
-        });
-        cb(times,temps,hums,press);
+
+    const times = [], temps = [], hums = [], press = [];
+    const keys = Object.keys(data).sort();
+
+    keys.forEach(k => {
+        const e = data[k];
+        if (!e) return;
+        times.push(k);
+        temps.push(e.temperature);
+        hums.push(e.humidity);
+        press.push(e.pressure);
     });
+
+    cb(times, temps, hums, press);
 }
 
-function loadWeekHistory(){loadRange(7,updateChart);}
-function loadMonthHistory(){loadRange(30,updateChart);}
-function loadYearHistory(){loadRange(365,updateChart);}
+function loadTodayHistory() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const da = String(d.getDate()).padStart(2, "0");
+    loadHistoryPath(`history/${y}/${m}/${da}`, updateChart);
+}
 
-let currentMode="today";
+async function loadRange(days, cb) {
+    const now = new Date();
+    const promises = [];
+
+    for (let i = 0; i < days; i++) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const da = String(d.getDate()).padStart(2, "0");
+
+        promises.push(loadHistoryPath(`history/${y}/${m}/${da}`, () => {}));
+    }
+
+    const results = await Promise.all(promises);
+
+    const times = [], temps = [], hums = [], press = [];
+
+    results.forEach(r => {
+        r[0].forEach((t, i) => {
+            times.push(t);
+            temps.push(r[1][i]);
+            hums.push(r[2][i]);
+            press.push(r[3][i]);
+        });
+    });
+
+    cb(times, temps, hums, press);
+}
+
+function loadWeekHistory()  { loadRange(7, updateChart); }
+function loadMonthHistory() { loadRange(30, updateChart); }
+function loadYearHistory()  { loadRange(365, updateChart); }
+
+/* MODUS */
+let currentMode = "today";
 let refreshTimer;
 
-function setMode(mode){
-    currentMode=mode;
-    document.querySelectorAll(".sidebar button").forEach(b=>b.classList.remove("active"));
+window.setMode = function(mode) {
+    currentMode = mode;
+    document.querySelectorAll(".sidebar button").forEach(b => b.classList.remove("active"));
     document.getElementById(`btn-${mode}`).classList.add("active");
     loadMode();
-}
+};
 
-function loadMode(){
-    if(refreshTimer) clearInterval(refreshTimer);
-    if(currentMode==="today") loadTodayHistory();
-    if(currentMode==="week") loadWeekHistory();
-    if(currentMode==="month") loadMonthHistory();
-    if(currentMode==="year") loadYearHistory();
-    refreshTimer=setInterval(loadMode,60000);
+function loadMode() {
+    if (refreshTimer) clearInterval(refreshTimer);
+
+    if (currentMode === "today") loadTodayHistory();
+    if (currentMode === "week")  loadWeekHistory();
+    if (currentMode === "month") loadMonthHistory();
+    if (currentMode === "year")  loadYearHistory();
+
+    refreshTimer = setInterval(loadMode, 60000);
 }
 
 setMode("today");
+
 </script>
 
 </body>
