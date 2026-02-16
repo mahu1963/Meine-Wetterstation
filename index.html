@@ -281,10 +281,14 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
             scales: {
                 x: {
                     ticks: {
+                        // ⭐ Heute: alle Labels
                         autoSkip: mode !== "today",
+
+                        // ⭐ Heute: Rotation für Uhrzeiten
                         maxRotation: mode === "today" ? 90 : 0,
                         minRotation: mode === "today" ? 45 : 0,
 
+                        // ⭐ Monat: 01, 02, 03 …
                         callback: function(value, index) {
                             let label = labels[index];
 
@@ -314,7 +318,6 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
         }
     });
 }
-
 /* HISTORY LADEN */
 async function loadHistory(path) {
     const snap = await get(ref(db, path));
@@ -447,3 +450,4 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
+
