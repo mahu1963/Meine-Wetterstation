@@ -181,10 +181,8 @@ async function loadToday() {
     const times = Object.keys(data).sort();
     const temps = times.map(t => data[t].temperature);
 
-    // Chart neu erstellen
     todayChart = createChart("chart-today", times, temps, "#ff9800", "today");
 
-    // ⭐ Live‑Animation: Sichtfenster der letzten 20 Werte
     const windowSize = 20;
 
     if (times.length > windowSize) {
@@ -194,27 +192,7 @@ async function loadToday() {
         todayChart.options.scales.x.min = min;
         todayChart.options.scales.x.max = max;
 
-        // ⭐ Weiche Animation
         todayChart.update("active");
-    }
-}
-
-    // Chart neu erstellen
-    todayChart = createChart("chart-today", times, temps, "#ff9800", "today");
-
-    // ⭐ KEIN Auto-Scroll
-    // Kopf bleibt sichtbar
-    // Chart wächst nach rechts
-}
-
-    // Chart neu erstellen
-    todayChart = createChart("chart-today", times, temps, "#ff9800", "today");
-
-    // ⭐ Auto‑Scroll: nur die letzten 20 Werte anzeigen
-    if (times.length > 20) {
-        todayChart.options.scales.x.min = times.length - 20;
-        todayChart.options.scales.x.max = times.length - 1;
-        todayChart.update();
     }
 }
 
@@ -309,6 +287,3 @@ setInterval(loadAll, 60000);
 
 </body>
 </html>
-
-
-
