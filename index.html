@@ -295,17 +295,15 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
             scales: {
                 x: {
                     ticks: {
-                        // Heute: Labels automatisch ausdünnen
+                        // Nur HEUTE ausdünnen
                         autoSkip: mode === "today",
                         maxTicksLimit: mode === "today" ? 12 : undefined,
 
-                        // bessere Lesbarkeit
-                        font: {
-                            size: 14
-                        },
+                        // Schriftgröße & Abstand
+                        font: { size: 14 },
                         padding: 12,
 
-                        // Heute: Uhrzeiten leicht gedreht
+                        // Heute leicht drehen
                         maxRotation: mode === "today" ? 45 : 0,
                         minRotation: mode === "today" ? 20 : 0,
 
@@ -466,5 +464,6 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
+
 
 
