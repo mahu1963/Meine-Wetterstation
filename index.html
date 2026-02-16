@@ -237,7 +237,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 /* ================= OPENWEATHERMAP ================= */
-const OWM_API_KEY = "d3ca3b5f8c95303ee7c779d2af00fe60";   /* <--- HIER EINTRAGEN */
+const OWM_API_KEY = "DEIN_OWM_API_KEY_HIER";   /* <--- HIER EINTRAGEN */
 const OWM_LAT = 47.366;
 const OWM_LON = 16.233;
 
@@ -248,19 +248,17 @@ async function loadOpenWeather() {
 
         if (!res.ok) {
             console.warn("OpenWeather Fehler:", res.status);
-            return; /* ⭐ Script läuft weiter */
+            return;
         }
 
         const data = await res.json();
 
-        /* Wettericon */
         if (data.weather && data.weather[0]) {
             const iconCode = data.weather[0].icon;
             const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
             document.getElementById("weather-icon").src = iconUrl;
         }
 
-        /* Sonnenaufgang / Sonnenuntergang */
         if (data.sys) {
             const sunrise = data.sys.sunrise * 1000;
             const sunset  = data.sys.sunset * 1000;
@@ -278,7 +276,6 @@ async function loadOpenWeather() {
 
     } catch (e) {
         console.error("OpenWeather Fehler:", e);
-        /* ⭐ Script darf NICHT abbrechen */
     }
 }
 
@@ -351,12 +348,12 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
             scales: {
                 x: {
                     ticks: {
-                        autoSkip: mode === "today",
-                        maxTicksLimit: mode === "today" ? 10 : labels.length,
+                        autoSkip: true,
+                        maxTicksLimit: mode === "today" ? 10 : 10,
                         font: { size: 14 },
                         padding: 10,
-                        maxRotation: mode === "today" ? 45 : 0,
-                        minRotation: mode === "today" ? 20 : 0,
+                        maxRotation: 0,
+                        minRotation: 0,
                         callback: (value, index) => labels[index]
                     }
                 },
@@ -482,4 +479,3 @@ setInterval(loadAll, 60000);
 
 </body>
 </html>
-
