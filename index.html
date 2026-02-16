@@ -296,7 +296,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebas
 import { getDatabase, ref, onValue, get }
     from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
-/* Deine Firebase-Konfiguration */
+/* Firebase-Konfiguration */
 const firebaseConfig = {
   apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
   authDomain: "meine-wetterstation.firebaseapp.com",
@@ -340,22 +340,38 @@ function loadGPS() {
 }
 loadGPS();
 
-/* Trendpfeile */
+/* Wetter-Icon automatisch */
+function updateWeatherIcon(temp, hum, pres) {
+    const icon = document.getElementById("weatherIcon");
+
+    if (pres < 990)       icon.innerHTML = "🌧️";   // Regen
+    else if (hum > 85)    icon.innerHTML = "☁️";   // Wolkig
+    else if (temp < 0)    icon.innerHTML = "❄️";   // Schnee
+    else if (temp > 25)   icon.innerHTML = "☀️";   // Sonne
+    else                  icon.innerHTML = "⛅";   // Sonne + Wolken
+}
+
+/* Trendpfeile mit Toleranz */
 let lastTemp = null, lastHum = null, lastPres = null;
 
 function updateTrend(id, last, current) {
     const el = document.getElementById(id);
+
     if (last === null) {
         el.innerHTML = "";
         return current;
     }
-    if (current > last) {
-        el.innerHTML = `<svg width="24" height="24"><polygon points="12,4 20,20 4,20" fill="#4fc3f7"/></svg>`;
-    } else if (current < last) {
-        el.innerHTML = `<svg width="24" height="24"><polygon points="12,20 20,4 4,4" fill="#ff5252"/></svg>`;
-    } else {
+
+    const diff = current - last;
+
+    if (Math.abs(diff) < 0.05) {
         el.innerHTML = "";
+    } else if (diff > 0) {
+        el.innerHTML = `<svg width="24" height="24"><polygon points="12,4 20,20 4,20" fill="#4fc3f7"/></svg>`;
+    } else {
+        el.innerHTML = `<svg width="24" height="24"><polygon points="12,20 20,4 4,4" fill="#ff5252"/></svg>`;
     }
+
     return current;
 }
 
@@ -371,6 +387,8 @@ onValue(ref(db, "weather"), snap => {
     lastTemp = updateTrend("trend-temp", lastTemp, d.temperature);
     lastHum  = updateTrend("trend-hum", lastHum, d.humidity);
     lastPres = updateTrend("trend-pres", lastPres, d.pressure);
+
+    updateWeatherIcon(d.temperature, d.humidity, d.pressure);
 });
 
 /* CHARTS */
@@ -413,7 +431,7 @@ function updateMinMax(temps, hums, press) {
         `Druck: ${Math.min(...press).toFixed(1)} – ${Math.max(...press).toFixed(1)} hPa`;
 }
 
-/* HISTORY */
+/* HISTORY – FIX für deinen ESP32 */
 async function loadHistoryPath(path, cb) {
     const snap = await get(ref(db, path));
     const data = snap.val();
@@ -506,6 +524,3 @@ function loadMode() {
 setMode("today");
 
 </script>
-
-</body>
-</html>
