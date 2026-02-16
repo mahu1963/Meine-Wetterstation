@@ -184,6 +184,24 @@ async function loadToday() {
     // Chart neu erstellen
     todayChart = createChart("chart-today", times, temps, "#ff9800", "today");
 
+    // ⭐ Live‑Animation: Sichtfenster der letzten 20 Werte
+    const windowSize = 20;
+
+    if (times.length > windowSize) {
+        const max = times.length - 1;
+        const min = max - windowSize;
+
+        todayChart.options.scales.x.min = min;
+        todayChart.options.scales.x.max = max;
+
+        // ⭐ Weiche Animation
+        todayChart.update("active");
+    }
+}
+
+    // Chart neu erstellen
+    todayChart = createChart("chart-today", times, temps, "#ff9800", "today");
+
     // ⭐ KEIN Auto-Scroll
     // Kopf bleibt sichtbar
     // Chart wächst nach rechts
@@ -291,5 +309,6 @@ setInterval(loadAll, 60000);
 
 </body>
 </html>
+
 
 
