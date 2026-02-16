@@ -237,9 +237,8 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 /* ================= OPENWEATHERMAP ================= */
-// HIER DEIN EIGENER API-KEY:
-const OWM_API_KEY = "DEIN_OPENWEATHERMAP_API_KEY_HIER";
-const OWM_LAT = 47.366;   // Stuben-Bernstein grob
+const OWM_API_KEY = "d3ca3b5f8c95303ee7c779d2af00fe60";   /* <--- HIER EINTRAGEN */
+const OWM_LAT = 47.366;
 const OWM_LON = 16.233;
 
 async function loadOpenWeather() {
@@ -249,34 +248,35 @@ async function loadOpenWeather() {
         if (!res.ok) return;
         const data = await res.json();
 
-        // Icon
+        /* Wettericon */
         if (data.weather && data.weather[0]) {
-            const iconCode = data.weather[0].icon; // z.B. "10d"
+            const iconCode = data.weather[0].icon;
             const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
             document.getElementById("weather-icon").src = iconUrl;
         }
 
-        // Sonnenaufgang / -untergang
+        /* Sonnenaufgang / Sonnenuntergang */
         if (data.sys) {
             const sunrise = data.sys.sunrise * 1000;
             const sunset  = data.sys.sunset * 1000;
 
-            const sunriseDate = new Date(sunrise);
-            const sunsetDate  = new Date(sunset);
+            const fmt = d => new Date(d).toLocaleTimeString("de-AT", {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
 
-            const fmt = d => d.toLocaleTimeString("de-AT", { hour: "2-digit", minute: "2-digit" });
-
-            document.getElementById("sunrise").innerText = "Aufgang " + fmt(sunriseDate);
-            document.getElementById("sunset").innerText  = "Untergang " + fmt(sunsetDate);
+            document.getElementById("sunrise").innerText = "Aufgang " + fmt(sunrise);
+            document.getElementById("sunset").innerText  = "Untergang " + fmt(sunset);
 
             updateSunProgress(sunrise, sunset);
         }
+
     } catch (e) {
         console.error("OpenWeather Fehler:", e);
     }
 }
 
-/* Sonnen-Progress animieren */
+/* Sonnen-Animation */
 function updateSunProgress(sunriseMs, sunsetMs) {
     const now = Date.now();
     let pos = 0;
@@ -289,8 +289,7 @@ function updateSunProgress(sunriseMs, sunsetMs) {
         pos = (passed / total) * 100;
     }
 
-    const el = document.getElementById("sun-progress");
-    el.style.left = `${pos}%`;
+    document.getElementById("sun-progress").style.left = `${pos}%`;
 }
 
 /* ================= GPS ================= */
@@ -371,8 +370,6 @@ async function loadHistory(path) {
 }
 
 /* ================= HEUTE ================= */
-let todayChart = null;
-
 async function loadToday() {
     const d = new Date();
     const y = d.getFullYear();
@@ -384,7 +381,7 @@ async function loadToday() {
     const times = Object.keys(data).sort();
     const temps = times.map(t => data[t].temperature);
 
-    todayChart = createChart("chart-today", times, temps, "#ff9800", "today");
+    createChart("chart-today", times, temps, "#ff9800", "today");
 }
 
 /* ================= WOCHE ================= */
