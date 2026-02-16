@@ -246,25 +246,11 @@ function updateTrend(id, last, current) {
     return current;
 }
 
-/* LIVE-DATEN */
-onValue(ref(db, "weather"), snap => {
-    const d = snap.val();
-    if (!d) return;
-
-    document.getElementById("temp").innerText = d.temperature.toFixed(1);
-    document.getElementById("hum").innerText = d.humidity.toFixed(1);
-    document.getElementById("pres").innerText = d.pressure.toFixed(1);
-
-    lastTemp = updateTrend("trend-temp", lastTemp, d.temperature);
-    lastHum  = updateTrend("trend-hum", lastHum, d.humidity);
-    lastPres = updateTrend("trend-pres", lastPres, d.pressure);
-
-    updateWeatherIcon(d.temperature, d.humidity, d.pressure);
-});
-
 /* ⭐ MODERNE CHART-FUNKTION */
-function createChart(canvasId, labels, data, color) {
+function createChart(canvasId, labels, data, color, mode = "auto") {
+
     const ctx = document.getElementById(canvasId).getContext("2d");
+
     return new Chart(ctx, {
         type: "line",
         data: {
@@ -295,16 +281,14 @@ function createChart(canvasId, labels, data, color) {
             scales: {
                 x: {
                     ticks: {
-                        autoSkip: false,
-                        maxRotation: 90,
-                        minRotation: 45,
+                        autoSkip: mode !== "today",
+                        maxRotation: mode === "today" ? 90 : 0,
+                        minRotation: mode === "today" ? 45 : 0,
 
-                        // ⭐ Achsen schöner formatieren
                         callback: function(value, index) {
                             let label = labels[index];
 
-                            // Monatstage: 1 → 01
-                            if (/^\d{1,2}$/.test(label)) {
+                            if (mode === "month" && /^\d{1,2}$/.test(label)) {
                                 return label.toString().padStart(2, "0");
                             }
 
@@ -337,7 +321,7 @@ async function loadHistory(path) {
     return snap.val() || {};
 }
 
-/* HEUTE */
+/* HEUTE (alle 10 Minuten) */
 async function loadToday() {
     const d = new Date();
     const y = d.getFullYear();
@@ -349,7 +333,7 @@ async function loadToday() {
     const times = Object.keys(data).sort();
     const temps = times.map(t => data[t].temperature);
 
-    createChart("chart-today", times, temps, "#ff9800");
+    createChart("chart-today", times, temps, "#ff9800", "today");
 }
 
 /* WOCHE */
@@ -381,10 +365,10 @@ async function loadWeek() {
         labels.push(weekdayNames[d.getDay()]);
     }
 
-    createChart("chart-week", labels, temps, "#4fc3f7");
+    createChart("chart-week", labels, temps, "#4fc3f7", "today");
 }
 
-/* MONAT */
+/* MONAT (1 Punkt pro Tag) */
 async function loadMonth() {
     const now = new Date();
     const labels = [];
@@ -411,10 +395,10 @@ async function loadMonth() {
         labels.push(da);
     }
 
-    createChart("chart-month", labels, temps, "#81c784");
+    createChart("chart-month", labels, temps, "#81c784", "month");
 }
 
-/* JAHR */
+/* JAHR (1 Punkt pro Monat) */
 async function loadYear() {
     const now = new Date();
     const labels = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
@@ -440,7 +424,7 @@ async function loadYear() {
         temps.push(lastTemp);
     }
 
-    createChart("chart-year", labels, temps, "#ba68c8");
+    createChart("chart-year", labels, temps, "#ba68c8", "auto");
 }
 
 /* ALLES LADEN */
