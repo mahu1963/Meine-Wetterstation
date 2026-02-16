@@ -248,8 +248,39 @@ async function loadOpenWeather() {
 
         if (!res.ok) {
             console.warn("OpenWeather Fehler:", res.status);
-            return;
+            return; // ⭐ Icon NICHT löschen!
         }
+
+        const data = await res.json();
+
+        // ⭐ Nur aktualisieren, wenn wirklich ein Icon vorhanden ist
+        if (data.weather && data.weather[0] && data.weather[0].icon) {
+            const iconCode = data.weather[0].icon;
+            const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+            document.getElementById("weather-icon").src = iconUrl;
+        }
+
+        // Sonnenzeiten
+        if (data.sys) {
+            const sunrise = data.sys.sunrise * 1000;
+            const sunset  = data.sys.sunset * 1000;
+
+            const fmt = d => new Date(d).toLocaleTimeString("de-AT", {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+
+            document.getElementById("sunrise").innerText = "Aufgang " + fmt(sunrise);
+            document.getElementById("sunset").innerText  = "Untergang " + fmt(sunset);
+
+            updateSunProgress(sunrise, sunset);
+        }
+
+    } catch (e) {
+        console.error("OpenWeather Fehler:", e);
+        // ⭐ NICHTS löschen!
+    }
+}
 
         const data = await res.json();
 
@@ -479,4 +510,5 @@ setInterval(loadAll, 60000);
 
 </body>
 </html>
+
 
