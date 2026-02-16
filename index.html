@@ -181,19 +181,12 @@ async function loadToday() {
     const times = Object.keys(data).sort();
     const temps = times.map(t => data[t].temperature);
 
+    // Chart neu erstellen – ohne Scroll-Fenster
     todayChart = createChart("chart-today", times, temps, "#ff9800", "today");
 
-    const windowSize = 20;
-
-    if (times.length > windowSize) {
-        const max = times.length - 1;
-        const min = max - windowSize;
-
-        todayChart.options.scales.x.min = min;
-        todayChart.options.scales.x.max = max;
-
-        todayChart.update("active");
-    }
+    // ⭐ KEIN Auto-Scroll
+    // Kopf bleibt sichtbar
+    // Chart wächst nach rechts
 }
 
 /* WOCHE */
