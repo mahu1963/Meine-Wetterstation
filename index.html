@@ -153,7 +153,7 @@ body {
     <div class="chart-box">
         <canvas id="mainChart"></canvas>
     </div>
-  <script type="module">
+    <script type="module">
 /* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getDatabase, ref, onValue, get }
@@ -209,7 +209,16 @@ function loadGPS() {
         document.getElementById("gps").innerText = `GPS: ${lat}, ${lon}`;
     });
 }
-      /* ================= HISTORY LADEN ================= */
+
+/* ================= LIVE-WERTE (optional) ================= */
+onValue(ref(db, "weather"), snap => {
+    const d = snap.val();
+    if (!d) return;
+
+    // Falls du später Live-Karten einbaust
+    console.log("Live-Werte:", d);
+});
+/* ================= HISTORY LADEN ================= */
 async function loadHistory(sensor) {
     const year = new Date().getFullYear();
     const snap = await get(ref(db, `history/${year}/${sensor}`));
@@ -222,12 +231,15 @@ function filterData(data, hours) {
     const limit = now - hours * 3600 * 1000;
 
     const timestamps = Object.keys(data)
-        .map(t => Number(t) * 1000)
+        .map(t => Number(t) * 1000)   // Unix Sekunden → ms
         .filter(t => t >= limit)
         .sort((a, b) => a - b);
 
     return timestamps.map(t => ({
-        time: new Date(t).toLocaleTimeString("de-AT", { hour: "2-digit", minute: "2-digit" }),
+        time: new Date(t).toLocaleTimeString("de-AT", {
+            hour: "2-digit",
+            minute: "2-digit"
+        }),
         value: data[Math.floor(t / 1000)]
     }));
 }
@@ -278,15 +290,19 @@ async function updateChart() {
     if (currentRange === "today") filtered = filterData(data, 24);
     if (currentRange === "week")  filtered = filterData(data, 24 * 7);
     if (currentRange === "month") filtered = filterData(data, 24 * 30);
+
     if (currentRange === "year") {
-        const timestamps = Object.keys(data).map(t => Number(t) * 1000).sort((a,b)=>a-b);
+        const timestamps = Object.keys(data)
+            .map(t => Number(t) * 1000)
+            .sort((a, b) => a - b);
+
         filtered = timestamps.map(t => ({
             time: new Date(t).toLocaleDateString("de-AT"),
             value: data[Math.floor(t / 1000)]
         }));
     }
 
-    if (filtered.length === 0) {
+    if (!filtered || filtered.length === 0) {
         drawChart(["Keine Daten"], [0], sensorColors[currentSensor]);
         return;
     }
@@ -325,4 +341,4 @@ setInterval(loadOpenWeather, 60000);
 </script>
 
 </body>
-</html>
+</html>        
