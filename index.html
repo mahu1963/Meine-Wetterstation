@@ -287,58 +287,44 @@ async function updateChart() {
 
     let filtered;
 
-    if (currentRange === "today") filtered = filterData(data, 24);
-    if (currentRange === "week")  filtered = filterData(data, 24 * 7);
-    if (currentRange === "month") filtered = filterData(data, 24 * 30);
+  let timestamps = Object.keys(data)
+    .map(t => Number(t) * 1000)
+    .sort((a, b) => a - b);
 
-    if (currentRange === "year") {
-        const timestamps = Object.keys(data)
-            .map(t => Number(t) * 1000)
-            .sort((a, b) => a - b);
-
-        filtered = timestamps.map(t => ({
-            time: new Date(t).toLocaleDateString("de-AT"),
-            value: data[Math.floor(t / 1000)]
-        }));
-    }
-
-    if (!filtered || filtered.length === 0) {
-        drawChart(["Keine Daten"], [0], sensorColors[currentSensor]);
-        return;
-    }
-
-    drawChart(
-        filtered.map(x => x.time),
-        filtered.map(x => x.value),
-        sensorColors[currentSensor]
-    );
+if (currentRange === "today") {
+    filtered = timestamps.map(t => ({
+        time: new Date(t).toLocaleTimeString("de-AT", {
+            hour: "2-digit",
+            minute: "2-digit"
+        }),
+        value: data[Math.floor(t / 1000)]
+    }));
 }
 
-/* ================= EVENTS ================= */
-document.querySelectorAll(".tab").forEach(tab => {
-    tab.onclick = () => {
-        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-        tab.classList.add("active");
-        currentRange = tab.dataset.range;
-        updateChart();
-    };
-});
+if (currentRange === "week") {
+    filtered = timestamps.map(t => ({
+        time: new Date(t).toLocaleString("de-AT", {
+            weekday: "short",
+            hour: "2-digit",
+            minute: "2-digit"
+        }),
+        value: data[Math.floor(t / 1000)]
+    }));
+}
 
-document.querySelectorAll(".sensor-btn").forEach(btn => {
-    btn.onclick = () => {
-        document.querySelectorAll(".sensor-btn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        currentSensor = btn.dataset.sensor;
-        updateChart();
-    };
-});
+if (currentRange === "month") {
+    filtered = timestamps.map(t => ({
+        time: new Date(t).toLocaleDateString("de-AT", {
+            day: "2-digit",
+            month: "2-digit"
+        }),
+        value: data[Math.floor(t / 1000)]
+    }));
+}
 
-/* ================= START ================= */
-loadGPS();
-loadOpenWeather();
-updateChart();
-setInterval(loadOpenWeather, 60000);
-</script>
-
-</body>
-</html>        
+if (currentRange === "year") {
+    filtered = timestamps.map(t => ({
+        time: new Date(t).toLocaleDateString("de-AT"),
+        value: data[Math.floor(t / 1000)]
+    }));
+}
