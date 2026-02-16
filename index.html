@@ -168,6 +168,8 @@ async function loadHistory(path) {
 }
 
 /* HEUTE */
+let todayChart = null;
+
 async function loadToday() {
     const d = new Date();
     const y = d.getFullYear();
@@ -179,7 +181,15 @@ async function loadToday() {
     const times = Object.keys(data).sort();
     const temps = times.map(t => data[t].temperature);
 
-    createChart("chart-today", times, temps, "#ff9800", "today");
+    // Chart neu erstellen
+    todayChart = createChart("chart-today", times, temps, "#ff9800", "today");
+
+    // ⭐ Auto‑Scroll: nur die letzten 20 Werte anzeigen
+    if (times.length > 20) {
+        todayChart.options.scales.x.min = times.length - 20;
+        todayChart.options.scales.x.max = times.length - 1;
+        todayChart.update();
+    }
 }
 
 /* WOCHE */
@@ -273,3 +283,4 @@ setInterval(loadAll, 60000);
 
 </body>
 </html>
+
