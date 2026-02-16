@@ -95,6 +95,22 @@ body {
     background: #1c1c1e;
     padding: 20px;
     border-radius: 18px;
+    margin-bottom: 30px;
+}
+
+/* Radar */
+#radar {
+    background: #1c1c1e;
+    padding: 20px;
+    border-radius: 18px;
+    margin-bottom: 30px;
+}
+
+#radar-frame {
+    width: 100%;
+    height: 260px;
+    border: none;
+    border-radius: 12px;
 }
 </style>
 </head>
@@ -107,6 +123,15 @@ body {
         <h1>Stuben‑Bernstein</h1>
         <h3>Martin Huber</h3>
         <div id="gps">GPS lädt…</div>
+    </div>
+
+    <!-- Regenradar -->
+    <div id="radar">
+        <iframe
+            id="radar-frame"
+            src="https://www.rainviewer.com/map.html?loc=47.366,16.233,9&oFa=1&oC=1&oU=1&oCS=1&oF=1&oAP=1&c=3&o=83&lm=1&layer=radar&sm=1&sn=1"
+            loading="lazy">
+        </iframe>
     </div>
 
     <!-- Tabs -->
@@ -128,7 +153,6 @@ body {
     <div class="chart-box">
         <canvas id="mainChart"></canvas>
     </div>
-
   <script type="module">
 /* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
@@ -158,7 +182,10 @@ async function loadOpenWeather() {
         const url = `https://api.openweathermap.org/data/2.5/weather?lat=${LAT}&lon=${LON}&units=metric&lang=de&appid=${OWM_API_KEY}&_=${Date.now()}`;
         const res = await fetch(url);
 
-        if (!res.ok) return;
+        if (!res.ok) {
+            console.warn("OWM Fehler:", res.status);
+            return;
+        }
 
         const data = await res.json();
 
@@ -166,7 +193,10 @@ async function loadOpenWeather() {
             document.getElementById("weather-icon").src =
                 `https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png`;
         }
-    } catch (e) {}
+
+    } catch (e) {
+        console.error("OWM Fehler:", e);
+    }
 }
 
 /* ================= GPS ================= */
@@ -179,13 +209,7 @@ function loadGPS() {
         document.getElementById("gps").innerText = `GPS: ${lat}, ${lon}`;
     });
 }
-
-/* ================= LIVE-WERTE ================= */
-onValue(ref(db, "weather"), snap => {
-    const d = snap.val();
-    if (!d) return;
-});
-/* ================= HISTORY LADEN ================= */
+      /* ================= HISTORY LADEN ================= */
 async function loadHistory(sensor) {
     const year = new Date().getFullYear();
     const snap = await get(ref(db, `history/${year}/${sensor}`));
@@ -262,6 +286,11 @@ async function updateChart() {
         }));
     }
 
+    if (filtered.length === 0) {
+        drawChart(["Keine Daten"], [0], sensorColors[currentSensor]);
+        return;
+    }
+
     drawChart(
         filtered.map(x => x.time),
         filtered.map(x => x.value),
@@ -296,5 +325,4 @@ setInterval(loadOpenWeather, 60000);
 </script>
 
 </body>
-</html>      
-
+</html>
