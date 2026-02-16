@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Wetterstation</title>
+<title>Wetterstation Stuben‑Bernstein</title>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,32 +19,127 @@ body {
 }
 
 .main {
-    padding: 40px;
+    padding: 30px 20px 40px;
+    max-width: 1100px;
+    margin: 0 auto;
 }
 
+#header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+#header h1 {
+    margin: 10px 0 0;
+    font-size: 28px;
+}
+
+#header h3 {
+    margin: 5px 0 10px;
+    font-weight: 400;
+    opacity: 0.8;
+}
+
+#gps {
+    opacity: 0.7;
+    font-size: 15px;
+}
+
+/* Sonnenaufgang/Sonnenuntergang */
+.sun-container {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.sun-times {
+    display: flex;
+    justify-content: space-between;
+    width: 260px;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+.sun-bar {
+    position: relative;
+    margin-top: 8px;
+    width: 260px;
+    height: 6px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #ff9800, #ffc107, #ff9800);
+    overflow: hidden;
+}
+
+.sun-progress {
+    position: absolute;
+    top: -6px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #fff176;
+    box-shadow: 0 0 12px rgba(255, 241, 118, 0.9);
+    transition: left 1s ease-out;
+}
+
+/* Karten */
 .cards {
     display: flex;
-    gap: 30px;
-    margin-top: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 25px;
 }
 
 .card {
     flex: 1;
+    min-width: 180px;
     background: #1c1c1e;
-    padding: 30px;
-    border-radius: 22px;
+    padding: 20px;
+    border-radius: 18px;
+}
+
+.card .label {
+    font-size: 14px;
+    opacity: 0.7;
 }
 
 .card .value {
-    font-size: 48px;
+    font-size: 36px;
     font-weight: 600;
+    margin-top: 5px;
 }
 
-.chart-container {
-    margin-top: 40px;
+/* Radar */
+#radar-card {
+    margin-top: 25px;
     background: #1c1c1e;
-    padding: 25px;
-    border-radius: 22px;
+    padding: 15px;
+    border-radius: 18px;
+}
+
+#radar-card h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
+}
+
+#radar-frame {
+    width: 100%;
+    height: 260px;
+    border: none;
+    border-radius: 12px;
+}
+
+/* Charts */
+.chart-container {
+    margin-top: 30px;
+    background: #1c1c1e;
+    padding: 20px;
+    border-radius: 18px;
+}
+
+.chart-container h2 {
+    margin: 0 0 10px;
+    font-size: 18px;
 }
 </style>
 </head>
@@ -53,6 +148,25 @@ body {
 
 <div class="main">
 
+    <!-- Kopfbereich -->
+    <div id="header">
+        <img id="weather-icon" src="" alt="Wetter" style="width:120px; height:120px;">
+        <h1>Stuben‑Bernstein</h1>
+        <h3>Martin Huber</h3>
+        <div id="gps">GPS lädt…</div>
+
+        <div class="sun-container">
+            <div class="sun-times">
+                <span id="sunrise">Aufgang --:--</span>
+                <span id="sunset">Untergang --:--</span>
+            </div>
+            <div class="sun-bar">
+                <div class="sun-progress" id="sun-progress" style="left:0%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live-Karten -->
     <div class="cards">
         <div class="card">
             <div class="label">Temperatur</div>
@@ -70,23 +184,41 @@ body {
         </div>
     </div>
 
-    <h2>Heute</h2>
-    <div class="chart-container"><canvas id="chart-today"></canvas></div>
+    <!-- Regenradar -->
+    <div id="radar-card">
+        <h2>Regenradar</h2>
+        <iframe
+            id="radar-frame"
+            src="https://www.rainviewer.com/map.html?loc=47.366,16.233,9&oFa=1&oC=1&oU=1&oCS=1&oF=1&oAP=1&c=3&o=83&lm=1&layer=radar&sm=1&sn=1"
+            loading="lazy">
+        </iframe>
+    </div>
 
-    <h2>Woche</h2>
-    <div class="chart-container"><canvas id="chart-week"></canvas></div>
+    <!-- Charts -->
+    <div class="chart-container">
+        <h2>Heute</h2>
+        <canvas id="chart-today"></canvas>
+    </div>
 
-    <h2>Monat</h2>
-    <div class="chart-container"><canvas id="chart-month"></canvas></div>
+    <div class="chart-container">
+        <h2>Woche</h2>
+        <canvas id="chart-week"></canvas>
+    </div>
 
-    <h2>Jahr</h2>
-    <div class="chart-container"><canvas id="chart-year"></canvas></div>
+    <div class="chart-container">
+        <h2>Monat</h2>
+        <canvas id="chart-month"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <h2>Jahr</h2>
+        <canvas id="chart-year"></canvas>
+    </div>
 
 </div>
 
 <script type="module">
-
-/* FIREBASE */
+/* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getDatabase, ref, onValue, get }
     from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
@@ -104,7 +236,80 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* LIVE-WERTE */
+/* ================= OPENWEATHERMAP ================= */
+// HIER DEIN EIGENER API-KEY:
+const OWM_API_KEY = "DEIN_OPENWEATHERMAP_API_KEY_HIER";
+const OWM_LAT = 47.366;   // Stuben-Bernstein grob
+const OWM_LON = 16.233;
+
+async function loadOpenWeather() {
+    try {
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${OWM_LAT}&lon=${OWM_LON}&units=metric&lang=de&appid=${OWM_API_KEY}`;
+        const res = await fetch(url);
+        if (!res.ok) return;
+        const data = await res.json();
+
+        // Icon
+        if (data.weather && data.weather[0]) {
+            const iconCode = data.weather[0].icon; // z.B. "10d"
+            const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+            document.getElementById("weather-icon").src = iconUrl;
+        }
+
+        // Sonnenaufgang / -untergang
+        if (data.sys) {
+            const sunrise = data.sys.sunrise * 1000;
+            const sunset  = data.sys.sunset * 1000;
+
+            const sunriseDate = new Date(sunrise);
+            const sunsetDate  = new Date(sunset);
+
+            const fmt = d => d.toLocaleTimeString("de-AT", { hour: "2-digit", minute: "2-digit" });
+
+            document.getElementById("sunrise").innerText = "Aufgang " + fmt(sunriseDate);
+            document.getElementById("sunset").innerText  = "Untergang " + fmt(sunsetDate);
+
+            updateSunProgress(sunrise, sunset);
+        }
+    } catch (e) {
+        console.error("OpenWeather Fehler:", e);
+    }
+}
+
+/* Sonnen-Progress animieren */
+function updateSunProgress(sunriseMs, sunsetMs) {
+    const now = Date.now();
+    let pos = 0;
+
+    if (now <= sunriseMs) pos = 0;
+    else if (now >= sunsetMs) pos = 100;
+    else {
+        const total = sunsetMs - sunriseMs;
+        const passed = now - sunriseMs;
+        pos = (passed / total) * 100;
+    }
+
+    const el = document.getElementById("sun-progress");
+    el.style.left = `${pos}%`;
+}
+
+/* ================= GPS ================= */
+function loadGPS() {
+    if (!navigator.geolocation) {
+        document.getElementById("gps").innerText = "GPS nicht verfügbar";
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(pos => {
+        const lat = pos.coords.latitude.toFixed(5);
+        const lon = pos.coords.longitude.toFixed(5);
+        document.getElementById("gps").innerText = `GPS: ${lat}, ${lon}`;
+    }, () => {
+        document.getElementById("gps").innerText = "GPS verweigert";
+    });
+}
+
+/* ================= LIVE-WERTE (Firebase) ================= */
 onValue(ref(db, "weather"), snap => {
     const d = snap.val();
     if (!d) return;
@@ -114,9 +319,8 @@ onValue(ref(db, "weather"), snap => {
     document.getElementById("pres").innerText = d.pressure.toFixed(1) + " hPa";
 });
 
-/* CHART FUNKTION */
+/* ================= CHART-FUNKTION ================= */
 function createChart(canvasId, labels, data, color, mode = "auto") {
-
     const ctx = document.getElementById(canvasId).getContext("2d");
 
     return new Chart(ctx, {
@@ -132,20 +336,20 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
                 pointHoverRadius: 7,
                 pointBackgroundColor: color,
                 pointBorderColor: "#ffffff",
-                pointBorderWidth: 2
+                pointBorderWidth: 2,
+                spanGaps: false
             }]
         },
         options: {
             responsive: true,
             animation: false,
-
             scales: {
                 x: {
                     ticks: {
                         autoSkip: mode === "today",
                         maxTicksLimit: mode === "today" ? 10 : labels.length,
                         font: { size: 14 },
-                        padding: 12,
+                        padding: 10,
                         maxRotation: mode === "today" ? 45 : 0,
                         minRotation: mode === "today" ? 20 : 0,
                         callback: (value, index) => labels[index]
@@ -153,7 +357,6 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
                 },
                 y: { beginAtZero: false }
             },
-
             plugins: {
                 legend: { display: false }
             }
@@ -161,13 +364,13 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
     });
 }
 
-/* HISTORY LADEN */
+/* ================= HISTORY LADEN ================= */
 async function loadHistory(path) {
     const snap = await get(ref(db, path));
     return snap.val() || {};
 }
 
-/* HEUTE */
+/* ================= HEUTE ================= */
 let todayChart = null;
 
 async function loadToday() {
@@ -181,15 +384,10 @@ async function loadToday() {
     const times = Object.keys(data).sort();
     const temps = times.map(t => data[t].temperature);
 
-    // Chart neu erstellen – ohne Scroll-Fenster
     todayChart = createChart("chart-today", times, temps, "#ff9800", "today");
-
-    // ⭐ KEIN Auto-Scroll
-    // Kopf bleibt sichtbar
-    // Chart wächst nach rechts
 }
 
-/* WOCHE */
+/* ================= WOCHE ================= */
 async function loadWeek() {
     const now = new Date();
     const labels = [];
@@ -214,7 +412,7 @@ async function loadWeek() {
     createChart("chart-week", labels, temps, "#4fc3f7");
 }
 
-/* MONAT */
+/* ================= MONAT ================= */
 async function loadMonth() {
     const now = new Date();
     const labels = [];
@@ -238,7 +436,7 @@ async function loadMonth() {
     createChart("chart-month", labels, temps, "#81c784");
 }
 
-/* JAHR */
+/* ================= JAHR ================= */
 async function loadYear() {
     const now = new Date();
     const labels = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
@@ -265,8 +463,10 @@ async function loadYear() {
     createChart("chart-year", labels, temps, "#ba68c8");
 }
 
-/* ALLES LADEN */
+/* ================= ALLES LADEN ================= */
 async function loadAll() {
+    loadGPS();
+    loadOpenWeather();
     await loadToday();
     await loadWeek();
     await loadMonth();
@@ -275,7 +475,6 @@ async function loadAll() {
 
 loadAll();
 setInterval(loadAll, 60000);
-
 </script>
 
 </body>
