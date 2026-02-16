@@ -246,7 +246,27 @@ function updateTrend(id, last, current) {
     return current;
 }
 
-/* ⭐ MODERNE CHART-FUNKTION */
+/* ⭐ LIVE-WERTE LADEN */
+onValue(ref(db, "weather"), snap => {
+    const d = snap.val();
+    if (!d) return;
+
+    const temp = d.temperature;
+    const hum  = d.humidity;
+    const pres = d.pressure;
+
+    document.getElementById("temp").innerText = temp.toFixed(1) + "°C";
+    document.getElementById("hum").innerText  = hum.toFixed(1) + "%";
+    document.getElementById("pres").innerText = pres.toFixed(1) + " hPa";
+
+    updateWeatherIcon(temp, hum, pres);
+
+    lastTemp = updateTrend("trend-temp", lastTemp, temp);
+    lastHum  = updateTrend("trend-hum",  lastHum,  hum);
+    lastPres = updateTrend("trend-pres", lastPres, pres);
+});
+
+/* ⭐ CHART-FUNKTION */
 function createChart(canvasId, labels, data, color, mode = "auto") {
 
     const ctx = document.getElementById(canvasId).getContext("2d");
@@ -259,18 +279,12 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
                 data,
                 borderColor: color,
                 backgroundColor: color,
-
-                // ⭐ Linie glätten
                 tension: 0.35,
-
-                // ⭐ Punkte hervorheben
                 pointRadius: 4,
                 pointHoverRadius: 7,
                 pointBackgroundColor: color,
                 pointBorderColor: "#ffffff",
                 pointBorderWidth: 2,
-
-                // ⭐ Lücken NICHT verbinden
                 spanGaps: false
             }]
         },
@@ -281,14 +295,10 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
             scales: {
                 x: {
                     ticks: {
-                        // ⭐ Heute: alle Labels
                         autoSkip: mode !== "today",
-
-                        // ⭐ Heute: Rotation für Uhrzeiten
                         maxRotation: mode === "today" ? 90 : 0,
                         minRotation: mode === "today" ? 45 : 0,
 
-                        // ⭐ Monat: 01, 02, 03 …
                         callback: function(value, index) {
                             let label = labels[index];
 
@@ -318,13 +328,14 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
         }
     });
 }
-/* HISTORY LADEN */
+
+/* ⭐ HISTORY LADEN */
 async function loadHistory(path) {
     const snap = await get(ref(db, path));
     return snap.val() || {};
 }
 
-/* HEUTE (alle 10 Minuten) */
+/* ⭐ HEUTE */
 async function loadToday() {
     const d = new Date();
     const y = d.getFullYear();
@@ -339,7 +350,7 @@ async function loadToday() {
     createChart("chart-today", times, temps, "#ff9800", "today");
 }
 
-/* WOCHE */
+/* ⭐ WOCHE */
 async function loadWeek() {
     const now = new Date();
     const labels = [];
@@ -371,7 +382,7 @@ async function loadWeek() {
     createChart("chart-week", labels, temps, "#4fc3f7", "today");
 }
 
-/* MONAT (1 Punkt pro Tag) */
+/* ⭐ MONAT */
 async function loadMonth() {
     const now = new Date();
     const labels = [];
@@ -401,7 +412,7 @@ async function loadMonth() {
     createChart("chart-month", labels, temps, "#81c784", "month");
 }
 
-/* JAHR (1 Punkt pro Monat) */
+/* ⭐ JAHR */
 async function loadYear() {
     const now = new Date();
     const labels = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
@@ -430,7 +441,7 @@ async function loadYear() {
     createChart("chart-year", labels, temps, "#ba68c8", "auto");
 }
 
-/* ALLES LADEN */
+/* ⭐ ALLES LADEN */
 async function loadAll() {
     await loadToday();
     await loadWeek();
@@ -450,4 +461,3 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
-
