@@ -237,15 +237,20 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 /* ================= OPENWEATHERMAP ================= */
-const OWM_API_KEY = "d3ca3b5f8c95303ee7c779d2af00fe60";   /* <--- HIER EINTRAGEN */
+const OWM_API_KEY = "DEIN_OWM_API_KEY_HIER";   /* <--- HIER EINTRAGEN */
 const OWM_LAT = 47.366;
 const OWM_LON = 16.233;
 
 async function loadOpenWeather() {
     try {
-        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${OWM_LAT}&lon=${OWM_LON}&units=metric&lang=de&appid=${OWM_API_KEY}`;
+        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${OWM_LAT}&lon=${OWM_LON}&units=metric&lang=de&appid=${OWM_API_KEY}&_=${Date.now()}`;
         const res = await fetch(url);
-        if (!res.ok) return;
+
+        if (!res.ok) {
+            console.warn("OpenWeather Fehler:", res.status);
+            return; /* ⭐ Script läuft weiter */
+        }
+
         const data = await res.json();
 
         /* Wettericon */
@@ -273,6 +278,7 @@ async function loadOpenWeather() {
 
     } catch (e) {
         console.error("OpenWeather Fehler:", e);
+        /* ⭐ Script darf NICHT abbrechen */
     }
 }
 
