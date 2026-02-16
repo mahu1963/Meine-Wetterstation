@@ -154,7 +154,7 @@ body {
 <script type="module">
 /* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getDatabase, ref, onValue, get }
+import { getDatabase, ref, get }
     from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
 const firebaseConfig = {
@@ -255,6 +255,20 @@ function filterData(data, hours, range) {
     }));
 }
 
+/* ================= GRADIENT COLORS ================= */
+function createGradient(ctx, color) {
+    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+    gradient.addColorStop(0, color + "FF");
+    gradient.addColorStop(1, color + "00");
+    return gradient;
+}
+
+const sensorColors = {
+    temperature: "#ff4d4d",
+    humidity: "#4da3ff",
+    pressure: "#ffd24d"
+};
+
 /* ================= CHART ================= */
 let chart;
 function drawChart(data) {
@@ -262,16 +276,24 @@ function drawChart(data) {
 
     if (chart) chart.destroy();
 
+    const baseColor = sensorColors[sensor];
+    const gradient = createGradient(ctx, baseColor);
+
     chart = new Chart(ctx, {
         type: "line",
         data: {
             labels: data.map(d => d.time),
             datasets: [{
-                label: "Wert",
+                label:
+                    sensor === "temperature" ? "Temperatur (°C)" :
+                    sensor === "humidity" ? "Feuchtigkeit (%)" :
+                    "Luftdruck (hPa)",
                 data: data.map(d => d.value),
-                borderColor: "#4da3ff",
+                borderColor: baseColor,
+                backgroundColor: gradient,
                 borderWidth: 2,
-                tension: 0.3
+                tension: 0.3,
+                fill: true
             }]
         },
         options: {
