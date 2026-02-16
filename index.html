@@ -7,13 +7,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Wetterstation</title>
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-/* ----------------------------------------------------
-   GLOBAL STYLE (Dark Mode + iOS Look)
----------------------------------------------------- */
 body {
     margin: 0;
     padding: 0;
@@ -22,28 +18,32 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Arial, sans-serif;
 }
 
-/* Layout */
 .main {
     padding: 40px;
     padding-top: calc(40px + env(safe-area-inset-top));
 }
 
-/* Header */
+/* HEADER */
 .header {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
+    gap: 25px;
 }
 
 .weather-icon {
-    width: 120px;
-    height: 120px;
+    font-size: 90px;
+    line-height: 1;
+    width: auto;
+    height: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .header-info .title {
     font-size: 36px;
     font-weight: 700;
-    letter-spacing: -0.5px;
 }
 
 .header-info .subtitle {
@@ -57,7 +57,7 @@ body {
     opacity: 0.7;
 }
 
-/* Cards */
+/* CARDS */
 .cards {
     display: flex;
     gap: 30px;
@@ -88,150 +88,24 @@ body {
     height: 32px;
 }
 
-/* Tabs */
-.chart-tabs {
-    margin-top: 30px;
+/* CHART CONTAINERS */
+.chart-container {
+    margin-top: 40px;
+    background: #1c1c1e;
+    padding: 25px;
+    border-radius: 22px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.35);
 }
 
-.chart-tab {
-    background: #2c2c2e;
-    padding: 14px 22px;
-    border-radius: 14px;
-    font-size: 20px;
-    margin: 6px;
-    display: inline-block;
-    transition: 0.2s;
-}
-
-.chart-tab.active {
-    background: #0a84ff;
-    color: white;
+h2 {
+    margin-top: 50px;
+    font-size: 28px;
     font-weight: 600;
 }
 
-/* Chart */
-#chart-container {
-    margin-top: 25px;
-}
-
-/* Min/Max */
-.minmax {
-    font-size: 20px;
-    margin-top: 15px;
-    opacity: 0.8;
-}
-
-/* Sidebar */
-.sidebar {
-    position: fixed;
-    left: -260px;
-    top: 0;
-    width: 240px;
-    height: 100%;
-    background: #1c1c1e;
-    padding-top: 60px;
-    box-shadow: 4px 0 20px rgba(0,0,0,0.4);
-    transition: 0.3s;
-}
-
-.sidebar.open {
-    left: 0;
-}
-
-.sidebar button {
-    width: 200px;
-    margin: 10px auto;
-    display: block;
-    padding: 18px;
-    font-size: 20px;
-    border-radius: 14px;
-    background: #2c2c2e;
-    color: white;
-    border: none;
-}
-
-.sidebar button.active {
-    background: #0a84ff;
-}
-
-.menu-btn {
-    position: fixed;
-    left: 20px;
-    top: calc(20px + env(safe-area-inset-top));
-    background: #0a84ff;
-    color: white;
-    padding: 12px 18px;
-    border-radius: 12px;
-    font-size: 22px;
-    border: none;
-    z-index: 1000;
-}
-.weather-icon {
-    font-size: 90px;     /* Emoji sichtbar machen */
-    line-height: 1;      /* Kein zusätzlicher Abstand */
-    width: auto;         /* SVG-Größe entfernen */
-    height: auto;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-   
-/* ----------------------------------------------------
-   MOBILE iOS OPTIMIERUNG
----------------------------------------------------- */
 @media (max-width: 700px) {
-
-    body {
-        font-size: 19px;
-        line-height: 1.45;
-    }
-
-    .main {
-        padding: 25px;
-        padding-top: calc(25px + env(safe-area-inset-top));
-    }
-
-    .header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-
-    .weather-icon {
-        width: 90px;
-        height: 90px;
-    }
-
-    .header-info .title {
-        font-size: 32px;
-    }
-
     .cards {
         flex-direction: column;
-        gap: 25px;
-    }
-
-    .card {
-        width: 100%;
-        padding: 28px;
-    }
-
-    .card .value {
-        font-size: 44px;
-    }
-
-    .chart-tab {
-        font-size: 20px;
-        padding: 14px 20px;
-    }
-
-    .sidebar {
-        width: 240px;
-    }
-
-    .sidebar button {
-        font-size: 20px;
-        padding: 18px;
     }
 }
 </style>
@@ -239,27 +113,18 @@ body {
 
 <body>
 
-<button class="menu-btn" onclick="toggleSidebar()">☰</button>
-
-<div class="sidebar" id="sidebar">
-    <button id="btn-today" onclick="setMode('today')">Heute</button>
-    <button id="btn-week" onclick="setMode('week')">Woche</button>
-    <button id="btn-month" onclick="setMode('month')">Monat</button>
-    <button id="btn-year" onclick="setMode('year')">Jahr</button>
-</div>
-
 <div class="main">
 
     <div class="header">
-    <div id="weatherIcon" class="weather-icon">⛅</div>
+        <div id="weatherIcon" class="weather-icon">⛅</div>
 
-    <div class="header-info">
-        <div class="title">Stuben‑Bernstein</div>
-        <div class="subtitle">Martin Huber</div>
-        <div class="gps" id="gps">GPS lädt…</div>
-        <div class="datetime" id="datetime">--:--</div>
+        <div class="header-info">
+            <div class="title">Stuben‑Bernstein</div>
+            <div class="subtitle">Martin Huber</div>
+            <div class="gps" id="gps">GPS lädt…</div>
+            <div class="datetime" id="datetime">--:--</div>
+        </div>
     </div>
-</div>
 
     <div class="cards">
         <div class="card">
@@ -281,31 +146,28 @@ body {
         </div>
     </div>
 
-    <div class="chart-tabs">
-        <span class="chart-tab active" id="tab-temp" onclick="setChartType('temp')">Temperatur</span>
-        <span class="chart-tab" id="tab-hum" onclick="setChartType('hum')">Feuchte</span>
-        <span class="chart-tab" id="tab-pres" onclick="setChartType('pres')">Druck</span>
-    </div>
+    <!-- 4 große Charts -->
+    <h2>Heute</h2>
+    <div class="chart-container"><canvas id="chart-today"></canvas></div>
 
-    <div id="chart-container">
-        <canvas id="chart"></canvas>
-    </div>
+    <h2>Woche</h2>
+    <div class="chart-container"><canvas id="chart-week"></canvas></div>
 
-    <div class="minmax" id="minmax">Min/Max lädt…</div>
+    <h2>Monat</h2>
+    <div class="chart-container"><canvas id="chart-month"></canvas></div>
+
+    <h2>Jahr</h2>
+    <div class="chart-container"><canvas id="chart-year"></canvas></div>
 
 </div>
 
-<!-- ----------------------------------------------------
-     JAVASCRIPT – FIREBASE SDK 9
----------------------------------------------------- -->
+<!-- JAVASCRIPT -->
 <script type="module">
 
-/* Firebase SDK 9 */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getDatabase, ref, onValue, get }
     from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
-/* Firebase-Konfiguration */
 const firebaseConfig = {
   apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
   authDomain: "meine-wetterstation.firebaseapp.com",
@@ -319,12 +181,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* Sidebar */
-window.toggleSidebar = function () {
-    document.getElementById("sidebar").classList.toggle("open");
-};
-
-/* Datum & Uhrzeit */
+/* DATUM & UHRZEIT */
 function updateDateTime() {
     const now = new Date();
     document.getElementById("datetime").innerText =
@@ -349,18 +206,18 @@ function loadGPS() {
 }
 loadGPS();
 
-/* Wetter-Icon automatisch */
+/* WETTER ICON */
 function updateWeatherIcon(temp, hum, pres) {
     const icon = document.getElementById("weatherIcon");
 
-    if (pres < 990)       icon.innerHTML = "🌧️";   // Regen
-    else if (hum > 85)    icon.innerHTML = "☁️";   // Wolkig
-    else if (temp < 0)    icon.innerHTML = "❄️";   // Schnee
-    else if (temp > 25)   icon.innerHTML = "☀️";   // Sonne
-    else                  icon.innerHTML = "⛅";   // Sonne + Wolken
+    if (pres < 990)       icon.innerHTML = "🌧️";
+    else if (hum > 85)    icon.innerHTML = "☁️";
+    else if (temp < 0)    icon.innerHTML = "❄️";
+    else if (temp > 25)   icon.innerHTML = "☀️";
+    else                  icon.innerHTML = "⛅";
 }
 
-/* Trendpfeile mit Toleranz */
+/* TREND */
 let lastTemp = null, lastHum = null, lastPres = null;
 
 function updateTrend(id, last, current) {
@@ -400,84 +257,56 @@ onValue(ref(db, "weather"), snap => {
     updateWeatherIcon(d.temperature, d.humidity, d.pressure);
 });
 
-/* CHARTS */
-let chart;
-let chartType = "temp";
-
-window.setChartType = function(type) {
-    chartType = type;
-    document.querySelectorAll(".chart-tab").forEach(t => t.classList.remove("active"));
-    document.getElementById(`tab-${type}`).classList.add("active");
-    loadMode();
-};
-
-function updateChart(times, temps, hums, press) {
-    const ctx = document.getElementById("chart").getContext("2d");
-    if (chart) chart.destroy();
-
-    let data, color;
-    if (chartType === "temp") { data = temps; color = "#ff9800"; }
-    else if (chartType === "hum") { data = hums; color = "#4fc3f7"; }
-    else { data = press; color = "#81c784"; }
-
-    chart = new Chart(ctx, {
+/* CHART FUNKTION */
+function createChart(canvasId, labels, data, color) {
+    const ctx = document.getElementById(canvasId).getContext("2d");
+    return new Chart(ctx, {
         type: "line",
-        data: { labels: times, datasets: [{ data, borderColor: color, fill: false }] },
-        options: { responsive: true, animation: false }
+        data: {
+            labels,
+            datasets: [{
+                data,
+                borderColor: color,
+                fill: false
+            }]
+        },
+        options: {
+            responsive: true,
+            animation: false
+        }
     });
-
-    updateMinMax(temps, hums, press);
 }
 
-function updateMinMax(temps, hums, press) {
-    if (temps.length === 0) {
-        document.getElementById("minmax").innerText = "Keine Daten";
-        return;
-    }
-    document.getElementById("minmax").innerText =
-        `Temp: ${Math.min(...temps).toFixed(1)} – ${Math.max(...temps).toFixed(1)} °C | ` +
-        `Feuchte: ${Math.min(...hums).toFixed(1)} – ${Math.max(...hums).toFixed(1)} % | ` +
-        `Druck: ${Math.min(...press).toFixed(1)} – ${Math.max(...press).toFixed(1)} hPa`;
-}
-
-/* HISTORY – FIX für deinen ESP32 */
-async function loadHistoryPath(path, cb) {
+/* HISTORY LADEN */
+async function loadHistory(path) {
     const snap = await get(ref(db, path));
-    const data = snap.val();
-
-    if (!data) {
-        cb([], [], [], []);
-        return;
-    }
-
-    const times = [], temps = [], hums = [], press = [];
-    const keys = Object.keys(data).sort();
-
-    keys.forEach(k => {
-        const e = data[k];
-        if (!e) return;
-        times.push(k);
-        temps.push(e.temperature);
-        hums.push(e.humidity);
-        press.push(e.pressure);
-    });
-
-    cb(times, temps, hums, press);
+    return snap.val() || {};
 }
 
-function loadTodayHistory() {
+/* HEUTE */
+async function loadToday() {
     const d = new Date();
     const y = d.getFullYear();
     const m = String(d.getMonth() + 1).padStart(2, "0");
     const da = String(d.getDate()).padStart(2, "0");
-    loadHistoryPath(`history/${y}/${m}/${da}`, updateChart);
+
+    const data = await loadHistory(`history/${y}/${m}/${da}`);
+
+    const times = Object.keys(data).sort();
+    const temps = times.map(t => data[t].temperature);
+
+    createChart("chart-today", times, temps, "#ff9800");
 }
 
-async function loadRange(days, cb) {
+/* WOCHE */
+async function loadWeek() {
     const now = new Date();
-    const promises = [];
+    const labels = [];
+    const temps = [];
 
-    for (let i = 0; i < days; i++) {
+    const weekdayNames = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
+
+    for (let i = 6; i >= 0; i--) {
         const d = new Date(now);
         d.setDate(now.getDate() - i);
 
@@ -485,57 +314,93 @@ async function loadRange(days, cb) {
         const m = String(d.getMonth() + 1).padStart(2, "0");
         const da = String(d.getDate()).padStart(2, "0");
 
-        promises.push(loadHistoryPath(`history/${y}/${m}/${da}`, () => {}));
+        const dayData = await loadHistory(`history/${y}/${m}/${da}`);
+        const keys = Object.keys(dayData);
+
+        if (keys.length > 0) {
+            const last = dayData[keys[keys.length - 1]];
+            temps.push(last.temperature);
+        } else {
+            temps.push(null);
+        }
+
+        labels.push(weekdayNames[d.getDay()]);
     }
 
-    const results = await Promise.all(promises);
+    createChart("chart-week", labels, temps, "#4fc3f7");
+}
 
-    const times = [], temps = [], hums = [], press = [];
+/* MONAT */
+async function loadMonth() {
+    const now = new Date();
+    const labels = [];
+    const temps = [];
 
-    results.forEach(r => {
-        r[0].forEach((t, i) => {
-            times.push(t);
-            temps.push(r[1][i]);
-            hums.push(r[2][i]);
-            press.push(r[3][i]);
+    for (let i = 29; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const da = String(d.getDate()).padStart(2, "0");
+
+        const dayData = await loadHistory(`history/${y}/${m}/${da}`);
+        const keys = Object.keys(dayData);
+
+        if (keys.length > 0) {
+            const last = dayData[keys[keys.length - 1]];
+            temps.push(last.temperature);
+        } else {
+            temps.push(null);
+        }
+
+        labels.push(da);
+    }
+
+    createChart("chart-month", labels, temps, "#81c784");
+}
+
+/* JAHR */
+async function loadYear() {
+    const now = new Date();
+    const labels = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+    const temps = [];
+
+    for (let month = 0; month < 12; month++) {
+        const y = now.getFullYear();
+        const m = String(month + 1).padStart(2, "0");
+
+        const monthSnap = await get(ref(db, `history/${y}/${m}`));
+        const monthData = monthSnap.val() || {};
+
+        let lastTemp = null;
+
+        Object.keys(monthData).forEach(day => {
+            const entries = monthData[day];
+            const keys = Object.keys(entries);
+            if (keys.length > 0) {
+                lastTemp = entries[keys[keys.length - 1]].temperature;
+            }
         });
-    });
 
-    cb(times, temps, hums, press);
+        temps.push(lastTemp);
+    }
+
+    createChart("chart-year", labels, temps, "#ba68c8");
 }
 
-function loadWeekHistory()  { loadRange(7, updateChart); }
-function loadMonthHistory() { loadRange(30, updateChart); }
-function loadYearHistory()  { loadRange(365, updateChart); }
-
-/* MODUS */
-let currentMode = "today";
-let refreshTimer;
-
-window.setMode = function(mode) {
-    currentMode = mode;
-    document.querySelectorAll(".sidebar button").forEach(b => b.classList.remove("active"));
-    document.getElementById(`btn-${mode}`).classList.add("active");
-    loadMode();
-};
-
-function loadMode() {
-    if (refreshTimer) clearInterval(refreshTimer);
-
-    if (currentMode === "today") loadTodayHistory();
-    if (currentMode === "week")  loadWeekHistory();
-    if (currentMode === "month") loadMonthHistory();
-    if (currentMode === "year")  loadYearHistory();
-
-    refreshTimer = setInterval(loadMode, 60000);
+/* ALLES LADEN */
+async function loadAll() {
+    await loadToday();
+    await loadWeek();
+    await loadMonth();
+    await loadYear();
 }
 
-setMode("today");
+loadAll();
+setInterval(loadAll, 60000);
 
 </script>
 
 </body>
 </html>
-
-
-
