@@ -340,12 +340,6 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
     });
 }
 
-/* ⭐ HISTORY LADEN */
-async function loadHistory(path) {
-    const snap = await get(ref(db, path));
-    return snap.val() || {};
-}
-
 /* ⭐ HEUTE */
 async function loadToday() {
     const d = new Date();
@@ -472,4 +466,5 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
+
 
