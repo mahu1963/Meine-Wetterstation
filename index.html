@@ -295,13 +295,24 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
             scales: {
                 x: {
                     ticks: {
-                        autoSkip: mode !== "today",
-                        maxRotation: mode === "today" ? 90 : 0,
-                        minRotation: mode === "today" ? 45 : 0,
+                        // Heute: Labels automatisch ausdünnen
+                        autoSkip: mode === "today",
+                        maxTicksLimit: mode === "today" ? 12 : undefined,
+
+                        // bessere Lesbarkeit
+                        font: {
+                            size: 14
+                        },
+                        padding: 12,
+
+                        // Heute: Uhrzeiten leicht gedreht
+                        maxRotation: mode === "today" ? 45 : 0,
+                        minRotation: mode === "today" ? 20 : 0,
 
                         callback: function(value, index) {
                             let label = labels[index];
 
+                            // Monatstage hübsch formatieren
                             if (mode === "month" && /^\d{1,2}$/.test(label)) {
                                 return label.toString().padStart(2, "0");
                             }
@@ -461,3 +472,4 @@ if ("serviceWorker" in navigator) {
 
 </body>
 </html>
+
