@@ -11,7 +11,7 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
                 borderColor: color,
                 backgroundColor: color,
                 tension: 0.35,
-                pointRadius: 4,
+                pointRadius: mode === "today" ? 3 : 4,
                 pointHoverRadius: 7,
                 pointBackgroundColor: color,
                 pointBorderColor: "#ffffff",
@@ -28,25 +28,19 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
                     ticks: {
                         // ⭐ Nur HEUTE ausdünnen
                         autoSkip: mode === "today",
-                        maxTicksLimit: mode === "today" ? 12 : undefined,
+                        maxTicksLimit: mode === "today" ? 10 : labels.length,
 
                         // ⭐ Schriftgröße & Abstand
                         font: { size: 14 },
-                        padding: 10,
+                        padding: 12,
 
                         // ⭐ Nur HEUTE drehen
                         maxRotation: mode === "today" ? 45 : 0,
                         minRotation: mode === "today" ? 20 : 0,
 
+                        // ⭐ History: Labels NICHT verändern
                         callback: function(value, index) {
-                            let label = labels[index];
-
-                            // ⭐ Monatstage hübsch formatieren
-                            if (mode === "month" && /^\d{1,2}$/.test(label)) {
-                                return label.toString().padStart(2, "0");
-                            }
-
-                            return label;
+                            return labels[index];
                         }
                     }
                 },
