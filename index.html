@@ -1,3 +1,120 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Wetterstation</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    background: #0d0d0d;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Arial, sans-serif;
+}
+
+.main {
+    padding: 40px;
+}
+
+.cards {
+    display: flex;
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.card {
+    flex: 1;
+    background: #1c1c1e;
+    padding: 30px;
+    border-radius: 22px;
+}
+
+.card .value {
+    font-size: 48px;
+    font-weight: 600;
+}
+
+.chart-container {
+    margin-top: 40px;
+    background: #1c1c1e;
+    padding: 25px;
+    border-radius: 22px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="main">
+
+    <div class="cards">
+        <div class="card">
+            <div class="label">Temperatur</div>
+            <div class="value" id="temp">--</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Feuchtigkeit</div>
+            <div class="value" id="hum">--</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Luftdruck</div>
+            <div class="value" id="pres">--</div>
+        </div>
+    </div>
+
+    <h2>Heute</h2>
+    <div class="chart-container"><canvas id="chart-today"></canvas></div>
+
+    <h2>Woche</h2>
+    <div class="chart-container"><canvas id="chart-week"></canvas></div>
+
+    <h2>Monat</h2>
+    <div class="chart-container"><canvas id="chart-month"></canvas></div>
+
+    <h2>Jahr</h2>
+    <div class="chart-container"><canvas id="chart-year"></canvas></div>
+
+</div>
+
+<script type="module">
+
+/* FIREBASE */
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getDatabase, ref, onValue, get }
+    from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
+  authDomain: "meine-wetterstation.firebaseapp.com",
+  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "meine-wetterstation",
+  storageBucket: "meine-wetterstation.appspot.com",
+  messagingSenderId: "593494014586",
+  appId: "1:593494014586:web:a05ed68495b1b16d6059c3"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+/* LIVE-WERTE */
+onValue(ref(db, "weather"), snap => {
+    const d = snap.val();
+    if (!d) return;
+
+    document.getElementById("temp").innerText = d.temperature.toFixed(1) + "°C";
+    document.getElementById("hum").innerText  = d.humidity.toFixed(1) + "%";
+    document.getElementById("pres").innerText = d.pressure.toFixed(1) + " hPa";
+});
+
+/* CHART FUNKTION */
 function createChart(canvasId, labels, data, color, mode = "auto") {
 
     const ctx = document.getElementById(canvasId).getContext("2d");
@@ -15,8 +132,7 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
                 pointHoverRadius: 7,
                 pointBackgroundColor: color,
                 pointBorderColor: "#ffffff",
-                pointBorderWidth: 2,
-                spanGaps: false
+                pointBorderWidth: 2
             }]
         },
         options: {
@@ -26,39 +142,134 @@ function createChart(canvasId, labels, data, color, mode = "auto") {
             scales: {
                 x: {
                     ticks: {
-                        // ⭐ Nur HEUTE ausdünnen
                         autoSkip: mode === "today",
                         maxTicksLimit: mode === "today" ? 10 : labels.length,
-
-                        // ⭐ Schriftgröße & Abstand
                         font: { size: 14 },
                         padding: 12,
-
-                        // ⭐ Nur HEUTE drehen
                         maxRotation: mode === "today" ? 45 : 0,
                         minRotation: mode === "today" ? 20 : 0,
-
-                        // ⭐ History: Labels NICHT verändern
-                        callback: function(value, index) {
-                            return labels[index];
-                        }
+                        callback: (value, index) => labels[index]
                     }
                 },
-                y: {
-                    beginAtZero: false
-                }
+                y: { beginAtZero: false }
             },
 
             plugins: {
-                legend: { display: false },
-                tooltip: {
-                    backgroundColor: "#1c1c1e",
-                    titleColor: "#fff",
-                    bodyColor: "#fff",
-                    borderColor: color,
-                    borderWidth: 1
-                }
+                legend: { display: false }
             }
         }
     });
 }
+
+/* HISTORY LADEN */
+async function loadHistory(path) {
+    const snap = await get(ref(db, path));
+    return snap.val() || {};
+}
+
+/* HEUTE */
+async function loadToday() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const da = String(d.getDate()).padStart(2, "0");
+
+    const data = await loadHistory(`history/${y}/${m}/${da}`);
+
+    const times = Object.keys(data).sort();
+    const temps = times.map(t => data[t].temperature);
+
+    createChart("chart-today", times, temps, "#ff9800", "today");
+}
+
+/* WOCHE */
+async function loadWeek() {
+    const now = new Date();
+    const labels = [];
+    const temps = [];
+    const days = ["So","Mo","Di","Mi","Do","Fr","Sa"];
+
+    for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const da = String(d.getDate()).padStart(2, "0");
+
+        const dayData = await loadHistory(`history/${y}/${m}/${da}`);
+        const keys = Object.keys(dayData);
+
+        temps.push(keys.length ? dayData[keys[keys.length - 1]].temperature : null);
+        labels.push(days[d.getDay()]);
+    }
+
+    createChart("chart-week", labels, temps, "#4fc3f7");
+}
+
+/* MONAT */
+async function loadMonth() {
+    const now = new Date();
+    const labels = [];
+    const temps = [];
+
+    for (let i = 29; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const da = String(d.getDate()).padStart(2, "0");
+
+        const dayData = await loadHistory(`history/${y}/${m}/${da}`);
+        const keys = Object.keys(dayData);
+
+        temps.push(keys.length ? dayData[keys[keys.length - 1]].temperature : null);
+        labels.push(da);
+    }
+
+    createChart("chart-month", labels, temps, "#81c784");
+}
+
+/* JAHR */
+async function loadYear() {
+    const now = new Date();
+    const labels = ["Jan","Feb","Mär","Apr","Mai","Jun","Jul","Aug","Sep","Okt","Nov","Dez"];
+    const temps = [];
+
+    for (let month = 0; month < 12; month++) {
+        const y = now.getFullYear();
+        const m = String(month + 1).padStart(2, "0");
+
+        const monthSnap = await get(ref(db, `history/${y}/${m}`));
+        const monthData = monthSnap.val() || {};
+
+        let lastTemp = null;
+
+        Object.keys(monthData).forEach(day => {
+            const entries = monthData[day];
+            const keys = Object.keys(entries);
+            if (keys.length) lastTemp = entries[keys[keys.length - 1]].temperature;
+        });
+
+        temps.push(lastTemp);
+    }
+
+    createChart("chart-year", labels, temps, "#ba68c8");
+}
+
+/* ALLES LADEN */
+async function loadAll() {
+    await loadToday();
+    await loadWeek();
+    await loadMonth();
+    await loadYear();
+}
+
+loadAll();
+setInterval(loadAll, 60000);
+
+</script>
+
+</body>
+</html>
