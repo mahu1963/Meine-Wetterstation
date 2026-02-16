@@ -262,7 +262,7 @@ onValue(ref(db, "weather"), snap => {
     updateWeatherIcon(d.temperature, d.humidity, d.pressure);
 });
 
-/* CHART FUNKTION */
+/* ⭐ MODERNE CHART-FUNKTION */
 function createChart(canvasId, labels, data, color) {
     const ctx = document.getElementById(canvasId).getContext("2d");
     return new Chart(ctx, {
@@ -272,12 +272,61 @@ function createChart(canvasId, labels, data, color) {
             datasets: [{
                 data,
                 borderColor: color,
-                fill: false
+                backgroundColor: color,
+
+                // ⭐ Linie glätten
+                tension: 0.35,
+
+                // ⭐ Punkte hervorheben
+                pointRadius: 4,
+                pointHoverRadius: 7,
+                pointBackgroundColor: color,
+                pointBorderColor: "#ffffff",
+                pointBorderWidth: 2,
+
+                // ⭐ Lücken NICHT verbinden
+                spanGaps: false
             }]
         },
         options: {
             responsive: true,
-            animation: false
+            animation: false,
+
+            scales: {
+                x: {
+                    ticks: {
+                        autoSkip: false,
+                        maxRotation: 90,
+                        minRotation: 45,
+
+                        // ⭐ Achsen schöner formatieren
+                        callback: function(value, index) {
+                            let label = labels[index];
+
+                            // Monatstage: 1 → 01
+                            if (/^\d{1,2}$/.test(label)) {
+                                return label.toString().padStart(2, "0");
+                            }
+
+                            return label;
+                        }
+                    }
+                },
+                y: {
+                    beginAtZero: false
+                }
+            },
+
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: "#1c1c1e",
+                    titleColor: "#fff",
+                    bodyColor: "#fff",
+                    borderColor: color,
+                    borderWidth: 1
+                }
+            }
         }
     });
 }
