@@ -74,7 +74,7 @@ function tempColor(t) {
     return "#ff5c5c";
 }
 
-onValue(ref(db, "/history/weather/temperature"), (snap) => {
+onValue(ref(db, "/live/temperature"), (snap) => {
     const temp = snap.val();
     if (temp == null) return;
 
@@ -92,7 +92,7 @@ onValue(ref(db, "/history/weather/temperature"), (snap) => {
     liveEl.innerHTML = `🌡️ ${temp.toFixed(1)} °C ${arrow}`;
 });
 
-onValue(ref(db, "/history/weather/humidity"), (snap) => {
+onValue(ref(db, "/live/humidity"), (snap) => {
     const hum = snap.val();
     if (hum == null) return;
 
@@ -102,7 +102,7 @@ onValue(ref(db, "/history/weather/humidity"), (snap) => {
     lastHum = hum;
 });
 
-onValue(ref(db, "/history/weather/pressure"), (snap) => {
+onValue(ref(db, "/live/pressure"), (snap) => {
     const pres = snap.val();
     if (pres == null) return;
 
@@ -114,7 +114,7 @@ onValue(ref(db, "/history/weather/pressure"), (snap) => {
     lastPres = pres;
 });
 
-onValue(ref(db, "/history/weather/timestamp"), (snap) => {
+onValue(ref(db, "/live/time"), (snap) => {
     const t = snap.val();
     if (t == null) return;
 
@@ -127,7 +127,7 @@ onValue(ref(db, "/history/weather/timestamp"), (snap) => {
 
 async function loadOpenWeather() {
     const apiKey = "27602f1bbb8e3dd3587a1da6e3de24b6";   // <-- HIER EINTRAGEN
-    const lat = 47.366;  
+    const lat = 47.366;
     const lon = 16.266;
 
     try {
@@ -168,7 +168,7 @@ function loadGPS() {
     );
 }
 
-/* ================= HISTORY / CHART ================= */
+/* ================= CHART ================= */
 
 const ctx = document.getElementById("mainChart").getContext("2d");
 let mainChart = new Chart(ctx, {
@@ -197,13 +197,41 @@ let mainChart = new Chart(ctx, {
     }
 });
 
+/* ================= HISTORY AUS FIREBASE ================= */
+
+function loadHistory() {
+    const year = new Date().getFullYear();
+    const base = `/history/${year}/temperature`;
+
+    onValue(ref(db, base), (snap) => {
+        const data = snap.val();
+        if (!data) return;
+
+        const timestamps = Object.keys(data).sort();
+        const last = timestamps.slice(-50);
+
+        const labels = [];
+        const values = [];
+
+        last.forEach(ts => {
+            const date = new Date(parseInt(ts) * 1000);
+            labels.push(date.toLocaleTimeString("de-AT"));
+            values.push(data[ts]);
+        });
+
+        mainChart.data.labels = labels;
+        mainChart.data.datasets[0].data = values;
+        mainChart.update();
+    });
+}
+
 /* ================= INIT ================= */
 
 loadOpenWeather();
 loadGPS();
+loadHistory();
 
 </script>
 
 </body>
 </html>
-
