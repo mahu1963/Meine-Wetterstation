@@ -12,6 +12,7 @@ body {
     background: #0d0d0d;
     color: white;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Arial, sans-serif;
+    font-size: 18px;
 }
 
 .main {
@@ -28,7 +29,7 @@ body {
 
 #header h1 {
     margin: 10px 0 0;
-    font-size: 28px;
+    font-size: 32px;
 }
 
 #header h3 {
@@ -39,24 +40,29 @@ body {
 
 #gps, #sunrise, #sunset {
     opacity: 0.8;
-    font-size: 15px;
+    font-size: 17px;
+    margin-top: 4px;
 }
 
-/* Tabs */
+/* Tabs untereinander */
 .tabs {
     display: flex;
-    justify-content: center;
-    gap: 20px;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
     margin: 25px 0 10px;
 }
 
 .tab {
-    padding: 10px 18px;
+    padding: 12px 20px;
     border-radius: 12px;
     cursor: pointer;
     background: #1c1c1e;
     opacity: 0.7;
     transition: 0.2s;
+    width: 80%;
+    text-align: center;
+    font-size: 20px;
 }
 
 .tab.active {
@@ -74,12 +80,13 @@ body {
 }
 
 .sensor-btn {
-    padding: 8px 16px;
+    padding: 10px 18px;
     border-radius: 10px;
     background: #1c1c1e;
     cursor: pointer;
     opacity: 0.7;
     transition: 0.2s;
+    font-size: 18px;
 }
 
 .sensor-btn.active {
@@ -93,6 +100,10 @@ body {
     padding: 20px;
     border-radius: 18px;
     margin-bottom: 30px;
+}
+
+#mainChart {
+    height: 420px !important; /* größerer Chart */
 }
 
 /* Radar */
@@ -193,9 +204,7 @@ async function loadOpenWeather() {
         if (!res.ok) return;
 
         const data = await res.json();
-        console.log("OWM Daten:", data);
 
-        // ICON robust auslesen
         const icon =
             data.weather?.[0]?.icon ||
             data.weather?.icon ||
@@ -206,7 +215,6 @@ async function loadOpenWeather() {
                 `https://openweathermap.org/img/wn/${icon}@2x.png`;
         }
 
-        // Sonnenaufgang / Sonnenuntergang
         document.getElementById("sunrise").innerText =
             "Sonnenaufgang: " + formatTime(data.sys.sunrise);
 
@@ -246,25 +254,16 @@ async function loadHistory(sensor) {
 }
 
 /* ================= FORMATTER ================= */
-function formatLabel(t, range) {
+function formatLabel(t) {
     const d = new Date(t);
-
-    if (range === "today") {
-        return d.toLocaleTimeString("de-AT", { hour: "2-digit", minute: "2-digit" });
-    }
-    if (range === "week") {
-        return d.toLocaleString("de-AT", { weekday: "short", hour: "2-digit", minute: "2-digit" });
-    }
-    if (range === "month") {
-        return d.toLocaleDateString("de-AT", { day: "2-digit", month: "2-digit" });
-    }
-    if (range === "year") {
-        return d.toLocaleDateString("de-AT");
-    }
+    return d.toLocaleTimeString("de-AT", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
 }
 
 /* ================= FILTER ================= */
-function filterData(data, hours, range) {
+function filterData(data, hours) {
     const now = Date.now();
     const limit = now - hours * 3600 * 1000;
 
@@ -274,7 +273,7 @@ function filterData(data, hours, range) {
         .sort((a, b) => a - b);
 
     return timestamps.map(t => ({
-        time: formatLabel(t, range),
+        time: formatLabel(t),
         value: data[Math.floor(t / 1000)]
     }));
 }
@@ -315,9 +314,11 @@ function drawChart(data) {
                 data: data.map(d => d.value),
                 borderColor: baseColor,
                 backgroundColor: gradient,
-                borderWidth: 2,
-                tension: 0.3,
-                fill: true
+                borderWidth: 1.5,
+                tension: 0.35,
+                fill: true,
+                pointRadius: 0,
+                pointHoverRadius: 0
             }]
         },
         options: {
@@ -344,7 +345,7 @@ async function updateChart() {
     if (range === "month") hours = 24 * 30;
     if (range === "year") hours = 24 * 365;
 
-    const filtered = filterData(data, hours, range);
+    const filtered = filterData(data, hours);
     drawChart(filtered);
 }
 
