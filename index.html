@@ -180,21 +180,23 @@ async function loadOpenWeather() {
         const url = `https://api.openweathermap.org/data/2.5/weather?lat=${LAT}&lon=${LON}&units=metric&lang=de&appid=${OWM_API_KEY}&_=${Date.now()}`;
         const res = await fetch(url);
 
-        if (!res.ok) {
-            console.warn("OWM Fehler:", res.status);
-            document.getElementById("weather-icon").src = "";
-            return;
-        }
+        console.log("OWM Status:", res.status);
+
+        if (!res.ok) return;
 
         const data = await res.json();
-        console.log("OWM:", data);
+        console.log("OWM Daten:", data);
 
-        if (data.weather && data.weather[0] && data.weather[0].icon) {
-            const icon = data.weather[0].icon;
+        // Icon robust auslesen
+        const icon =
+            data.weather?.[0]?.icon ||
+            data.weather?.icon ||
+            data.weather?.["0"]?.icon;
+
+        if (icon) {
             document.getElementById("weather-icon").src =
                 `https://openweathermap.org/img/wn/${icon}@2x.png`;
         } else {
-            document.getElementById("weather-icon").src = "";
             console.warn("Kein Icon gefunden");
         }
 
@@ -360,4 +362,5 @@ updateChart();
 </div>
 </body>
 </html>
+
 
