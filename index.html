@@ -169,88 +169,23 @@ body {
 </div>
 
 <script type="module">
-/* ================= FIREBASE ================= */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import {
-    getDatabase,
-    ref,
-    get,
-    onValue
-} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+/* ================= FIREBASE INITIALISIERUNG ================= */
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
-  authDomain: "meine-wetterstation.firebaseapp.com",
-  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "meine-wetterstation",
-  storageBucket: "meine-wetterstation.appspot.com",
-  messagingSenderId: "593494014586",
-  appId: "1:593494014586:web:a05ed68495b1b16d6059c3"
+    apiKey: "DEIN_API_KEY",
+    authDomain: "meine-wetterstation.firebaseapp.com",
+    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "meine-wetterstation",
+    storageBucket: "meine-wetterstation.appspot.com",
+    messagingSenderId: "DEINE_SENDER_ID",
+    appId: "DEINE_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
-
-/* ================= OPENWEATHER ================= */
-const OWM_API_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
-const LAT = 47.366;
-const LON = 16.233;
-
-function formatTime(ts) {
-    return new Date(ts * 1000).toLocaleTimeString("de-AT", {
-        hour: "2-digit",
-        minute: "2-digit"
-    });
-}
-
-async function loadOpenWeather() {
-    try {
-        const url = `https://api.openweathermap.org/data/2.5/weather?lat=${LAT}&lon=${LON}&units=metric&lang=de&appid=${OWM_API_KEY}&_=${Date.now()}`;
-        const res = await fetch(url);
-        if (!res.ok) return;
-
-        const data = await res.json();
-
-        const icon =
-            data.weather?.[0]?.icon ||
-            data.weather?.icon ||
-            data.weather?.["0"]?.icon;
-
-        if (icon) {
-            document.getElementById("weather-icon").src =
-                `https://openweathermap.org/img/wn/${icon}@2x.png`;
-        }
-
-        document.getElementById("sunrise").innerText =
-            "Sonnenaufgang: " + formatTime(data.sys.sunrise);
-
-        document.getElementById("sunset").innerText =
-            "Sonnenuntergang: " + formatTime(data.sys.sunset);
-
-    } catch (e) {
-        console.error("OWM Fehler:", e);
-    }
-}
-
-/* ================= GPS ================= */
-function loadGPS() {
-    if (!navigator.geolocation) {
-        document.getElementById("gps").innerText = "GPS nicht verfügbar";
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-        pos => {
-            const lat = pos.coords.latitude.toFixed(5);
-            const lon = pos.coords.longitude.toFixed(5);
-            document.getElementById("gps").innerText = `GPS: ${lat}, ${lon}`;
-        },
-        err => {
-            document.getElementById("gps").innerText = "GPS blockiert – Standort erlauben";
-        },
-        { enableHighAccuracy: true, timeout: 5000 }
-    );
-}
 
 /* ================= LIVE-DATEN AUS FIREBASE ================= */
 
@@ -357,7 +292,9 @@ let mainChart = new Chart(ctx, {
 /* ================= INIT ================= */
 loadOpenWeather();
 loadGPS();
+
 </script>
 
 </body>
 </html>
+
