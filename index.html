@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Wetterstation Stuben‑Bernstein</title>
 
-<!-- Wetter-Icon für Browser-Teilen / Homescreen -->
+<!-- Wetter-Icon -->
 <link rel="icon" type="image/png" href="https://openweathermap.org/img/wn/10d@2x.png">
 <link rel="apple-touch-icon" href="https://openweathermap.org/img/wn/10d@2x.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,43 +21,37 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Arial, sans-serif;
     font-size: 20px;
 }
-
 .main {
     padding: 30px 20px 40px;
     max-width: 1100px;
     margin: 0 auto;
 }
-
 /* Header */
 #header {
     text-align: center;
     margin-bottom: 30px;
 }
-
 #header h1 {
     margin: 10px 0 0;
     font-size: 34px;
 }
-
 #header h3 {
     margin: 5px 0 10px;
     font-weight: 400;
     opacity: 0.8;
 }
-
 #gps, #sunrise, #sunset {
     opacity: 0.8;
     font-size: 18px;
     margin-top: 4px;
 }
-
 #live {
     margin-top: 12px;
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 600;
+    line-height: 1.4;
 }
-
-/* Tabs untereinander */
+/* Tabs */
 .tabs {
     display: flex;
     flex-direction: column;
@@ -65,7 +59,6 @@ body {
     gap: 14px;
     margin: 25px 0 10px;
 }
-
 .tab {
     padding: 16px 24px;
     border-radius: 14px;
@@ -77,13 +70,11 @@ body {
     text-align: center;
     font-size: 22px;
 }
-
 .tab.active {
     background: #333;
     opacity: 1;
     font-weight: 600;
 }
-
 /* Sensor Buttons */
 .sensor-buttons {
     display: flex;
@@ -91,7 +82,6 @@ body {
     gap: 18px;
     margin-bottom: 20px;
 }
-
 .sensor-btn {
     padding: 14px 22px;
     border-radius: 12px;
@@ -101,24 +91,20 @@ body {
     transition: 0.2s;
     font-size: 20px;
 }
-
 .sensor-btn.active {
     opacity: 1;
     font-weight: 600;
 }
-
-/* Chart Container */
+/* Chart */
 .chart-box {
     background: #1c1c1e;
     padding: 20px;
     border-radius: 18px;
     margin-bottom: 30px;
 }
-
 #mainChart {
     height: 520px !important;
 }
-
 /* Radar */
 #radar {
     background: #1c1c1e;
@@ -126,7 +112,6 @@ body {
     border-radius: 18px;
     margin-bottom: 30px;
 }
-
 #radar-frame {
     width: 100%;
     height: 420px;
@@ -148,8 +133,8 @@ body {
         <div id="sunrise"></div>
         <div id="sunset"></div>
 
-        <!-- ⭐ LIVE-WERT -->
-        <div id="live"></div>
+        <!-- LIVE-WERT -->
+        <div id="live">Live‑Daten werden geladen…</div>
     </div>
 
     <!-- Regenradar -->
@@ -181,11 +166,17 @@ body {
         <canvas id="mainChart"></canvas>
     </div>
 
+</div>
+
 <script type="module">
 /* ================= FIREBASE ================= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getDatabase, ref, get }
-    from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+import {
+    getDatabase,
+    ref,
+    get,
+    onValue
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
@@ -198,7 +189,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const db  = getDatabase(app);
 
 /* ================= OPENWEATHER ================= */
 const OWM_API_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
@@ -216,7 +207,6 @@ async function loadOpenWeather() {
     try {
         const url = `https://api.openweathermap.org/data/2.5/weather?lat=${LAT}&lon=${LON}&units=metric&lang=de&appid=${OWM_API_KEY}&_=${Date.now()}`;
         const res = await fetch(url);
-
         if (!res.ok) return;
 
         const data = await res.json();
@@ -262,238 +252,112 @@ function loadGPS() {
     );
 }
 
-/* ================= LIVE-WERT (farbig + Trend) ================= */
-let lastLiveTemp = null;
+/* ================= LIVE-DATEN AUS FIREBASE ================= */
 
-function getTempColor(t) {
-    if (t <= 0) return "#4da3ff";      // kalt
-    if (t >= 25) return "#ff4d4d";     // warm
-    return "#ffffff";                  // neutral
+let lastTemp = null;
+let lastHum  = null;
+let lastPres = null;
+
+function tempColor(t) {
+    if (t <= -5) return "#4da3ff";
+    if (t < 5)   return "#7fbfff";
+    if (t < 15)  return "#a0ffb0";
+    if (t < 25)  return "#ffe680";
+    if (t < 30)  return "#ffb347";
+    return "#ff5c5c";
 }
 
-function getTrendArrow(t) {
-    if (lastLiveTemp === null) return "→";
-    if (t > lastLiveTemp) return "↑";
-    if (t < lastLiveTemp) return "↓";
-    return "→";
-}
+onValue(ref(db, "/live/temperature"), (snap) => {
+    const temp = snap.val();
+    if (temp == null) return;
 
-async function loadLive() {
-    const snap = await get(ref(db, "live"));
-    const live = snap.val();
+    const liveEl = document.getElementById("live");
+    liveEl.style.color = tempColor(temp);
 
-    if (!live) return;
-
-    const t = Number(live.temperature);
-    const h = live.humidity;
-    const p = live.pressure;
-
-    const time = new Date(live.time * 1000).toLocaleTimeString("de-AT", {
-        hour: "2-digit",
-        minute: "2-digit"
-    });
-
-    const arrow = getTrendArrow(t);
-    const color = getTempColor(t);
-
-    lastLiveTemp = t;
-
-    const el = document.getElementById("live");
-    el.innerText = `Aktuell: ${t}°C ${arrow} | ${h}% | ${p} hPa – ${time}`;
-    el.style.color = color;
-}
-
-/* ================= HISTORY LADEN ================= */
-async function loadHistory(sensor) {
-    const year = new Date().getFullYear();
-    const snap = await get(ref(db, `history/${year}/${sensor}`));
-    return snap.val() || {};
-}
-
-/* ================= LABEL FORMATTER ================= */
-function formatLabel(t, range) {
-    const d = new Date(t);
-
-    if (range === "today") {
-        return d.toLocaleTimeString("de-AT", {
-            hour: "2-digit",
-            minute: "2-digit"
-        });
+    let arrow = "";
+    if (lastTemp !== null) {
+        if (temp > lastTemp) arrow = "▲";
+        else if (temp < lastTemp) arrow = "▼";
+        else arrow = "●";
     }
+    lastTemp = temp;
 
-    if (range === "week") {
-        return d.toLocaleString("de-AT", {
-            weekday: "short",
-            hour: "2-digit"
-        });
-    }
+    liveEl.innerHTML =
+        `🌡️ ${temp.toFixed(1)} °C ${arrow}`;
+});
 
-    if (range === "month") {
-        return d.toLocaleDateString("de-AT", {
-            day: "2-digit",
-            month: "2-digit"
-        });
-    }
+onValue(ref(db, "/live/humidity"), (snap) => {
+    const hum = snap.val();
+    if (hum == null) return;
 
-    if (range === "year") {
-        return d.toLocaleDateString("de-AT", {
-            month: "short"
-        });
-    }
-}
+    const liveEl = document.getElementById("live");
+    let txt = liveEl.innerHTML.split("<br>")[0];
+    liveEl.innerHTML =
+        `${txt}<br>💧 ${hum.toFixed(1)} %`;
+    lastHum = hum;
+});
 
-/* ================= FILTER + MOVING AVERAGE ================= */
-function filterData(data, hours, range) {
-    const now = Date.now();
-    const limit = now - hours * 3600 * 1000;
+onValue(ref(db, "/live/pressure"), (snap) => {
+    const pres = snap.val();
+    if (pres == null) return;
 
-    const timestamps = Object.keys(data)
-        .map(t => Number(t) * 1000)
-        .filter(t => t >= limit)
-        .sort((a, b) => a - b);
+    const liveEl = document.getElementById("live");
+    const parts = liveEl.innerHTML.split("<br>");
+    const first = parts[0] || "";
+    const second = parts[1] || "";
+    liveEl.innerHTML =
+        `${first}<br>${second}<br>🧭 ${pres.toFixed(1)} hPa`;
+    lastPres = pres;
+});
 
-    const hourly = [];
-    let lastHour = -1;
+onValue(ref(db, "/live/time"), (snap) => {
+    const t = snap.val();
+    if (t == null) return;
 
-    for (const t of timestamps) {
-        const d = new Date(t);
-        const hour = d.getHours();
+    const dt = new Date(t * 1000).toLocaleString("de-AT");
+    const liveEl = document.getElementById("live");
+    const parts = liveEl.innerHTML.split("<br");
+    const first = parts[0] || "";
+    const second = parts[1] ? "<br" + parts[1] : "";
+    const third  = parts[2] ? "<br" + parts[2] : "";
 
-        if (hour !== lastHour) {
-            hourly.push({
-                time: formatLabel(t, range),
-                value: data[Math.floor(t / 1000)]
-            });
-            lastHour = hour;
-        }
-    }
+    liveEl.innerHTML =
+        `${first}${second}${third}<br>⏱️ ${dt}`;
+});
 
-    const smooth = [];
-    const window = 3;
+/* ================= HISTORY / CHART ================= */
 
-    for (let i = 0; i < hourly.length; i++) {
-        let sum = 0;
-        let count = 0;
-
-        for (let j = i - window; j <= i + window; j++) {
-            if (hourly[j]) {
-                sum += hourly[j].value;
-                count++;
-            }
-        }
-
-        smooth.push({
-            time: hourly[i].time,
-            value: sum / count
-        });
-    }
-
-    return smooth;
-}
-
-/* ================= GRADIENT COLORS ================= */
-function createGradient(ctx, color) {
-    const gradient = ctx.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, color + "FF");
-    gradient.addColorStop(1, color + "00");
-    return gradient;
-}
-
-const sensorColors = {
-    temperature: "#ff4d4d",
-    humidity: "#4da3ff",
-    pressure: "#ffd24d"
-};
-
-/* ================= CHART ================= */
-let chart;
-function drawChart(data) {
-    const ctx = document.getElementById("mainChart").getContext("2d");
-
-    if (chart) chart.destroy();
-
-    const baseColor = sensorColors[sensor];
-    const gradient = createGradient(ctx, baseColor);
-
-    chart = new Chart(ctx, {
-        type: "line",
-        data: {
-            labels: data.map(d => d.time),
-            datasets: [{
-                label:
-                    sensor === "temperature" ? "Temperatur (°C)" :
-                    sensor === "humidity" ? "Feuchtigkeit (%)" :
-                    "Luftdruck (hPa)",
-                data: data.map(d => d.value),
-                borderColor: baseColor,
-                backgroundColor: gradient,
-                borderWidth: 1.5,
-                tension: 0.35,
-                fill: true,
-                pointRadius: 0,
-                pointHoverRadius: 0
-            }]
+const ctx = document.getElementById("mainChart").getContext("2d");
+let mainChart = new Chart(ctx, {
+    type: "line",
+    data: {
+        labels: [],
+        datasets: [{
+            label: "Temperatur",
+            data: [],
+            borderColor: "#ffb347",
+            backgroundColor: "rgba(255,179,71,0.2)",
+            tension: 0.2,
+            pointRadius: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            x: { ticks: { color: "#ccc" }, grid: { color: "#333" } },
+            y: { ticks: { color: "#ccc" }, grid: { color: "#333" } }
         },
-        options: {
-            scales: {
-                x: { ticks: { color: "white" } },
-                y: {
-                    ticks: { color: "white" },
-                    beginAtZero: false,
-                    suggestedMin: undefined,
-                    suggestedMax: undefined
-                }
-            },
-            plugins: {
-                legend: { labels: { color: "white" } }
-            }
+        plugins: {
+            legend: { labels: { color: "#fff" } }
         }
-    });
-}
-
-/* ================= INTERAKTION ================= */
-let range = "today";
-let sensor = "temperature";
-
-async function updateChart() {
-    const data = await loadHistory(sensor);
-
-    let hours = 24;
-    if (range === "week") hours = 24 * 7;
-    if (range === "month") hours = 24 * 30;
-    if (range === "year") hours = 24 * 365;
-
-    const filtered = filterData(data, hours, range);
-    drawChart(filtered);
-}
-
-document.querySelectorAll(".tab").forEach(tab => {
-    tab.addEventListener("click", () => {
-        document.querySelector(".tab.active").classList.remove("active");
-        tab.classList.add("active");
-        range = tab.dataset.range;
-        updateChart();
-    });
+    }
 });
 
-document.querySelectorAll(".sensor-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-        document.querySelector(".sensor-btn.active").classList.remove("active");
-        btn.classList.add("active");
-        sensor = btn.dataset.sensor;
-        updateChart();
-    });
-});
-
-/* ================= START ================= */
-loadGPS();
+/* ================= INIT ================= */
 loadOpenWeather();
-loadLive();
-setInterval(loadLive, 30000);
-updateChart();
-
+loadGPS();
 </script>
-</div>
+
 </body>
 </html>
-
