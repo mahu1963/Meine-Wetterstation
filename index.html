@@ -262,14 +262,29 @@ function loadGPS() {
     );
 }
 
-/* ================= LIVE-WERT ================= */
+/* ================= LIVE-WERT (farbig + Trend) ================= */
+let lastLiveTemp = null;
+
+function getTempColor(t) {
+    if (t <= 0) return "#4da3ff";      // kalt
+    if (t >= 25) return "#ff4d4d";     // warm
+    return "#ffffff";                  // neutral
+}
+
+function getTrendArrow(t) {
+    if (lastLiveTemp === null) return "→";
+    if (t > lastLiveTemp) return "↑";
+    if (t < lastLiveTemp) return "↓";
+    return "→";
+}
+
 async function loadLive() {
     const snap = await get(ref(db, "live"));
     const live = snap.val();
 
     if (!live) return;
 
-    const t = live.temperature;
+    const t = Number(live.temperature);
     const h = live.humidity;
     const p = live.pressure;
 
@@ -278,8 +293,14 @@ async function loadLive() {
         minute: "2-digit"
     });
 
-    document.getElementById("live").innerText =
-        `Aktuell: ${t}°C | ${h}% | ${p} hPa – ${time}`;
+    const arrow = getTrendArrow(t);
+    const color = getTempColor(t);
+
+    lastLiveTemp = t;
+
+    const el = document.getElementById("live");
+    el.innerText = `Aktuell: ${t}°C ${arrow} | ${h}% | ${p} hPa – ${time}`;
+    el.style.color = color;
 }
 
 /* ================= HISTORY LADEN ================= */
@@ -347,7 +368,6 @@ function filterData(data, hours, range) {
         }
     }
 
-    /* ⭐ Moving Average Glättung */
     const smooth = [];
     const window = 3;
 
