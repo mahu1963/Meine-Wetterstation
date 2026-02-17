@@ -51,6 +51,12 @@ body {
     margin-top: 4px;
 }
 
+#live {
+    margin-top: 12px;
+    font-size: 24px;
+    font-weight: 600;
+}
+
 /* Tabs untereinander */
 .tabs {
     display: flex;
@@ -141,6 +147,9 @@ body {
         <div id="gps">GPS lädt…</div>
         <div id="sunrise"></div>
         <div id="sunset"></div>
+
+        <!-- ⭐ LIVE-WERT -->
+        <div id="live"></div>
     </div>
 
     <!-- Regenradar -->
@@ -251,6 +260,26 @@ function loadGPS() {
         },
         { enableHighAccuracy: true, timeout: 5000 }
     );
+}
+
+/* ================= LIVE-WERT ================= */
+async function loadLive() {
+    const snap = await get(ref(db, "live"));
+    const live = snap.val();
+
+    if (!live) return;
+
+    const t = live.temperature;
+    const h = live.humidity;
+    const p = live.pressure;
+
+    const time = new Date(live.time * 1000).toLocaleTimeString("de-AT", {
+        hour: "2-digit",
+        minute: "2-digit"
+    });
+
+    document.getElementById("live").innerText =
+        `Aktuell: ${t}°C | ${h}% | ${p} hPa – ${time}`;
 }
 
 /* ================= HISTORY LADEN ================= */
@@ -439,6 +468,8 @@ document.querySelectorAll(".sensor-btn").forEach(btn => {
 /* ================= START ================= */
 loadGPS();
 loadOpenWeather();
+loadLive();
+setInterval(loadLive, 30000);
 updateChart();
 
 </script>
