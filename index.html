@@ -175,13 +175,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
-    apiKey: "DEIN_API_KEY",
-    authDomain: "meine-wetterstation.firebaseapp.com",
-    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "meine-wetterstation",
-    storageBucket: "meine-wetterstation.appspot.com",
-    messagingSenderId: "DEINE_SENDER_ID",
-    appId: "DEINE_APP_ID"
+  apiKey: "AIzaSyAfIU041dyNBiCC_ywpJiwf8mABJVsT-lw",
+  authDomain: "meine-wetterstation.firebaseapp.com",
+  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "meine-wetterstation",
+  storageBucket: "meine-wetterstation.appspot.com",
+  messagingSenderId: "593494014586",
+  appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
+  measurementId: "G-ST9RCRW888"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -202,7 +203,7 @@ function tempColor(t) {
     return "#ff5c5c";
 }
 
-onValue(ref(db, "/live/temperature"), (snap) => {
+onValue(ref(db, "/history/weather/temperature"), (snap) => {
     const temp = snap.val();
     if (temp == null) return;
 
@@ -217,22 +218,20 @@ onValue(ref(db, "/live/temperature"), (snap) => {
     }
     lastTemp = temp;
 
-    liveEl.innerHTML =
-        `🌡️ ${temp.toFixed(1)} °C ${arrow}`;
+    liveEl.innerHTML = `🌡️ ${temp.toFixed(1)} °C ${arrow}`;
 });
 
-onValue(ref(db, "/live/humidity"), (snap) => {
+onValue(ref(db, "/history/weather/humidity"), (snap) => {
     const hum = snap.val();
     if (hum == null) return;
 
     const liveEl = document.getElementById("live");
     let txt = liveEl.innerHTML.split("<br>")[0];
-    liveEl.innerHTML =
-        `${txt}<br>💧 ${hum.toFixed(1)} %`;
+    liveEl.innerHTML = `${txt}<br>💧 ${hum.toFixed(1)} %`;
     lastHum = hum;
 });
 
-onValue(ref(db, "/live/pressure"), (snap) => {
+onValue(ref(db, "/history/weather/pressure"), (snap) => {
     const pres = snap.val();
     if (pres == null) return;
 
@@ -240,12 +239,11 @@ onValue(ref(db, "/live/pressure"), (snap) => {
     const parts = liveEl.innerHTML.split("<br>");
     const first = parts[0] || "";
     const second = parts[1] || "";
-    liveEl.innerHTML =
-        `${first}<br>${second}<br>🧭 ${pres.toFixed(1)} hPa`;
+    liveEl.innerHTML = `${first}<br>${second}<br>🧭 ${pres.toFixed(1)} hPa`;
     lastPres = pres;
 });
 
-onValue(ref(db, "/live/time"), (snap) => {
+onValue(ref(db, "/history/weather/timestamp"), (snap) => {
     const t = snap.val();
     if (t == null) return;
 
@@ -256,8 +254,7 @@ onValue(ref(db, "/live/time"), (snap) => {
     const second = parts[1] ? "<br" + parts[1] : "";
     const third  = parts[2] ? "<br" + parts[2] : "";
 
-    liveEl.innerHTML =
-        `${first}${second}${third}<br>⏱️ ${dt}`;
+    liveEl.innerHTML = `${first}${second}${third}<br>⏱️ ${dt}`;
 });
 
 /* ================= HISTORY / CHART ================= */
@@ -297,4 +294,3 @@ loadGPS();
 
 </body>
 </html>
-
