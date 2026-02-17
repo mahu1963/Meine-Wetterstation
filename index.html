@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <title>Wetterstation Stuben‑Bernstein</title>
+
+<!-- Wetter-Icon für Browser-Teilen / Homescreen -->
+<link rel="icon" type="image/png" href="weather.png">
+<link rel="apple-touch-icon" href="weather.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
@@ -12,7 +19,7 @@ body {
     background: #0d0d0d;
     color: white;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", Arial, sans-serif;
-    font-size: 20px; /* größere Schrift */
+    font-size: 20px;
 }
 
 .main {
@@ -103,20 +110,20 @@ body {
 }
 
 #mainChart {
-    height: 520px !important; /* großer Chart */
+    height: 520px !important;
 }
 
 /* Radar */
 #radar {
     background: #1c1c1e;
-    padding: 20px;
+    padding: 10px;
     border-radius: 18px;
     margin-bottom: 30px;
 }
 
 #radar-frame {
     width: 100%;
-    height: 260px;
+    height: 420px;
     border: none;
     border-radius: 12px;
 }
@@ -285,7 +292,7 @@ function formatLabel(t, range) {
     }
 }
 
-/* ================= FILTER ================= */
+/* ================= FILTER + MOVING AVERAGE ================= */
 function filterData(data, hours, range) {
     const now = Date.now();
     const limit = now - hours * 3600 * 1000;
@@ -295,10 +302,44 @@ function filterData(data, hours, range) {
         .filter(t => t >= limit)
         .sort((a, b) => a - b);
 
-    return timestamps.map(t => ({
-        time: formatLabel(t, range),
-        value: data[Math.floor(t / 1000)]
-    }));
+    const hourly = [];
+    let lastHour = -1;
+
+    for (const t of timestamps) {
+        const d = new Date(t);
+        const hour = d.getHours();
+
+        if (hour !== lastHour) {
+            hourly.push({
+                time: formatLabel(t, range),
+                value: data[Math.floor(t / 1000)]
+            });
+            lastHour = hour;
+        }
+    }
+
+    /* ⭐ Moving Average Glättung */
+    const smooth = [];
+    const window = 3;
+
+    for (let i = 0; i < hourly.length; i++) {
+        let sum = 0;
+        let count = 0;
+
+        for (let j = i - window; j <= i + window; j++) {
+            if (hourly[j]) {
+                sum += hourly[j].value;
+                count++;
+            }
+        }
+
+        smooth.push({
+            time: hourly[i].time,
+            value: sum / count
+        });
+    }
+
+    return smooth;
 }
 
 /* ================= GRADIENT COLORS ================= */
@@ -347,7 +388,12 @@ function drawChart(data) {
         options: {
             scales: {
                 x: { ticks: { color: "white" } },
-                y: { ticks: { color: "white" } }
+                y: {
+                    ticks: { color: "white" },
+                    beginAtZero: false,
+                    suggestedMin: undefined,
+                    suggestedMax: undefined
+                }
             },
             plugins: {
                 legend: { labels: { color: "white" } }
