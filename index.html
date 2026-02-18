@@ -5,47 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wetterstation – Martin Huber</title>
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
-    body {
-        background: #111;
-        color: #fff;
-        font-family: Arial, sans-serif;
-        margin: 0;
-        padding: 20px;
-    }
-    h2 {
-        margin-top: 0;
-    }
-    #live, #openweather, #gps {
-        margin-bottom: 15px;
-        font-size: 1.1rem;
-        line-height: 1.6;
-    }
-    #mainChart {
-        width: 100%;
-        height: 320px;
-    }
-    #rangeButtons button,
-    #saveBtn {
-        margin-right: 8px;
-        margin-bottom: 8px;
-        padding: 6px 12px;
-        background: #222;
-        color: #fff;
-        border: 1px solid #444;
-        cursor: pointer;
-        border-radius: 4px;
-    }
-    #rangeButtons button:hover,
-    #saveBtn:hover {
-        background: #444;
-    }
-    #rangeButtons button.active {
-        background: #666;
-    }
+    body { background:#111; color:#fff; font-family:Arial; margin:0; padding:20px; }
+    h2 { margin-top:0; }
+    #live, #openweather, #gps, #clock { margin-bottom:12px; font-size:1.1rem; }
+    #weatherIcon { font-size:48px; margin-bottom:10px; }
+    button { padding:6px 12px; margin-right:6px; margin-bottom:6px; background:#222; color:#fff; border:1px solid #444; border-radius:4px; cursor:pointer; }
+    button.active { background:#666; }
+    button:hover { background:#444; }
+    #mainChart { width:100%; height:320px; }
 </style>
 </head>
 
@@ -53,15 +23,17 @@
 
 <h2>🌧️ Wetterstation – Martin Huber</h2>
 
+<div id="clock">⏱️ Uhr lädt…</div>
+<div id="weatherIcon">⛅</div>
 <div id="live">Live-Daten werden geladen…</div>
 <div id="openweather">OpenWeather lädt…</div>
 <div id="gps">GPS lädt…</div>
 
-<div id="rangeButtons">
-    <button id="btnWeek"  onclick="setRange('week')">Woche</button>
+<div>
+    <button id="btnWeek" onclick="setRange('week')">Woche</button>
     <button id="btnMonth" onclick="setRange('month')">Monat</button>
-    <button id="btnYear"  onclick="setRange('year')">Jahr</button>
-    <button id="saveBtn"  onclick="saveChart()">Diagramm speichern</button>
+    <button id="btnYear" onclick="setRange('year')">Jahr</button>
+    <button onclick="saveChart()">Diagramm speichern</button>
 </div>
 
 <canvas id="mainChart"></canvas>
@@ -87,7 +59,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 
-/* ================= LIVE-DATEN ================= */
+/* ================= LIVE-DATEN (ESP32) ================= */
 
 let lastTemp = null;
 
@@ -118,41 +90,34 @@ onValue(ref(db, "/weather/temperature"), (snap) => {
     const temp = snap.val();
     if (temp == null) return;
 
-    const liveEl = document.getElementById("live");
-    const arrow  = trendArrow(temp, lastTemp);
-    const color  = trendColor(temp, lastTemp);
+    const arrow = trendArrow(temp, lastTemp);
+    const color = trendColor(temp, lastTemp);
     lastTemp = temp;
 
-    liveEl.style.color = tempColor(temp);
-    liveEl.innerHTML = `🌡️ <span style="color:${color}">${arrow}</span> ${temp.toFixed(1)} °C`;
+    document.getElementById("live").innerHTML =
+        `🌡️ <span style="color:${color}">${arrow}</span> ${temp.toFixed(1)} °C`;
 });
 
 onValue(ref(db, "/weather/humidity"), (snap) => {
     const hum = snap.val();
     if (hum == null) return;
-
-    const liveEl = document.getElementById("live");
-    liveEl.innerHTML += `<br>💧 ${hum.toFixed(1)} %`;
+    document.getElementById("live").innerHTML += `<br>💧 ${hum.toFixed(1)} %`;
 });
 
 onValue(ref(db, "/weather/pressure"), (snap) => {
     const pres = snap.val();
     if (pres == null) return;
-
-    const liveEl = document.getElementById("live");
-    liveEl.innerHTML += `<br>🧭 ${pres.toFixed(1)} hPa`;
+    document.getElementById("live").innerHTML += `<br>🧭 ${pres.toFixed(1)} hPa`;
 });
 
 onValue(ref(db, "/weather/timestamp"), (snap) => {
     const t = snap.val();
     if (t == null) return;
-
     const dt = new Date(t * 1000).toLocaleString("de-AT");
-    const liveEl = document.getElementById("live");
-    liveEl.innerHTML += `<br>⏱️ ${dt}`;
+    document.getElementById("live").innerHTML += `<br>📅 ${dt}`;
 });
 
-/* ================= OPENWEATHER (KORRIGIERT) ================= */
+/* ================= OPENWEATHER (LIVE) ================= */
 
 async function loadOpenWeather() {
     const apiKey = "27602f1bbb8e3dd3587a1da6e3de24b6";
@@ -160,7 +125,7 @@ async function loadOpenWeather() {
     const lon = 16.266;
 
     if (!apiKey || apiKey.length < 30) {
-        document.getElementById("openweather").innerHTML = "27602f1bbb8e3dd3587a1da6e3de24b6";
+        document.getElementById("openweather").innerHTML = "Bitte OpenWeather API-Key eintragen.";
         return;
     }
 
@@ -175,6 +140,19 @@ async function loadOpenWeather() {
 
         const data = await res.json();
 
+        // Wetter-Icon
+        const icon = data.weather[0].main.toLowerCase();
+        let symbol = "🌤️";
+        if (icon.includes("rain")) symbol = "🌧️";
+        if (icon.includes("cloud")) symbol = "☁️";
+        if (icon.includes("clear")) symbol = "☀️";
+        if (icon.includes("snow")) symbol = "❄️";
+        if (icon.includes("storm") || icon.includes("thunder")) symbol = "⛈️";
+        if (icon.includes("fog") || icon.includes("mist")) symbol = "🌫️";
+
+        document.getElementById("weatherIcon").innerHTML = symbol;
+
+        // Text
         document.getElementById("openweather").innerHTML = `
             ☁️ ${data.weather[0].description}<br>
             🌡️ ${data.main.temp.toFixed(1)} °C<br>
@@ -186,7 +164,7 @@ async function loadOpenWeather() {
     }
 }
 
-/* ================= GPS ================= */
+/* ================= GPS (LIVE) ================= */
 
 function loadGPS() {
     if (!navigator.geolocation) {
@@ -206,71 +184,43 @@ function loadGPS() {
     );
 }
 
-/* ================= CHART ================= */
+/* ================= LIVE-UHR ================= */
+
+setInterval(() => {
+    document.getElementById("clock").innerHTML =
+        "⏱️ " + new Date().toLocaleString("de-AT");
+}, 1000);
+
+/* ================= CHART + HISTORY ================= */
 
 const ctx = document.getElementById("mainChart").getContext("2d");
 let mainChart = new Chart(ctx, {
     type: "line",
-    data: {
-        labels: [],
-        datasets: [
-            {
-                label: "Temperatur (°C)",
-                data: [],
-                borderColor: "#ffb347",
-                backgroundColor: "rgba(255,179,71,0.2)",
-                tension: 0.2,
-                pointRadius: 0
-            },
-            {
-                label: "Luftfeuchtigkeit (%)",
-                data: [],
-                borderColor: "#4da3ff",
-                backgroundColor: "rgba(77,163,255,0.2)",
-                tension: 0.2,
-                pointRadius: 0
-            },
-            {
-                label: "Luftdruck (hPa)",
-                data: [],
-                borderColor: "#a0ffb0",
-                backgroundColor: "rgba(160,255,176,0.2)",
-                tension: 0.2,
-                pointRadius: 0,
-                yAxisID: "y2"
-            }
-        ]
-    },
+    data: { labels: [], datasets: [
+        { label:"Temperatur (°C)", data:[], borderColor:"#ffb347", backgroundColor:"rgba(255,179,71,0.2)", tension:0.2, pointRadius:0 },
+        { label:"Luftfeuchtigkeit (%)", data:[], borderColor:"#4da3ff", backgroundColor:"rgba(77,163,255,0.2)", tension:0.2, pointRadius:0 },
+        { label:"Luftdruck (hPa)", data:[], borderColor:"#a0ffb0", backgroundColor:"rgba(160,255,176,0.2)", tension:0.2, pointRadius:0, yAxisID:"y2" }
+    ]},
     options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            x: { ticks: { color: "#ccc" }, grid: { color: "#333" } },
-            y: { ticks: { color: "#ccc" }, grid: { color: "#333" } },
-            y2: { ticks: { color: "#ccc" }, grid: { display: false } }
+        responsive:true, maintainAspectRatio:false,
+        scales:{
+            x:{ ticks:{color:"#ccc"}, grid:{color:"#333"} },
+            y:{ ticks:{color:"#ccc"}, grid:{color:"#333"} },
+            y2:{ ticks:{color:"#ccc"}, grid:{display:false} }
         },
-        plugins: {
-            legend: { labels: { color: "#fff" } }
-        }
+        plugins:{ legend:{ labels:{color:"#fff"} } }
     }
 });
 
-/* ================= HISTORY ================= */
-
 let historyRange = "week";
-let tempData = {};
-let humData  = {};
-let presData = {};
+let tempData={}, humData={}, presData={};
 
 function setRange(r) {
     historyRange = r;
-
     document.getElementById("btnWeek").classList.remove("active");
     document.getElementById("btnMonth").classList.remove("active");
     document.getElementById("btnYear").classList.remove("active");
-
     document.getElementById("btn" + r.charAt(0).toUpperCase() + r.slice(1)).classList.add("active");
-
     loadHistory();
 }
 window.setRange = setRange;
@@ -281,50 +231,43 @@ function loadHistory() {
     const basePres = `/weather/history/pressure`;
 
     function updateChart() {
-        const nowSec = Date.now() / 1000;
-        let limit = nowSec - 7 * 24 * 3600;
+        const nowSec = Date.now()/1000;
+        let limit = nowSec - 7*24*3600;
+        if (historyRange==="month") limit = nowSec - 30*24*3600;
+        if (historyRange==="year")  limit = nowSec - 365*24*3600;
 
-        if (historyRange === "month") limit = nowSec - 30 * 24 * 3600;
-        if (historyRange === "year")  limit = nowSec - 365 * 24 * 3600;
+        const timestamps = Object.keys(tempData||{})
+            .map(t=>parseInt(t))
+            .filter(t=>t>=limit)
+            .sort((a,b)=>a-b);
 
-        const timestamps = Object.keys(tempData || {})
-            .map(t => parseInt(t))
-            .filter(t => t >= limit)
-            .sort((a, b) => a - b);
-
-        const labels = [];
-        const temps  = [];
-        const hums   = [];
-        const press  = [];
-
-        timestamps.forEach(ts => {
-            const date = new Date(ts * 1000);
-            labels.push(date.toLocaleString("de-AT", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }));
-
-            temps.push(tempData[ts] ?? null);
-            hums.push(humData[ts] ?? null);
-            press.push(presData[ts] ?? null);
+        const labels=[], temps=[], hums=[], press=[];
+        timestamps.forEach(ts=>{
+            const d=new Date(ts*1000);
+            labels.push(d.toLocaleString("de-AT",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"2-digit"}));
+            temps.push(tempData[ts]??null);
+            hums.push(humData[ts]??null);
+            press.push(presData[ts]??null);
         });
 
         mainChart.data.labels = labels;
         mainChart.data.datasets[0].data = temps;
         mainChart.data.datasets[1].data = hums;
         mainChart.data.datasets[2].data = press;
-
         mainChart.update();
     }
 
-    onValue(ref(db, baseTemp), (snap) => { tempData = snap.val() || {}; updateChart(); });
-    onValue(ref(db, baseHum),  (snap) => { humData  = snap.val() || {}; updateChart(); });
-    onValue(ref(db, basePres), (snap) => { presData = snap.val() || {}; updateChart(); });
+    onValue(ref(db, baseTemp),(s)=>{ tempData=s.val()||{}; updateChart(); });
+    onValue(ref(db, baseHum),(s)=>{ humData=s.val()||{}; updateChart(); });
+    onValue(ref(db, basePres),(s)=>{ presData=s.val()||{}; updateChart(); });
 }
 
 /* ================= DIAGRAMM SPEICHERN ================= */
 
 function saveChart() {
-    const link = document.createElement('a');
-    link.download = "wetterstation-diagramm.png";
-    link.href = mainChart.toBase64Image();
+    const link=document.createElement('a');
+    link.download="wetterstation-diagramm.png";
+    link.href=mainChart.toBase64Image();
     link.click();
 }
 window.saveChart = saveChart;
@@ -335,7 +278,10 @@ loadOpenWeather();
 loadGPS();
 setRange("week");
 
-</script>
+// LIVE-Updates
+setInterval(loadOpenWeather, 5 * 60 * 1000); // OpenWeather alle 5 Minuten
+setInterval(loadGPS, 10000);                 // GPS alle 10 Sekunden
 
+</script>
 </body>
 </html>
