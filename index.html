@@ -12,6 +12,7 @@
     h2 { margin-top:0; }
     #live, #openweather, #gps, #clock, #rangeInfo { margin-bottom:12px; font-size:1.1rem; }
     #weatherIcon { font-size:48px; margin-bottom:10px; }
+    #liveIcon { font-size:40px; margin:10px 0; }
     button { padding:6px 12px; margin-right:6px; margin-bottom:6px; background:#222; color:#fff; border:1px solid #444; border-radius:4px; cursor:pointer; }
     button.active { background:#666; }
     button:hover { background:#444; }
@@ -21,13 +22,11 @@
 
 <body>
 
-<h2>🌧️ Wetterstation – Martin Huber</h2>
-
-<!-- Fixes Icon Sonne + Wolke -->
-<div id="weatherIcon">🌤️</div>
+<h2>🌤️ Wetterstation – Martin Huber</h2>
 
 <div id="clock">⏱️ Uhr lädt…</div>
 <div id="live">Live-Daten werden geladen…</div>
+<div id="liveIcon"></div>
 <div id="openweather">OpenWeather lädt…</div>
 <div id="gps">GPS lädt…</div>
 
@@ -38,7 +37,6 @@
     <button onclick="saveChart()">Diagramm speichern</button>
 </div>
 
-<!-- Zeitraum-Anzeige -->
 <div id="rangeInfo" style="color:#ccc; margin-bottom:10px;"></div>
 
 <canvas id="mainChart"></canvas>
@@ -125,8 +123,18 @@ async function loadOpenWeather() {
         const res = await fetch(url);
         const data = await res.json();
 
-        // Fixes Icon oben
-        document.getElementById("weatherIcon").innerHTML = "🌤️";
+        // Dynamisches Icon unter Live-Daten
+        let icon = data.weather[0].main.toLowerCase();
+        let symbol = "🌤️";
+
+        if (icon.includes("rain")) symbol = "🌧️";
+        if (icon.includes("cloud")) symbol = "☁️";
+        if (icon.includes("clear")) symbol = "☀️";
+        if (icon.includes("snow")) symbol = "❄️";
+        if (icon.includes("storm") || icon.includes("thunder")) symbol = "⛈️";
+        if (icon.includes("fog") || icon.includes("mist")) symbol = "🌫️";
+
+        document.getElementById("liveIcon").innerHTML = symbol;
 
         document.getElementById("openweather").innerHTML = `
             ☁️ ${data.weather[0].description}<br>
