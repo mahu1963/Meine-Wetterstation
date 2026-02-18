@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meine Wetterstation</title>
+<title>Wetterstation – Martin Huber</title>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -16,30 +16,57 @@
         margin: 0;
         padding: 20px;
     }
+    h2 {
+        margin-top: 0;
+    }
     #live, #openweather, #gps {
-        margin-bottom: 20px;
-        font-size: 1.2rem;
+        margin-bottom: 15px;
+        font-size: 1.1rem;
         line-height: 1.6;
     }
     #mainChart {
         width: 100%;
-        height: 300px;
+        height: 320px;
+    }
+    #rangeButtons button,
+    #saveBtn {
+        margin-right: 8px;
+        margin-bottom: 8px;
+        padding: 6px 12px;
+        background: #222;
+        color: #fff;
+        border: 1px solid #444;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+    #rangeButtons button:hover,
+    #saveBtn:hover {
+        background: #444;
+    }
+    #rangeButtons button.active {
+        background: #666;
     }
 </style>
 </head>
 
 <body>
 
-<h2>🌦️ Meine Wetterstation</h2>
+<h2>🌦️ Wetterstation – Martin Huber</h2>
 
 <div id="live">Live-Daten werden geladen…</div>
 <div id="openweather">OpenWeather lädt…</div>
 <div id="gps">GPS lädt…</div>
 
+<div id="rangeButtons">
+    <button id="btnWeek"  onclick="setRange('week')">Woche</button>
+    <button id="btnMonth" onclick="setRange('month')">Monat</button>
+    <button id="btnYear"  onclick="setRange('year')">Jahr</button>
+    <button id="saveBtn"  onclick="saveChart()">Diagramm speichern</button>
+</div>
+
 <canvas id="mainChart"></canvas>
 
 <script type="module">
-
 /* ================= FIREBASE INITIALISIERUNG ================= */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
@@ -59,7 +86,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 
-/* ================= LIVE-DATEN AUS /weather ================= */
+/* ================= HILFSFUNKTIONEN ================= */
 
 let lastTemp = null;
 
@@ -72,22 +99,33 @@ function tempColor(t) {
     return "#ff5c5c";
 }
 
+function trendArrow(curr, prev) {
+    if (prev === null || prev === undefined) return "●";
+    if (curr > prev) return "▲";
+    if (curr < prev) return "▼";
+    return "●";
+}
+
+function trendColor(curr, prev) {
+    if (prev === null || prev === undefined) return "#ccc";
+    if (curr > prev) return "red";
+    if (curr < prev) return "deepskyblue";
+    return "#ccc";
+}
+
+/* ================= LIVE-DATEN AUS /weather ================= */
+
 onValue(ref(db, "/weather/temperature"), (snap) => {
     const temp = snap.val();
     if (temp == null) return;
 
     const liveEl = document.getElementById("live");
-    liveEl.style.color = tempColor(temp);
-
-    let arrow = "";
-    if (lastTemp !== null) {
-        if (temp > lastTemp) arrow = "▲";
-        else if (temp < lastTemp) arrow = "▼";
-        else arrow = "●";
-    }
+    const arrow  = trendArrow(temp, lastTemp);
+    const color  = trendColor(temp, lastTemp);
     lastTemp = temp;
 
-    liveEl.innerHTML = `🌡️ ${temp.toFixed(1)} °C ${arrow}`;
+    liveEl.style.color = tempColor(temp);
+    liveEl.innerHTML = `🌡️ <span style="color:${color}">${arrow}</span> ${temp.toFixed(1)} °C`;
 });
 
 onValue(ref(db, "/weather/humidity"), (snap) => {
@@ -118,9 +156,14 @@ onValue(ref(db, "/weather/timestamp"), (snap) => {
 /* ================= OPENWEATHER ================= */
 
 async function loadOpenWeather() {
-    const apiKey = "27602f1bbb8e3dd3587a1da6e3de24b6";   // <-- HIER EINTRAGEN
+    const apiKey = "DEIN_OPENWEATHER_API_KEY";   // <-- HIER EINTRAGEN
     const lat = 47.366;
     const lon = 16.266;
+
+    if (!apiKey || apiKey === "27602f1bbb8e3dd3587a1da6e3de24b6") {
+        document.getElementById("openweather").innerHTML = "Bitte OpenWeather API-Key eintragen.";
+        return;
+    }
 
     try {
         const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${apiKey}`;
@@ -136,6 +179,7 @@ async function loadOpenWeather() {
         `;
     } catch (err) {
         console.error("OpenWeather Fehler:", err);
+        document.getElementById("openweather").innerHTML = "OpenWeather Fehler in der Abfrage.";
     }
 }
 
@@ -217,29 +261,55 @@ let mainChart = new Chart(ctx, {
     }
 });
 
+/* ================= WOCHE / MONAT / JAHR ================= */
+
+let historyRange = "week";
+
+function setRange(r) {
+    historyRange = r;
+    document.getElementById("btnWeek").classList.remove("active");
+    document.getElementById("btnMonth").classList.remove("active");
+    document.getElementById("btnYear").classList.remove("active");
+
+    if (r === "week")  document.getElementById("btnWeek").classList.add("active");
+    if (r === "month") document.getElementById("btnMonth").classList.add("active");
+    if (r === "year")  document.getElementById("btnYear").classList.add("active");
+
+    loadHistory();
+}
+window.setRange = setRange; // für Buttons
+
 /* ================= HISTORY AUS /weather/history ================= */
+
+let tempData = {};
+let humData  = {};
+let presData = {};
 
 function loadHistory() {
     const baseTemp = `/weather/history/temperature`;
     const baseHum  = `/weather/history/humidity`;
     const basePres = `/weather/history/pressure`;
 
-    let tempData = {};
-    let humData  = {};
-    let presData = {};
-
     function updateChart() {
-        const timestamps = Object.keys(tempData).sort();
-        const last = timestamps.slice(-50);
+        const nowSec = Date.now() / 1000;
+        let limit = nowSec - 7 * 24 * 3600; // Woche
+
+        if (historyRange === "month") limit = nowSec - 30 * 24 * 3600;
+        if (historyRange === "year")  limit = nowSec - 365 * 24 * 3600;
+
+        const timestamps = Object.keys(tempData || {})
+            .map(t => parseInt(t))
+            .filter(t => t >= limit)
+            .sort((a, b) => a - b);
 
         const labels = [];
         const temps  = [];
         const hums   = [];
         const press  = [];
 
-        last.forEach(ts => {
-            const date = new Date(parseInt(ts) * 1000);
-            labels.push(date.toLocaleTimeString("de-AT"));
+        timestamps.forEach(ts => {
+            const date = new Date(ts * 1000);
+            labels.push(date.toLocaleString("de-AT", { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" }));
 
             temps.push(tempData[ts] ?? null);
             hums.push(humData[ts] ?? null);
@@ -270,11 +340,21 @@ function loadHistory() {
     });
 }
 
+/* ================= DIAGRAMM SPEICHERN ================= */
+
+function saveChart() {
+    const link = document.createElement('a');
+    link.download = "wetterstation-diagramm.png";
+    link.href = mainChart.toBase64Image();
+    link.click();
+}
+window.saveChart = saveChart;
+
 /* ================= INIT ================= */
 
 loadOpenWeather();
 loadGPS();
-loadHistory();
+setRange("week"); // setzt auch Buttons & lädt History
 
 </script>
 
