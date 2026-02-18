@@ -10,7 +10,7 @@
 <style>
     body { background:#111; color:#fff; font-family:Arial; margin:0; padding:20px; }
     h2 { margin-top:0; }
-    #live, #openweather, #gps, #clock { margin-bottom:12px; font-size:1.1rem; }
+    #live, #openweather, #gps, #clock, #rangeInfo { margin-bottom:12px; font-size:1.1rem; }
     #weatherIcon { font-size:48px; margin-bottom:10px; }
     button { padding:6px 12px; margin-right:6px; margin-bottom:6px; background:#222; color:#fff; border:1px solid #444; border-radius:4px; cursor:pointer; }
     button.active { background:#666; }
@@ -23,8 +23,10 @@
 
 <h2>🌧️ Wetterstation – Martin Huber</h2>
 
+<!-- Fixes Icon Sonne + Wolke -->
+<div id="weatherIcon">🌤️</div>
+
 <div id="clock">⏱️ Uhr lädt…</div>
-<div id="weatherIcon">⛅</div>
 <div id="live">Live-Daten werden geladen…</div>
 <div id="openweather">OpenWeather lädt…</div>
 <div id="gps">GPS lädt…</div>
@@ -35,6 +37,9 @@
     <button id="btnYear" onclick="setRange('year')">Jahr</button>
     <button onclick="saveChart()">Diagramm speichern</button>
 </div>
+
+<!-- Zeitraum-Anzeige -->
+<div id="rangeInfo" style="color:#ccc; margin-bottom:10px;"></div>
 
 <canvas id="mainChart"></canvas>
 
@@ -140,19 +145,6 @@ async function loadOpenWeather() {
 
         const data = await res.json();
 
-        // Wetter-Icon
-        const icon = data.weather[0].main.toLowerCase();
-        let symbol = "🌤️";
-        if (icon.includes("rain")) symbol = "🌧️";
-        if (icon.includes("cloud")) symbol = "☁️";
-        if (icon.includes("clear")) symbol = "☀️";
-        if (icon.includes("snow")) symbol = "❄️";
-        if (icon.includes("storm") || icon.includes("thunder")) symbol = "⛈️";
-        if (icon.includes("fog") || icon.includes("mist")) symbol = "🌫️";
-
-        document.getElementById("weatherIcon").innerHTML = symbol;
-
-        // Text
         document.getElementById("openweather").innerHTML = `
             ☁️ ${data.weather[0].description}<br>
             🌡️ ${data.main.temp.toFixed(1)} °C<br>
@@ -191,7 +183,7 @@ setInterval(() => {
         "⏱️ " + new Date().toLocaleString("de-AT");
 }, 1000);
 
-/* ================= CHART + HISTORY ================= */
+/* ================= CHART ================= */
 
 const ctx = document.getElementById("mainChart").getContext("2d");
 let mainChart = new Chart(ctx, {
@@ -212,15 +204,43 @@ let mainChart = new Chart(ctx, {
     }
 });
 
+/* ================= HISTORY ================= */
+
 let historyRange = "week";
 let tempData={}, humData={}, presData={};
 
+function updateRangeInfo() {
+    const now = new Date();
+    let text = "";
+
+    if (historyRange === "week") {
+        const start = new Date(Date.now() - 7*24*3600*1000);
+        text = `Woche: ${start.toLocaleDateString("de-AT")} – ${now.toLocaleDateString("de-AT")}`;
+    }
+
+    if (historyRange === "month") {
+        text = `Monat: ${now.toLocaleString("de-AT", { month:"long", year:"numeric" })}`;
+    }
+
+    if (historyRange === "year") {
+        text = `Jahr: ${now.getFullYear()}`;
+    }
+
+    document.getElementById("rangeInfo").innerHTML = text;
+}
+
 function setRange(r) {
     historyRange = r;
+
+    localStorage.setItem("historyRange", r);
+
     document.getElementById("btnWeek").classList.remove("active");
     document.getElementById("btnMonth").classList.remove("active");
     document.getElementById("btnYear").classList.remove("active");
+
     document.getElementById("btn" + r.charAt(0).toUpperCase() + r.slice(1)).classList.add("active");
+
+    updateRangeInfo();
     loadHistory();
 }
 window.setRange = setRange;
@@ -244,7 +264,17 @@ function loadHistory() {
         const labels=[], temps=[], hums=[], press=[];
         timestamps.forEach(ts=>{
             const d=new Date(ts*1000);
-            labels.push(d.toLocaleString("de-AT",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"2-digit"}));
+
+            let label = "";
+            if (historyRange === "week")
+                label = d.toLocaleString("de-AT",{hour:"2-digit",minute:"2-digit"});
+            if (historyRange === "month")
+                label = d.toLocaleString("de-AT",{day:"2-digit",month:"2-digit"});
+            if (historyRange === "year")
+                label = d.toLocaleString("de-AT",{month:"2-digit"});
+
+            labels.push(label);
+
             temps.push(tempData[ts]??null);
             hums.push(humData[ts]??null);
             press.push(presData[ts]??null);
@@ -276,11 +306,13 @@ window.saveChart = saveChart;
 
 loadOpenWeather();
 loadGPS();
-setRange("week");
+
+const saved = localStorage.getItem("historyRange") || "week";
+setRange(saved);
 
 // LIVE-Updates
-setInterval(loadOpenWeather, 5 * 60 * 1000); // OpenWeather alle 5 Minuten
-setInterval(loadGPS, 10000);                 // GPS alle 10 Sekunden
+setInterval(loadOpenWeather, 5 * 60 * 1000);
+setInterval(loadGPS, 10000);
 
 </script>
 </body>
