@@ -16,11 +16,28 @@
         padding: 0;
     }
 
-    h1 {
+    header {
         text-align: center;
-        margin-top: 20px;
-        font-weight: 600;
-        color: #f0f0f0;
+        padding: 20px;
+        background: #1a1a1a;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+        margin-bottom: 20px;
+    }
+
+    h1 {
+        margin: 0;
+        font-size: 28px;
+        color: #fff;
+    }
+
+    .live-box {
+        width: 95%;
+        max-width: 900px;
+        margin: 20px auto;
+        padding: 20px;
+        background: #1a1a1a;
+        border-radius: 16px;
+        box-shadow: 0 4px 25px rgba(0,0,0,0.4);
     }
 
     .chart-container {
@@ -39,25 +56,52 @@
         margin-bottom: 10px;
         color: #f0f0f0;
     }
+
+    .value {
+        font-size: 22px;
+        margin: 8px 0;
+    }
 </style>
 </head>
 
 <body>
 
-<h1>📊 Wetterstation – History</h1>
+<header>
+    <h1>Wetterstation – Martin Huber</h1>
+    <div id="timestamp"></div>
+</header>
 
+<!-- LIVE WETTER -->
+<div class="live-box">
+    <h3>📡 Aktuelle Messwerte</h3>
+    <div class="value">🌡️ Temperatur: <span id="temp">–</span> °C</div>
+    <div class="value">💧 Feuchtigkeit: <span id="hum">–</span> %</div>
+    <div class="value">🌍 Luftdruck: <span id="pres">–</span> hPa</div>
+    <div class="value">📍 GPS: <span id="gps">–</span></div>
+</div>
+
+<!-- OPENWEATHER -->
+<div class="live-box">
+    <h3>🌨️ OpenWeather</h3>
+    <div class="value">❄️ Wetter: <span id="ow-desc">–</span></div>
+    <div class="value">🌡️ Temperatur: <span id="ow-temp">–</span> °C</div>
+    <div class="value">💧 Feuchtigkeit: <span id="ow-hum">–</span> %</div>
+    <div class="value">🌬️ Wind: <span id="ow-wind">–</span> m/s</div>
+</div>
+
+<!-- DIAGRAMME -->
 <div class="chart-container">
-    <h3>🌡️ Temperatur</h3>
+    <h3>🌡️ Temperatur – Verlauf</h3>
     <canvas id="tempChart"></canvas>
 </div>
 
 <div class="chart-container">
-    <h3>💧 Feuchtigkeit</h3>
+    <h3>💧 Feuchtigkeit – Verlauf</h3>
     <canvas id="humChart"></canvas>
 </div>
 
 <div class="chart-container">
-    <h3>🌍 Luftdruck</h3>
+    <h3>🌍 Luftdruck – Verlauf</h3>
     <canvas id="presChart"></canvas>
 </div>
 
@@ -66,7 +110,7 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
-// 🔥 Deine Firebase-Konfiguration hier einfügen
+// 🔥 Firebase-Konfiguration
 const firebaseConfig = {
     apiKey: "DEIN_API_KEY",
     authDomain: "DEIN_PROJECT.firebaseapp.com",
@@ -80,7 +124,38 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 // -------------------------------------------------------
-// 🔥 Funktion zum Erstellen eines Diagramms
+// 🔥 LIVE-DATEN LADEN
+// -------------------------------------------------------
+firebase.database().ref("weather").on("value", snap => {
+    const d = snap.val();
+
+    document.getElementById("temp").innerText = d.temperature.toFixed(1);
+    document.getElementById("hum").innerText = d.humidity.toFixed(1);
+    document.getElementById("pres").innerText = d.pressure.toFixed(1);
+    document.getElementById("gps").innerText = d.lat + ", " + d.lon;
+
+    const dt = new Date(d.timestamp * 1000);
+    document.getElementById("timestamp").innerText = dt.toLocaleString();
+});
+
+// -------------------------------------------------------
+// 🔥 OPENWEATHER LADEN
+// -------------------------------------------------------
+const OW_KEY = "DEIN_OPENWEATHER_KEY";
+const LAT = 47.43599;
+const LON = 16.25597;
+
+fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${LAT}&lon=${LON}&units=metric&lang=de&appid=${OW_KEY}`)
+    .then(r => r.json())
+    .then(w => {
+        document.getElementById("ow-desc").innerText = w.weather[0].description;
+        document.getElementById("ow-temp").innerText = w.main.temp;
+        document.getElementById("ow-hum").innerText = w.main.humidity;
+        document.getElementById("ow-wind").innerText = w.wind.speed;
+    });
+
+// -------------------------------------------------------
+// 🔥 Diagramm-Funktion
 // -------------------------------------------------------
 function createChart(canvasId, label, color, data) {
     const labels = Object.keys(data).map(ts => new Date(ts * 1000).toLocaleString());
@@ -126,7 +201,7 @@ function createChart(canvasId, label, color, data) {
 }
 
 // -------------------------------------------------------
-// 🔥 Daten laden und Diagramme erstellen
+// 🔥 HISTORY LADEN
 // -------------------------------------------------------
 firebase.database().ref("weather/history/temperature").once("value", snap => {
     createChart("tempChart", "Temperatur (°C)", "rgba(255,120,80,1)", snap.val());
