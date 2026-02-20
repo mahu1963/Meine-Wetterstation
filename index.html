@@ -22,6 +22,7 @@
         background: #1a1a1a;
         box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         margin-bottom: 20px;
+        position: relative;
     }
 
     h1 {
@@ -30,6 +31,14 @@
         color: #fff;
     }
 
+    /* Fixes Wetter-Icon links oben */
+    #header-icon-box {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+    }
+
+    /* Live-Box */
     .live-box {
         width: 95%;
         max-width: 900px;
@@ -38,6 +47,9 @@
         background: #1a1a1a;
         border-radius: 16px;
         box-shadow: 0 4px 25px rgba(0,0,0,0.4);
+        display: flex;
+        align-items: center;
+        gap: 20px;
     }
 
     .chart-container {
@@ -51,15 +63,31 @@
     }
 
     h3 {
-        text-align: center;
+        text-align: left;
         font-weight: 600;
         margin-bottom: 10px;
         color: #f0f0f0;
     }
 
     .value {
-        font-size: 22px;
-        margin: 8px 0;
+        font-size: 20px;
+        margin: 6px 0;
+    }
+
+    /* Animiertes Wetter-Icon */
+    .weather-icon-anim {
+        animation: floatIcon 3s ease-in-out infinite, glowIcon 2.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes floatIcon {
+        0%   { transform: translateY(0px); }
+        50%  { transform: translateY(-6px); }
+        100% { transform: translateY(0px); }
+    }
+
+    @keyframes glowIcon {
+        0%   { filter: drop-shadow(0 0 4px rgba(255,255,255,0.2)); }
+        100% { filter: drop-shadow(0 0 12px rgba(255,255,255,0.45)); }
     }
 </style>
 </head>
@@ -69,24 +97,41 @@
 <header>
     <h1>Wetterstation – Martin Huber</h1>
     <div id="timestamp"></div>
+
+    <!-- Fixes Wetter-Icon -->
+    <div id="header-icon-box">
+        <img id="header-weather-icon" src="" width="70" height="70">
+    </div>
 </header>
 
 <!-- LIVE WETTER -->
 <div class="live-box">
-    <h3>📡 Aktuelle Messwerte</h3>
-    <div class="value">🌡️ Temperatur: <span id="temp">–</span> °C</div>
-    <div class="value">💧 Feuchtigkeit: <span id="hum">–</span> %</div>
-    <div class="value">🌍 Luftdruck: <span id="pres">–</span> hPa</div>
-    <div class="value">📍 GPS: <span id="gps">–</span></div>
+
+    <!-- Animiertes Wetter-Icon -->
+    <div>
+        <img id="weather-icon" class="weather-icon-anim" src="" width="90" height="90" style="border-radius:12px;">
+    </div>
+
+    <!-- Live-Werte -->
+    <div>
+        <h3>📡 Aktuelle Messwerte</h3>
+        <div class="value">🌡️ Temperatur: <span id="temp">–</span> °C</div>
+        <div class="value">💧 Feuchtigkeit: <span id="hum">–</span> %</div>
+        <div class="value">🌍 Luftdruck: <span id="pres">–</span> hPa</div>
+        <div class="value">📍 GPS: <span id="gps">–</span></div>
+    </div>
+
 </div>
 
 <!-- OPENWEATHER -->
 <div class="live-box">
-    <h3>🌨️ OpenWeather</h3>
-    <div class="value">❄️ Wetter: <span id="ow-desc">–</span></div>
-    <div class="value">🌡️ Temperatur: <span id="ow-temp">–</span> °C</div>
-    <div class="value">💧 Feuchtigkeit: <span id="ow-hum">–</span> %</div>
-    <div class="value">🌬️ Wind: <span id="ow-wind">–</span> m/s</div>
+    <div>
+        <h3>🌨️ OpenWeather</h3>
+        <div class="value">❄️ Wetter: <span id="ow-desc">–</span></div>
+        <div class="value">🌡️ Temperatur: <span id="ow-temp">–</span> °C</div>
+        <div class="value">💧 Feuchtigkeit: <span id="ow-hum">–</span> %</div>
+        <div class="value">🌬️ Wind: <span id="ow-wind">–</span> m/s</div>
+    </div>
 </div>
 
 <!-- DIAGRAMME -->
@@ -148,10 +193,23 @@ const LON = 16.25597;
 fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${LAT}&lon=${LON}&units=metric&lang=de&appid=${OW_KEY}`)
     .then(r => r.json())
     .then(w => {
+
+        // Textdaten
         document.getElementById("ow-desc").innerText = w.weather[0].description;
         document.getElementById("ow-temp").innerText = w.main.temp;
         document.getElementById("ow-hum").innerText = w.main.humidity;
         document.getElementById("ow-wind").innerText = w.wind.speed;
+
+        // Wetter-Icon Code
+        const icon = w.weather[0].icon;
+
+        // ⭐ Animiertes Icon in der Live-Box
+        document.getElementById("weather-icon").src =
+            `https://openweathermap.org/img/wn/${icon}@2x.png`;
+
+        // ⭐ Fixes Icon im Header
+        document.getElementById("header-weather-icon").src =
+            `https://openweathermap.org/img/wn/${icon}@2x.png`;
     });
 
 // -------------------------------------------------------
