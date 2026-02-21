@@ -7,10 +7,11 @@
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
 <style>
-/* ---------------------- */
-/*   DARK MODE SYSTEM     */
-/* ---------------------- */
 :root {
   --bg: #f0f0f0;
   --fg: #000;
@@ -46,14 +47,13 @@ canvas {
 }
 
 button {
-  padding: 10px 20px;
-  margin-right: 10px;
+  padding: 8px 14px;
+  margin-right: 6px;
   cursor: pointer;
 }
 
 .hidden { display: none; }
 
-/* LIVE ICON */
 #livebox {
   display: flex;
   align-items: center;
@@ -79,6 +79,18 @@ button {
   border-radius: 10px;
   margin-top: 20px;
 }
+
+#radar {
+  width: 100%;
+  height: 400px;
+  border-radius: 10px;
+  margin-top: 20px;
+  background: var(--card);
+}
+
+.leaflet-marker-icon.myicon {
+  filter: drop-shadow(0 0 4px black);
+}
 </style>
 </head>
 
@@ -87,10 +99,8 @@ button {
 
 <h1>🌤 Wetterstation Dashboard</h1>
 
-<!-- DARK MODE BUTTON -->
 <button onclick="toggleDark()">🌙 / ☀️</button>
 
-<!-- LIVE-BEREICH -->
 <h2 id="livebox">
   <span id="live-icon">❓</span>
   Aktuelle Messwerte
@@ -104,7 +114,6 @@ button {
   <p id="minmax"></p>
 </div>
 
-<!-- TABS -->
 <div class="tab">
   <button onclick="showTab('24h')">24h</button>
   <button onclick="showTab('week')">Woche</button>
@@ -112,22 +121,14 @@ button {
   <button onclick="showTab('year')">Jahr</button>
 </div>
 
-<!-- DIAGRAMME -->
 <div id="24h"><canvas id="chart24h"></canvas></div>
 <div id="week" class="hidden"><canvas id="chartWeek"></canvas></div>
 <div id="month" class="hidden"><canvas id="chartMonth"></canvas></div>
 <div id="year" class="hidden"><canvas id="chartYear"></canvas></div>
 
-<!-- REGENRADAR -->
-<h2>Regenradar</h2>
-<iframe 
-  src="https://www.zamg.ac.at/wetter/radar" 
-  width="100%" 
-  height="400" 
-  style="border:0; border-radius:10px;">
-</iframe>
+<h2>Interaktives Regenradar</h2>
+<div id="radar"></div>
 
-<!-- OPENWEATHER VORHERSAGE -->
 <div id="forecast-box">
   <h2>OpenWeather Vorhersage (5 Tage)</h2>
   <div id="forecast"></div>
@@ -136,17 +137,11 @@ button {
 </div>
 
 <script type="module">
-/* ---------------------- */
-/*   FIREBASE IMPORTS     */
-/* ---------------------- */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* ---------------------- */
-/*   FIREBASE CONFIG      */
-/* ---------------------- */
 const firebaseConfig = {
-  apiKey: "AIzaSyBZowt7QFJ6AzSxaDQIcvw9oGEA6F-1-AM",
+  apiKey: "DEIN_API_KEY_HIER",
   authDomain: "meine-wetterstation.firebaseapp.com",
   databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "meine-wetterstation"
@@ -155,16 +150,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* ---------------------- */
-/*   DARK MODE            */
-/* ---------------------- */
 function toggleDark() {
   document.body.classList.toggle("dark");
 }
 
-/* ---------------------- */
-/*   LIVE-WERTE           */
-/* ---------------------- */
 const liveRef = ref(db, "weather/live");
 let lastTemp = null;
 
@@ -183,7 +172,6 @@ onValue(liveRef, (snap) => {
   document.getElementById("live-press").textContent =
     "🌍 Luftdruck: " + d.pressure.toFixed(1) + " hPa";
 
-  /* TREND */
   if (lastTemp !== null) {
     if (t > lastTemp) document.getElementById("live-trend").textContent = "📈 Temperatur steigt";
     else if (t < lastTemp) document.getElementById("live-trend").textContent = "📉 Temperatur fällt";
@@ -191,7 +179,6 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
-  /* LIVE ICON */
   let icon = "❓";
   if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
     const w = d.openweather.weather[0].main.toLowerCase();
@@ -203,16 +190,12 @@ onValue(liveRef, (snap) => {
   document.getElementById("live-icon").textContent = icon;
 });
 
-/* ---------------------- */
-/*   MIN/MAX 24h          */
-/* ---------------------- */
 async function updateMinMax() {
   const snap = await get(ref(db, "weather/history/24h"));
   const data = snap.val();
   if (!data) return;
 
   const temps = Object.values(data).map(v => v.t);
-
   const min = Math.min(...temps).toFixed(1);
   const max = Math.max(...temps).toFixed(1);
 
@@ -223,9 +206,6 @@ async function updateMinMax() {
 setInterval(updateMinMax, 60000);
 updateMinMax();
 
-/* ---------------------- */
-/*   HISTORY DIAGRAMME    */
-/* ---------------------- */
 async function loadHistory(path) {
   const snap = await get(ref(db, path));
   const data = snap.val();
@@ -278,11 +258,10 @@ window.onload = () => {
   drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
   drawChart("chartMonth", "weather/history/month", "Letzter Monat");
   drawChart("chartYear", "weather/history/year", "Letztes Jahr");
+  initRadar();
+  loadForecast();
 };
 
-/* ---------------------- */
-/*   OPENWEATHER FORECAST */
-/* ---------------------- */
 async function loadForecast() {
   const snap = await get(ref(db, "weather/live/openweather"));
   const ow = snap.val();
@@ -290,7 +269,7 @@ async function loadForecast() {
 
   const lat = ow.coord.lat;
   const lon = ow.coord.lon;
-  const key = ow.apiKey || ""; // optional
+  const key = "27602f1bbb8e3dd3587a1da6e3de24b6";
 
   const url =
     `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${key}`;
@@ -312,11 +291,6 @@ async function loadForecast() {
   });
 }
 
-loadForecast();
-
-/* ---------------------- */
-/*   TAB SWITCHING        */
-/* ---------------------- */
 window.showTab = function(name) {
   document.getElementById("24h").classList.add("hidden");
   document.getElementById("week").classList.add("hidden");
@@ -324,6 +298,58 @@ window.showTab = function(name) {
   document.getElementById("year").classList.add("hidden");
   document.getElementById(name).classList.remove("hidden");
 };
+
+function initRadar() {
+  const map = L.map('radar').setView([47.43599, 16.25597], 8);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  const stationIcon = L.icon({
+    iconUrl: "https://cdn-icons-png.flaticon.com/512/1116/1116453.png",
+    iconSize: [40, 40],
+    className: "myicon"
+  });
+
+  L.marker([47.43599, 16.25597], { icon: stationIcon })
+    .addTo(map)
+    .bindPopup("📍 Meine Wetterstation")
+    .openPopup();
+
+  const key = "27602f1bbb8e3dd3587a1da6e3de24b6";
+
+  const rainLayer = L.tileLayer(
+    `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${key}`,
+    { opacity: 0.6 }
+  ).addTo(map);
+
+  const cloudsLayer = L.tileLayer(
+    `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${key}`,
+    { opacity: 0.5 }
+  );
+
+  const tempLayer = L.tileLayer(
+    `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${key}`,
+    { opacity: 0.5 }
+  );
+
+  const windLayer = L.tileLayer(
+    `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${key}`,
+    { opacity: 0.5 }
+  );
+
+  L.control.layers(
+    {
+      "Regen": rainLayer,
+      "Wolken": cloudsLayer,
+      "Temperatur": tempLayer,
+      "Wind": windLayer
+    },
+    {}
+  ).addTo(map);
+}
 </script>
 
 </body>
