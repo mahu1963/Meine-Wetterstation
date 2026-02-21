@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <title>Wetterstation Dashboard</title>
 
+<!-- iPhone / Homescreen -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Wetterstation">
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1116/1116453.png">
+
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -13,23 +20,16 @@
 
 <style>
 :root {
-  --bg: #f0f0f0;
-  --fg: #000;
-  --card: #fff;
-}
-
-.dark {
-  --bg: #121212;
-  --fg: #eee;
-  --card: #1e1e1e;
+  --bg: #0d0d0d;
+  --fg: #f5f5f5;
+  --card: #1a1a1a;
 }
 
 body {
-  font-family: Arial;
+  font-family: Arial, sans-serif;
   background: var(--bg);
   color: var(--fg);
   padding: 20px;
-  transition: background 0.3s, color 0.3s;
 }
 
 #container {
@@ -37,6 +37,28 @@ body {
   margin: 0 auto;
 }
 
+/* Topbar */
+#topbar {
+  width: 100%;
+  background: #111;
+  padding: 12px;
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+#top-left {
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+#top-right {
+  font-size: 40px;
+}
+
+/* Charts */
 canvas {
   max-width: 100%;
   width: 100%;
@@ -50,10 +72,19 @@ button {
   padding: 8px 14px;
   margin-right: 6px;
   cursor: pointer;
+  background: #222;
+  color: var(--fg);
+  border: 1px solid #444;
+  border-radius: 6px;
+}
+
+button:active {
+  transform: scale(0.97);
 }
 
 .hidden { display: none; }
 
+/* Live-Bereich */
 #livebox {
   display: flex;
   align-items: center;
@@ -73,6 +104,7 @@ button {
   100% { opacity: 0.4; }
 }
 
+/* Forecast */
 #forecast-box {
   background: var(--card);
   padding: 10px;
@@ -80,6 +112,7 @@ button {
   margin-top: 20px;
 }
 
+/* Radar */
 #radar {
   width: 100%;
   height: 400px;
@@ -97,9 +130,18 @@ button {
 <body>
 <div id="container">
 
-<h1>🌤 Wetterstation Dashboard</h1>
+<!-- Top-Balken -->
+<div id="topbar">
+  <div id="top-left">
+    <div id="sunrise">🌅 --:--</div>
+    <div id="sunset">🌇 --:--</div>
+  </div>
+  <div id="top-right">
+    <span id="top-weather-icon">☀️</span>
+  </div>
+</div>
 
-<button onclick="toggleDark()">🌙 / ☀️</button>
+<h1>🌤 Wetterstation</h1>
 
 <h2 id="livebox">
   <span id="live-icon">❓</span>
@@ -140,20 +182,18 @@ button {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+/* Firebase-Konfiguration – HIER deine Daten eintragen */
 const firebaseConfig = {
   apiKey: "AIzaSyBZowt7QFJ6AzSxaDQIcvw9oGEA6F-1-AM",
-  authDomain: "meine-wetterstation.firebaseapp.com",
-  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "meine-wetterstation"
+  authDomain: "DEIN_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://DEIN_PROJECT_ID-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "DEIN_PROJECT_ID"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-function toggleDark() {
-  document.body.classList.toggle("dark");
-}
-
+/* Live-Werte */
 const liveRef = ref(db, "weather/live");
 let lastTemp = null;
 
@@ -163,6 +203,7 @@ onValue(liveRef, (snap) => {
 
   const t = d.temperature;
 
+  // Live-Werte
   document.getElementById("live-temp").textContent =
     "🌡 Temperatur: " + t.toFixed(1) + " °C";
 
@@ -172,6 +213,7 @@ onValue(liveRef, (snap) => {
   document.getElementById("live-press").textContent =
     "🌍 Luftdruck: " + d.pressure.toFixed(1) + " hPa";
 
+  // Trend
   if (lastTemp !== null) {
     if (t > lastTemp) document.getElementById("live-trend").textContent = "📈 Temperatur steigt";
     else if (t < lastTemp) document.getElementById("live-trend").textContent = "📉 Temperatur fällt";
@@ -179,17 +221,36 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
-  let icon = "❓";
+  // Live-Icon + Topbar aus OpenWeather
   if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
-    const w = d.openweather.weather[0].main.toLowerCase();
+    const ow = d.openweather;
+    const w = ow.weather[0].main.toLowerCase();
+
+    let icon = "❓";
     if (w.includes("clear")) icon = "☀️";
     else if (w.includes("cloud")) icon = "☁️";
     else if (w.includes("rain")) icon = "🌧️";
     else if (w.includes("snow")) icon = "❄️";
+
+    document.getElementById("live-icon").textContent = icon;
+    document.getElementById("top-weather-icon").textContent = icon;
+
+    // Sonnenaufgang / -untergang
+    const sr = new Date(ow.sys.sunrise * 1000).toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+    const ss = new Date(ow.sys.sunset * 1000).toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    document.getElementById("sunrise").textContent = "🌅 " + sr;
+    document.getElementById("sunset").textContent = "🌇 " + ss;
   }
-  document.getElementById("live-icon").textContent = icon;
 });
 
+/* Min/Max 24h */
 async function updateMinMax() {
   const snap = await get(ref(db, "weather/history/24h"));
   const data = snap.val();
@@ -206,6 +267,7 @@ async function updateMinMax() {
 setInterval(updateMinMax, 60000);
 updateMinMax();
 
+/* History-Daten für Diagramme */
 async function loadHistory(path) {
   const snap = await get(ref(db, path));
   const data = snap.val();
@@ -253,14 +315,8 @@ async function drawChart(canvasId, path, title) {
   });
 }
 
-window.onload = () => {
-  drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
-  drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
-  drawChart("chartMonth", "weather/history/month", "Letzter Monat");
-  drawChart("chartYear", "weather/history/year", "Letztes Jahr");
-  initRadar();
-  loadForecast();
-};
+/* OpenWeather Forecast (5 Tage) */
+const OW_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
 
 async function loadForecast() {
   const snap = await get(ref(db, "weather/live/openweather"));
@@ -269,10 +325,9 @@ async function loadForecast() {
 
   const lat = ow.coord.lat;
   const lon = ow.coord.lon;
-  const key = "27602f1bbb8e3dd3587a1da6e3de24b6";
 
   const url =
-    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${key}`;
+    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${OW_KEY}`;
 
   const res = await fetch(url);
   const data = await res.json();
@@ -291,14 +346,7 @@ async function loadForecast() {
   });
 }
 
-window.showTab = function(name) {
-  document.getElementById("24h").classList.add("hidden");
-  document.getElementById("week").classList.add("hidden");
-  document.getElementById("month").classList.add("hidden");
-  document.getElementById("year").classList.add("hidden");
-  document.getElementById(name).classList.remove("hidden");
-};
-
+/* Interaktives Radar mit Standort-Marker */
 function initRadar() {
   const map = L.map('radar').setView([47.43599, 16.25597], 8);
 
@@ -318,25 +366,23 @@ function initRadar() {
     .bindPopup("📍 Meine Wetterstation")
     .openPopup();
 
-  const key = "27602f1bbb8e3dd3587a1da6e3de24b6";
-
   const rainLayer = L.tileLayer(
-    `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${key}`,
+    `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OW_KEY}`,
     { opacity: 0.6 }
   ).addTo(map);
 
   const cloudsLayer = L.tileLayer(
-    `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${key}`,
+    `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OW_KEY}`,
     { opacity: 0.5 }
   );
 
   const tempLayer = L.tileLayer(
-    `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${key}`,
+    `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${OW_KEY}`,
     { opacity: 0.5 }
   );
 
   const windLayer = L.tileLayer(
-    `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${key}`,
+    `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${OW_KEY}`,
     { opacity: 0.5 }
   );
 
@@ -350,8 +396,26 @@ function initRadar() {
     {}
   ).addTo(map);
 }
+
+/* Tabs */
+window.showTab = function(name) {
+  document.getElementById("24h").classList.add("hidden");
+  document.getElementById("week").classList.add("hidden");
+  document.getElementById("month").classList.add("hidden");
+  document.getElementById("year").classList.add("hidden");
+  document.getElementById(name).classList.remove("hidden");
+};
+
+/* Start */
+window.onload = () => {
+  drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
+  drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
+  drawChart("chartMonth", "weather/history/month", "Letzter Monat");
+  drawChart("chartYear", "weather/history/year", "Letztes Jahr");
+  initRadar();
+  loadForecast();
+};
 </script>
 
 </body>
 </html>
-
