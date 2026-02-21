@@ -49,6 +49,12 @@
         0% { filter: drop-shadow(0 0 4px rgba(255,255,255,0.2)); }
         100% { filter: drop-shadow(0 0 12px rgba(255,255,255,0.45)); }
     }
+    #status {
+        text-align:center;
+        margin-top:10px;
+        color:#aaa;
+        font-size:16px;
+    }
 </style>
 </head>
 
@@ -62,15 +68,17 @@
     </div>
 </header>
 
+<div id="status">Warte auf Daten von der Wetterstation…</div>
+
 <div class="live-box">
     <div>
         <img id="weather-icon" class="weather-icon-anim" src="" width="90" height="90" style="border-radius:12px;">
     </div>
     <div>
         <h3>📡 Aktuelle Messwerte</h3>
-        <div class="value">🌡️ Temperatur: <span id="temp">–</span> °C</div>
-        <div class="value">💧 Feuchtigkeit: <span id="hum">–</span> %</div>
-        <div class="value">🌍 Luftdruck: <span id="pres">–</span> hPa</div>
+        <div class="value">🌡️ Temperatur: <span id="temp">–</span> °C <span id="temp-trend"></span></div>
+        <div class="value">💧 Feuchtigkeit: <span id="hum">–</span> % <span id="hum-trend"></span></div>
+        <div class="value">🌍 Luftdruck: <span id="pres">–</span> hPa <span id="pres-trend"></span></div>
         <div class="value">📍 GPS: <span id="gps">–</span></div>
     </div>
 </div>
@@ -107,19 +115,26 @@
 // Firebase
 const firebaseConfig = {
     apiKey: "DEIN_API_KEY",
-    authDomain: "DEIN_PROJECT.firebaseapp.com",
-    databaseURL: "https://DEIN_PROJECT.europe-west1.firebasedatabase.app",
-    projectId: "DEIN_PROJECT",
-    storageBucket: "DEIN_PROJECT.appspot.com",
+    authDomain: "meine-wetterstation.firebaseapp.com",
+    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "meine-wetterstation",
+    storageBucket: "meine-wetterstation.appspot.com",
     messagingSenderId: "123456789",
     appId: "DEINE_APP_ID"
 };
 firebase.initializeApp(firebaseConfig);
 
+let firstData = false;
+
 // 🔥 LIVE-DATEN + OPENWEATHER aus Firebase
 firebase.database().ref("weather").on("value", snap => {
     const d = snap.val();
     if (!d) return;
+
+    if (!firstData) {
+        document.getElementById("status").innerText = "Live-Daten aktiv";
+        firstData = true;
+    }
 
     document.getElementById("temp").innerText = d.temperature.toFixed(1);
     document.getElementById("hum").innerText = d.humidity.toFixed(1);
@@ -128,6 +143,14 @@ firebase.database().ref("weather").on("value", snap => {
 
     const dt = new Date(d.timestamp * 1000);
     document.getElementById("timestamp").innerText = dt.toLocaleString();
+
+    // ⭐ Trend
+    if (d.trend) {
+        const arrow = t => t === "steigend" ? "↑" : t === "fallend" ? "↓" : "→";
+        document.getElementById("temp-trend").innerText = arrow(d.trend.temperature);
+        document.getElementById("hum-trend").innerText  = arrow(d.trend.humidity);
+        document.getElementById("pres-trend").innerText = arrow(d.trend.pressure);
+    }
 
     // ⭐ OpenWeather aus Firebase
     if (d.openweather) {
