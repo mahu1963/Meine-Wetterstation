@@ -2,215 +2,211 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Wetterstation – Martin Huber</title>
+<title>Wetterstation Dashboard</title>
 
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBZowt7QFJ6AzSxaDQIcvw9oGEA6F-1-AM",
+  authDomain: "meine-wetterstation.firebaseapp.com",
+  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "meine-wetterstation"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// --------------------------------------------------
+// LIVE-WERTE + ICON
+// --------------------------------------------------
+const liveRef = ref(db, "weather/live");
+
+onValue(liveRef, (snap) => {
+  const d = snap.val();
+  if (!d) return;
+
+  document.getElementById("live-temp").textContent =
+    "🌡 Temperatur: " + d.temperature.toFixed(1) + " °C";
+
+  document.getElementById("live-hum").textContent =
+    "💧 Luftfeuchtigkeit: " + d.humidity.toFixed(1) + " %";
+
+  document.getElementById("live-press").textContent =
+    "🌍 Luftdruck: " + d.pressure.toFixed(1) + " hPa";
+
+  // Wetter-Icon bestimmen
+  let icon = "❓";
+
+  if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
+    const w = d.openweather.weather[0].main.toLowerCase();
+
+    if (w.includes("clear")) icon = "☀️";      // Sonne
+    else if (w.includes("cloud")) icon = "☁️"; // Wolken
+    else if (w.includes("rain")) icon = "🌧️";  // Regen
+    else if (w.includes("snow")) icon = "❄️";  // Schnee
+  }
+
+  document.getElementById("live-icon").textContent = icon;
+});
+
+// --------------------------------------------------
+// HISTORY LADEN
+// --------------------------------------------------
+async function loadHistory(path) {
+  const snap = await get(ref(db, path));
+  const data = snap.val();
+  if (!data) return { labels: [], temps: [], hums: [], press: [] };
+
+  const labels = [];
+  const temps = [];
+  const hums = [];
+  const press = [];
+
+  for (const ts in data) {
+    const d = new Date(ts * 1000);
+    labels.push(d.toLocaleString("de-DE"));
+    temps.push(data[ts].t);
+    hums.push(data[ts].h);
+    press.push(data[ts].p);
+  }
+
+  return { labels, temps, hums, press };
+}
+
+// --------------------------------------------------
+// DIAGRAMM ZEICHNEN
+// --------------------------------------------------
+async function drawChart(canvasId, path, title) {
+  const ctx = document.getElementById(canvasId).getContext("2d");
+  const { labels, temps, hums, press } = await loadHistory(path);
+
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [
+        { label: "Temperatur (°C)", data: temps, borderColor: "red", yAxisID: "y" },
+        { label: "Luftfeuchtigkeit (%)", data: hums, borderColor: "blue", yAxisID: "y1" },
+        { label: "Luftdruck (hPa)", data: press, borderColor: "green", yAxisID: "y2" }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { title: { display: true, text: title } },
+      scales: {
+        y: { type: "linear", position: "left" },
+        y1: { type: "linear", position: "right" },
+        y2: { type: "linear", position: "right", grid: { drawOnChartArea: false } }
+      }
+    }
+  });
+}
+
+window.onload = () => {
+  drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
+  drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
+  drawChart("chartMonth", "weather/history/month", "Letzter Monat");
+  drawChart("chartYear", "weather/history/year", "Letztes Jahr");
+};
+</script>
+
 <style>
-    body {
-        background: #0f0f0f;
-        color: #e0e0e0;
-        font-family: "Segoe UI", sans-serif;
-        margin: 0;
-        padding: 0;
-    }
-    header {
-        text-align: center;
-        padding: 20px;
-        background: #1a1a1a;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.4);
-        margin-bottom: 20px;
-        position: relative;
-    }
-    h1 { margin: 0; font-size: 28px; color: #fff; }
-    #header-icon-box { position: absolute; top: 10px; left: 10px; }
-    .live-box {
-        width: 95%; max-width: 900px; margin: 20px auto; padding: 20px;
-        background: #1a1a1a; border-radius: 16px;
-        box-shadow: 0 4px 25px rgba(0,0,0,0.4);
-        display: flex; align-items: center; gap: 20px;
-    }
-    .chart-container {
-        width: 95%; max-width: 900px; margin: 30px auto; padding: 20px;
-        background: #1a1a1a; border-radius: 16px;
-        box-shadow: 0 4px 25px rgba(0,0,0,0.4);
-    }
-    h3 { text-align: left; font-weight: 600; margin-bottom: 10px; color: #f0f0f0; }
-    .value { font-size: 20px; margin: 6px 0; }
-    .weather-icon-anim {
-        animation: floatIcon 3s ease-in-out infinite, glowIcon 2.5s ease-in-out infinite alternate;
-    }
-    @keyframes floatIcon {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-6px); }
-        100% { transform: translateY(0px); }
-    }
-    @keyframes glowIcon {
-        0% { filter: drop-shadow(0 0 4px rgba(255,255,255,0.2)); }
-        100% { filter: drop-shadow(0 0 12px rgba(255,255,255,0.45)); }
-    }
-    #status {
-        text-align:center;
-        margin-top:10px;
-        color:#aaa;
-        font-size:16px;
-    }
+body {
+  font-family: Arial;
+  background: #f0f0f0;
+  padding: 20px;
+}
+
+#container {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+canvas {
+  max-width: 100%;
+  width: 100%;
+  height: auto !important;
+  background: white;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.hidden { display: none; }
+
+#livebox {
+  display: flex;
+  align-items: center;
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+#live-icon {
+  font-size: 32px;
+  margin-right: 12px;
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
 </style>
 </head>
 
 <body>
+<div id="container">
 
-<header>
-    <h1>Wetterstation – Martin Huber</h1>
-    <div id="timestamp"></div>
-    <div id="header-icon-box">
-        <img id="header-weather-icon" src="" width="70" height="70">
-    </div>
-</header>
+<h1>🌤 Wetterstation Dashboard</h1>
 
-<div id="status">Warte auf Daten von der Wetterstation…</div>
+<!-- LIVE-BEREICH -->
+<h2 id="livebox">
+  <span id="live-icon">❓</span>
+  Aktuelle Messwerte
+</h2>
 
-<div class="live-box">
-    <div>
-        <img id="weather-icon" class="weather-icon-anim" src="" width="90" height="90" style="border-radius:12px;">
-    </div>
-    <div>
-        <h3>📡 Aktuelle Messwerte</h3>
-        <div class="value">🌡️ Temperatur: <span id="temp">–</span> °C <span id="temp-trend"></span></div>
-        <div class="value">💧 Feuchtigkeit: <span id="hum">–</span> % <span id="hum-trend"></span></div>
-        <div class="value">🌍 Luftdruck: <span id="pres">–</span> hPa <span id="pres-trend"></span></div>
-        <div class="value">📍 GPS: <span id="gps">–</span></div>
-    </div>
+<div id="livevalues">
+  <p id="live-temp"></p>
+  <p id="live-hum"></p>
+  <p id="live-press"></p>
 </div>
 
-<div class="live-box">
-    <div>
-        <h3>🌨️ OpenWeather</h3>
-        <div class="value">❄️ Wetter: <span id="ow-desc">–</span></div>
-        <div class="value">🌡️ Temperatur: <span id="ow-temp">–</span> °C</div>
-        <div class="value">💧 Feuchtigkeit: <span id="ow-hum">–</span> %</div>
-        <div class="value">🌬️ Wind: <span id="ow-wind">–</span> m/s</div>
-    </div>
+<!-- TABS -->
+<div class="tab">
+  <button onclick="showTab('24h')">24h</button>
+  <button onclick="showTab('week')">Woche</button>
+  <button onclick="showTab('month')">Monat</button>
+  <button onclick="showTab('year')">Jahr</button>
 </div>
 
-<div class="chart-container">
-    <h3>🌡️ Temperatur – Verlauf</h3>
-    <canvas id="tempChart"></canvas>
-</div>
-
-<div class="chart-container">
-    <h3>💧 Feuchtigkeit – Verlauf</h3>
-    <canvas id="humChart"></canvas>
-</div>
-
-<div class="chart-container">
-    <h3>🌍 Luftdruck – Verlauf</h3>
-    <canvas id="presChart"></canvas>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<!-- DIAGRAMME -->
+<div id="24h"><canvas id="chart24h"></canvas></div>
+<div id="week" class="hidden"><canvas id="chartWeek"></canvas></div>
+<div id="month" class="hidden"><canvas id="chartMonth"></canvas></div>
+<div id="year" class="hidden"><canvas id="chartYear"></canvas></div>
 
 <script>
-// Firebase
-const firebaseConfig = {
-    apiKey: "DEIN_API_KEY",
-    authDomain: "meine-wetterstation.firebaseapp.com",
-    databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "meine-wetterstation",
-    storageBucket: "meine-wetterstation.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "DEINE_APP_ID"
-};
-firebase.initializeApp(firebaseConfig);
-
-let firstData = false;
-
-// 🔥 LIVE-DATEN + OPENWEATHER aus Firebase
-firebase.database().ref("weather").on("value", snap => {
-    const d = snap.val();
-    if (!d) return;
-
-    if (!firstData) {
-        document.getElementById("status").innerText = "Live-Daten aktiv";
-        firstData = true;
-    }
-
-    document.getElementById("temp").innerText = d.temperature.toFixed(1);
-    document.getElementById("hum").innerText = d.humidity.toFixed(1);
-    document.getElementById("pres").innerText = d.pressure.toFixed(1);
-    document.getElementById("gps").innerText = d.lat + ", " + d.lon;
-
-    const dt = new Date(d.timestamp * 1000);
-    document.getElementById("timestamp").innerText = dt.toLocaleString();
-
-    // ⭐ Trend
-    if (d.trend) {
-        const arrow = t => t === "steigend" ? "↑" : t === "fallend" ? "↓" : "→";
-        document.getElementById("temp-trend").innerText = arrow(d.trend.temperature);
-        document.getElementById("hum-trend").innerText  = arrow(d.trend.humidity);
-        document.getElementById("pres-trend").innerText = arrow(d.trend.pressure);
-    }
-
-    // ⭐ OpenWeather aus Firebase
-    if (d.openweather) {
-        document.getElementById("ow-desc").innerText = d.openweather.weather[0].description;
-        document.getElementById("ow-temp").innerText = d.openweather.main.temp;
-        document.getElementById("ow-hum").innerText = d.openweather.main.humidity;
-        document.getElementById("ow-wind").innerText = d.openweather.wind.speed;
-
-        const icon = d.openweather.weather[0].icon;
-
-        document.getElementById("weather-icon").src =
-            `https://openweathermap.org/img/wn/${icon}@2x.png`;
-
-        document.getElementById("header-weather-icon").src =
-            `https://openweathermap.org/img/wn/${icon}@2x.png`;
-    }
-});
-
-// Diagramme
-function createChart(canvasId, label, color, data) {
-    const labels = Object.keys(data).map(ts => new Date(ts * 1000).toLocaleString());
-    const values = Object.values(data);
-
-    new Chart(document.getElementById(canvasId), {
-        type: "line",
-        data: {
-            labels: labels,
-            datasets: [{
-                label: label,
-                data: values,
-                borderColor: color,
-                backgroundColor: color.replace("1)", "0.15)"),
-                borderWidth: 3,
-                tension: 0.35,
-                pointRadius: 4,
-                pointBackgroundColor: color,
-                pointHoverRadius: 8,
-                fill: true
-            }]
-        },
-        options: {
-            plugins: { legend: { display: false }},
-            scales: {
-                x: { ticks: { color: "#ccc" }, grid: { color: "rgba(255,255,255,0.05)" }},
-                y: { ticks: { color: "#ccc" }, grid: { color: "rgba(255,255,255,0.05)" }}
-            }
-        }
-    });
+function showTab(name) {
+  document.getElementById("24h").classList.add("hidden");
+  document.getElementById("week").classList.add("hidden");
+  document.getElementById("month").classList.add("hidden");
+  document.getElementById("year").classList.add("hidden");
+  document.getElementById(name).classList.remove("hidden");
 }
-
-firebase.database().ref("weather/history/temperature").once("value", snap => {
-    createChart("tempChart", "Temperatur (°C)", "rgba(255,120,80,1)", snap.val());
-});
-firebase.database().ref("weather/history/humidity").once("value", snap => {
-    createChart("humChart", "Feuchtigkeit (%)", "rgba(80,160,255,1)", snap.val());
-});
-firebase.database().ref("weather/history/pressure").once("value", snap => {
-    createChart("presChart", "Luftdruck (hPa)", "rgba(100,220,180,1)", snap.val());
-});
 </script>
 
+</div>
 </body>
 </html>
