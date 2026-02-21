@@ -182,16 +182,15 @@ button:active {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* Firebase-Konfiguration – HIER deine Daten eintragen */
+/* 🔧 Deine FirebaseConfig – API-Key bitte selbst eintragen */
 const firebaseConfig = {
-  apiKey: "AIzaSyBZowt7QFJ6AzSxaDQIcvw9oGEA6F-1-AM",
+  apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
   authDomain: "meine-wetterstation.firebaseapp.com",
   databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "meine-wetterstation",
-  storageBucket: "meine-wetterstation.firebasestorage.com",
+  storageBucket: "meine-wetterstation.appspot.com",
   messagingSenderId: "593494014586",
-  appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
-  measurementId: "G-ST9RCRW888"
+  appId: "1:593494014586:web:a05ed68495b1b16d6059c3"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -207,7 +206,6 @@ onValue(liveRef, (snap) => {
 
   const t = d.temperature;
 
-  // Live-Werte
   document.getElementById("live-temp").textContent =
     "🌡 Temperatur: " + t.toFixed(1) + " °C";
 
@@ -217,7 +215,6 @@ onValue(liveRef, (snap) => {
   document.getElementById("live-press").textContent =
     "🌍 Luftdruck: " + d.pressure.toFixed(1) + " hPa";
 
-  // Trend
   if (lastTemp !== null) {
     if (t > lastTemp) document.getElementById("live-trend").textContent = "📈 Temperatur steigt";
     else if (t < lastTemp) document.getElementById("live-trend").textContent = "📉 Temperatur fällt";
@@ -225,7 +222,6 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
-  // Live-Icon + Topbar aus OpenWeather
   if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
     const ow = d.openweather;
     const w = ow.weather[0].main.toLowerCase();
@@ -239,7 +235,6 @@ onValue(liveRef, (snap) => {
     document.getElementById("live-icon").textContent = icon;
     document.getElementById("top-weather-icon").textContent = icon;
 
-    // Sonnenaufgang / -untergang
     const sr = new Date(ow.sys.sunrise * 1000).toLocaleTimeString("de-DE", {
       hour: "2-digit",
       minute: "2-digit"
@@ -254,7 +249,7 @@ onValue(liveRef, (snap) => {
   }
 });
 
-/* Min/Max 24h */
+/* Min/Max */
 async function updateMinMax() {
   const snap = await get(ref(db, "weather/history/24h"));
   const data = snap.val();
@@ -271,7 +266,7 @@ async function updateMinMax() {
 setInterval(updateMinMax, 60000);
 updateMinMax();
 
-/* History-Daten für Diagramme */
+/* Charts */
 async function loadHistory(path) {
   const snap = await get(ref(db, path));
   const data = snap.val();
@@ -319,7 +314,7 @@ async function drawChart(canvasId, path, title) {
   });
 }
 
-/* OpenWeather Forecast (5 Tage) */
+/* Forecast */
 const OW_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
 
 async function loadForecast() {
@@ -350,7 +345,7 @@ async function loadForecast() {
   });
 }
 
-/* Interaktives Radar mit Standort-Marker */
+/* Radar */
 function initRadar() {
   const map = L.map('radar').setView([47.43599, 16.25597], 8);
 
@@ -423,7 +418,3 @@ window.onload = () => {
 
 </body>
 </html>
-
-
-
-
