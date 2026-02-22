@@ -283,11 +283,11 @@ async function loadHistory(path) {
       });
     }
     else if (path.includes("year")) {
-      const jahr = d.getFullYear().toString().slice(-2); // 24, 25, 26 …
-      const monat = d.toLocaleDateString("de-DE", { month: "short" }).replace(".", "");
-      label = jahr + "." + monat;
+      // Nur das Jahr aus dem Timestamp
+      label = d.getFullYear().toString();
     }
     else {
+      // Monat: Jan, Feb, Mär …
       label = d.toLocaleDateString("de-DE", { month: "short" }).replace(".", "");
     }
 
