@@ -282,13 +282,18 @@ async function loadHistory(path) {
         minute: "2-digit"
       });
     }
-    else if (path.includes("year")) {
-      // Nur das Jahr aus dem Timestamp
-      label = d.getFullYear().toString();
+    else if (path.includes("week")) {
+      label = d.toLocaleDateString("de-DE", {
+        weekday: "short"
+      }).replace(".", "");
     }
-    else {
-      // Monat: Jan, Feb, Mär …
-      label = d.toLocaleDateString("de-DE", { month: "short" }).replace(".", "");
+    else if (path.includes("month")) {
+      label = d.toLocaleDateString("de-DE", {
+        month: "short"
+      }).replace(".", "");
+    }
+    else if (path.includes("year")) {
+      label = d.getFullYear().toString();
     }
 
     labels.push(label);
