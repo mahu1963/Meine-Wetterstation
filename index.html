@@ -123,6 +123,11 @@ button {
 <body>
 <div id="container">
 
+<h1 style="text-align:center;">🌤 Wetterstation</h1>
+<div style="text-align:center; font-size:12px; opacity:0.5; margin-top:-8px;">
+  von Martin Huber
+</div>
+
 <div id="topbar">
   <div id="top-left">
     <div id="sunrise">🌅 --:--</div>
@@ -131,11 +136,6 @@ button {
   <div id="top-right">
     <span id="top-weather-icon">☀️</span>
   </div>
-</div>
-
-<h1 style="text-align:center;">🌤 Wetterstation</h1>
-<div style="text-align:center; center-size:20px; opacity:1.5; margin-top:-8px;">
-  von Martin Huber
 </div>
 
 <h2 id="livebox">
@@ -261,7 +261,7 @@ async function updateMinMax() {
 setInterval(updateMinMax, 60000);
 updateMinMax();
 
-/* History mit kurzen Labels */
+/* History mit deinen neuen Labels */
 async function loadHistory(path) {
   const snap = await get(ref(db, path));
   const data = snap.val();
@@ -274,7 +274,6 @@ async function loadHistory(path) {
 
   for (const ts in data) {
     const d = new Date(ts * 1000);
-
     let label = "";
 
     if (path.includes("24h")) {
@@ -282,11 +281,14 @@ async function loadHistory(path) {
         hour: "2-digit",
         minute: "2-digit"
       });
-    } else {
-      label = d.toLocaleDateString("de-DE", {
-        day: "2-digit",
-        month: "2-digit"
-      });
+    }
+    else if (path.includes("year")) {
+      const jahr = d.getFullYear().toString().slice(-2); // 24, 25, 26 …
+      const monat = d.toLocaleDateString("de-DE", { month: "short" }).replace(".", "");
+      label = jahr + "." + monat;
+    }
+    else {
+      label = d.toLocaleDateString("de-DE", { month: "short" }).replace(".", "");
     }
 
     labels.push(label);
@@ -350,7 +352,14 @@ async function drawChart(canvasId, path, title) {
         y: { grid: { color: "rgba(255,255,255,0.05)" }, ticks: { color: "#ccc" } },
         y1: { grid: { display: false }, ticks: { color: "#ccc" } },
         y2: { grid: { display: false }, ticks: { color: "#ccc" } },
-        x: { grid: { display: false }, ticks: { color: "#ccc" } }
+        x: { 
+          grid: { display: false }, 
+          ticks: { 
+            color: "#ccc",
+            autoSkip: true,
+            maxTicksLimit: 12
+          } 
+        }
       }
     }
   });
@@ -467,13 +476,3 @@ window.onload = () => {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
