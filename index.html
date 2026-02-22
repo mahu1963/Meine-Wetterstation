@@ -416,7 +416,44 @@ function initRadar() {
 
   const tempLayer = L.tileLayer(
     `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${OW_KEY}`,
-   
+    { opacity: 0.5 }
+  );
 
+  const windLayer = L.tileLayer(
+    `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${OW_KEY}`,
+    { opacity: 0.5 }
+  );
 
+  L.control.layers(
+    {
+      "Regen": rainLayer,
+      "Wolken": cloudsLayer,
+      "Temperatur": tempLayer,
+      "Wind": windLayer
+    },
+    {}
+  ).addTo(map);
+}
 
+/* Tabs */
+window.showTab = function(name) {
+  document.getElementById("24h").classList.add("hidden");
+  document.getElementById("week").classList.add("hidden");
+  document.getElementById("month").classList.add("hidden");
+  document.getElementById("year").classList.add("hidden");
+  document.getElementById(name).classList.remove("hidden");
+};
+
+/* Start */
+window.onload = () => {
+  drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
+  drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
+  drawChart("chartMonth", "weather/history/month", "Letzter Monat");
+  drawChart("chartYear", "weather/history/year", "Letztes Jahr");
+  initRadar();
+  loadForecast();
+};
+</script>
+
+</body>
+</html>
