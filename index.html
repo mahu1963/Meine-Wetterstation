@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Wetterstation">
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/1116/1116453.png">
+<link rel="apple-touch-icon" href="icon.png">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -59,7 +59,7 @@ body {
 canvas {
   max-width: 100%;
   width: 100%;
-  height: auto !important;
+  min-height: 260px !important;
   background: var(--card);
   padding: 10px;
   border-radius: 12px;
@@ -174,7 +174,7 @@ button {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* FirebaseConfig – API-Key bitte eintragen */
+/* FirebaseConfig – API-Key eintragen */
 const firebaseConfig = {
   apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
   authDomain: "meine-wetterstation.firebaseapp.com",
@@ -394,7 +394,7 @@ function initRadar() {
   }).addTo(map);
 
   const stationIcon = L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/1116/1116453.png",
+    iconUrl: "icon.png",
     iconSize: [40, 40],
     className: "myicon"
   });
@@ -441,7 +441,14 @@ window.showTab = function(name) {
   document.getElementById("week").classList.add("hidden");
   document.getElementById("month").classList.add("hidden");
   document.getElementById("year").classList.add("hidden");
-  document.getElementById(name).classList.remove("hidden");
+
+  const tab = document.getElementById(name);
+  tab.classList.remove("hidden");
+
+  if (name === "24h") drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
+  if (name === "week") drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
+  if (name === "month") drawChart("chartMonth", "weather/history/month", "Letzter Monat");
+  if (name === "year") drawChart("chartYear", "weather/history/year", "Letztes Jahr");
 };
 
 /* Start */
