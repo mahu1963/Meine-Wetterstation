@@ -279,7 +279,24 @@ async function loadHistory(path) {
 
   for (const ts in data) {
     const d = new Date(ts * 1000);
-    labels.push(d.toLocaleString("de-DE"));
+
+    let label = "";
+
+    if (path.includes("24h")) {
+      // nur Uhrzeit
+      label = d.toLocaleTimeString("de-DE", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    } else {
+      // nur Datum
+      label = d.toLocaleDateString("de-DE", {
+        day: "2-digit",
+        month: "2-digit"
+      });
+    }
+
+    labels.push(label);
     temps.push(data[ts].t);
     hums.push(data[ts].h);
     press.push(data[ts].p);
@@ -418,5 +435,6 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
