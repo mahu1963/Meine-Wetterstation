@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Wetterstation</title>
+<title>Wetterstation von Martin Huber</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -68,7 +68,7 @@ button {
 
 <body>
 
-<h1 style="text-align:center;">🌤 Wetterstation</h1>
+<h1 style="text-align:center;">🌤 Wetterstation von Martin Huber</h1>
 
 <div id="topbar">
   <div id="top-left">
@@ -184,7 +184,7 @@ async function loadHistory(path) {
 
   for (const ts in data) {
 
-    // WICHTIG: Deine Firmware liefert bereits ORTSZEIT → KEINE KORREKTUR!
+    // Deine Firmware liefert ORTSZEIT → KEINE KORREKTUR!
     const d = new Date(ts * 1000);
 
     let label = "";
