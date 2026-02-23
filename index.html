@@ -191,7 +191,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* Live-Werte */
+/* Zeitfix: Firmware liefert UTC+2 → wir ziehen 1 Stunde ab */
+const FW_OFFSET_FIX = -3600;  // -1 Stunde
+ /* Live-Werte */
 const liveRef = ref(db, "weather/live");
 let lastTemp = null;
 
@@ -217,7 +219,7 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
-  /* Sunrise/Sunset – korrekt ohne Sommerzeitfehler */
+  /* Sunrise/Sunset – Firmware liefert UTC+2 → wir ziehen 1h ab */
   if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
     const ow = d.openweather;
 
@@ -234,11 +236,10 @@ onValue(liveRef, (snap) => {
     document.getElementById("live-icon").textContent = icon;
     document.getElementById("top-weather-icon").textContent = icon;
 
-    /* OpenWeather liefert UTC + timezone → wir zeigen als UTC an */
-    const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000)
+    const sr = new Date((ow.sys.sunrise + ow.timezone + FW_OFFSET_FIX) * 1000)
       .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
 
-    const ss = new Date((ow.sys.sunset + ow.timezone) * 1000)
+    const ss = new Date((ow.sys.sunset + ow.timezone + FW_OFFSET_FIX) * 1000)
       .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
 
     document.getElementById("sunrise").textContent = "🌅 " + sr;
@@ -275,7 +276,7 @@ async function loadHistory(path) {
   const press = [];
 
   for (const ts in data) {
-    const d = new Date(ts * 1000);
+    const d = new Date((ts + FW_OFFSET_FIX) * 1000);
     let label = "";
 
     if (path.includes("24h")) {
@@ -358,7 +359,7 @@ async function drawChart(canvasId, path, title) {
   });
 }
 
-/* OpenWeather in Firebase speichern */
+/* OpenWeather speichern */
 const OW_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
 
 async function updateOpenWeather() {
@@ -382,7 +383,7 @@ async function updateOpenWeather() {
 updateOpenWeather();
 setInterval(updateOpenWeather, 10 * 60 * 1000);
 
-/* Forecast – mit korrekter Zeit */
+/* Forecast – mit Zeitfix */
 async function loadForecast() {
   const lat = 47.43599;
   const lon = 16.25597;
@@ -397,7 +398,7 @@ async function loadForecast() {
   box.innerHTML = "";
 
   data.list.slice(0, 10).forEach(item => {
-    const d = new Date((item.dt + data.city.timezone) * 1000);
+    const d = new Date((item.dt + data.city.timezone + FW_OFFSET_FIX) * 1000);
 
     const textTime = d.toLocaleString("de-DE", {
       timeZone: "UTC"
@@ -476,10 +477,10 @@ window.showTab = function(name) {
   if (name === "24h") drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
   if (name === "week") drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
   if (name === "month") drawChart("chartMonth", "weather/history/month", "Letzter Monat");
-  if (name === "year") drawChart("
-  };
+  if (name === "year") drawChart("chartYear", "weather/history/year", "Letztes Jahr");
+};
 
- /* Start */
+/* Start */
 window.onload = () => {
   drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
   drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
@@ -491,4 +492,4 @@ window.onload = () => {
 </script>
 
 </body>
-</html>                               
+</html> 
