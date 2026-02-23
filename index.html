@@ -175,11 +175,11 @@ button {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, get, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 /* FirebaseConfig */
 const firebaseConfig = {
-  apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
+  apiKey: "xx",
   authDomain: "meine-wetterstation.firebaseapp.com",
   databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "meine-wetterstation",
@@ -191,9 +191,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* Zeitfix: Firmware liefert UTC+2 → wir ziehen 1 Stunde ab */
-const FW_OFFSET_FIX = -3600;  // -1 Stunde
- /* Live-Werte */
+/* Live-Werte */
 const liveRef = ref(db, "weather/live");
 let lastTemp = null;
 
@@ -219,50 +217,19 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
-  /* Sunrise/Sunset – Firmware liefert UTC+2 → wir ziehen 1h ab */
-  if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
-    const ow = d.openweather;
+  /* Sunrise/Sunset aus OpenWeather */
+  if (d.openweather && d.openweather.sys) {
 
-    const iconMap = {
-      clear: "☀️",
-      cloud: "☁️",
-      rain: "🌧️",
-      snow: "❄️"
-    };
-
-    const w = ow.weather[0].main.toLowerCase();
-    const icon = Object.keys(iconMap).find(k => w.includes(k)) ? iconMap[Object.keys(iconMap).find(k => w.includes(k))] : "❓";
-
-    document.getElementById("live-icon").textContent = icon;
-    document.getElementById("top-weather-icon").textContent = icon;
-
-    const sr = new Date((ow.sys.sunrise + ow.timezone + FW_OFFSET_FIX) * 1000)
+    const sr = new Date((d.openweather.sys.sunrise + d.openweather.timezone) * 1000)
       .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
 
-    const ss = new Date((ow.sys.sunset + ow.timezone + FW_OFFSET_FIX) * 1000)
+    const ss = new Date((d.openweather.sys.sunset + d.openweather.timezone) * 1000)
       .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
 
     document.getElementById("sunrise").textContent = "🌅 " + sr;
     document.getElementById("sunset").textContent = "🌇 " + ss;
   }
 });
-
-/* Min/Max */
-async function updateMinMax() {
-  const snap = await get(ref(db, "weather/history/24h"));
-  const data = snap.val();
-  if (!data) return;
-
-  const temps = Object.values(data).map(v => v.t);
-  const min = Math.min(...temps).toFixed(1);
-  const max = Math.max(...temps).toFixed(1);
-
-  document.getElementById("minmax").textContent =
-    "Min/Max (24h): " + min + "°C / " + max + "°C";
-}
-
-setInterval(updateMinMax, 60000);
-updateMinMax();
 
 /* History */
 async function loadHistory(path) {
@@ -276,7 +243,8 @@ async function loadHistory(path) {
   const press = [];
 
   for (const ts in data) {
-    const d = new Date((ts + FW_OFFSET_FIX) * 1000);
+    const d = new Date(ts * 1000);   // <<< WICHTIG: KEIN OFFSET MEHR
+
     let label = "";
 
     if (path.includes("24h")) {
@@ -359,37 +327,14 @@ async function drawChart(canvasId, path, title) {
   });
 }
 
-/* OpenWeather speichern */
-const OW_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
-
-async function updateOpenWeather() {
-  const lat = 47.43599;
-  const lon = 16.25597;
-
-  const url =
-    `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${OW_KEY}`;
-
-  try {
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("OpenWeather Fehler");
-    const data = await res.json();
-
-    await set(ref(db, "weather/live/openweather"), data);
-  } catch (e) {
-    console.error("OpenWeather lädt nicht:", e);
-  }
-}
-
-updateOpenWeather();
-setInterval(updateOpenWeather, 10 * 60 * 1000);
-
-/* Forecast – mit Zeitfix */
+/* Forecast */
 async function loadForecast() {
   const lat = 47.43599;
   const lon = 16.25597;
+  const key = "xx";
 
   const url =
-    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${OW_KEY}`;
+    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${key}`;
 
   const res = await fetch(url);
   const data = await res.json();
@@ -398,7 +343,7 @@ async function loadForecast() {
   box.innerHTML = "";
 
   data.list.slice(0, 10).forEach(item => {
-    const d = new Date((item.dt + data.city.timezone + FW_OFFSET_FIX) * 1000);
+    const d = new Date((item.dt + data.city.timezone) * 1000);
 
     const textTime = d.toLocaleString("de-DE", {
       timeZone: "UTC"
@@ -432,36 +377,6 @@ function initRadar() {
     .addTo(map)
     .bindPopup("📍 Meine Wetterstation")
     .openPopup();
-
-  const rainLayer = L.tileLayer(
-    `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${OW_KEY}`,
-    { opacity: 0.6 }
-  ).addTo(map);
-
-  const cloudsLayer = L.tileLayer(
-    `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${OW_KEY}`,
-    { opacity: 0.5 }
-  );
-
-  const tempLayer = L.tileLayer(
-    `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${OW_KEY}`,
-    { opacity: 0.5 }
-  );
-
-  const windLayer = L.tileLayer(
-    `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${OW_KEY}`,
-    { opacity: 0.5 }
-  );
-
-  L.control.layers(
-    {
-      "Regen": rainLayer,
-      "Wolken": cloudsLayer,
-      "Temperatur": tempLayer,
-      "Wind": windLayer
-    },
-    {}
-  ).addTo(map);
 }
 
 /* Tabs */
@@ -492,4 +407,4 @@ window.onload = () => {
 </script>
 
 </body>
-</html> 
+</html>
