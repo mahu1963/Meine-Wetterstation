@@ -217,35 +217,37 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
-  /* Sunrise/Sunset – jetzt korrekt */
+  /* Sunrise/Sunset – korrekt ohne doppelte Zeitzone */
   if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
-  const ow = d.openweather;
-  const w = ow.weather[0].main.toLowerCase();
+    const ow = d.openweather;
 
-  let icon = "❓";
-  if (w.includes("clear")) icon = "☀️";
-  else if (w.includes("cloud")) icon = "☁️";
-  else if (w.includes("rain")) icon = "🌧️";
-  else if (w.includes("snow")) icon = "❄️";
+    const iconMap = {
+      clear: "☀️",
+      cloud: "☁️",
+      rain: "🌧️",
+      snow: "❄️"
+    };
 
-  document.getElementById("live-icon").textContent = icon;
-  document.getElementById("top-weather-icon").textContent = icon;
+    const w = ow.weather[0].main.toLowerCase();
+    const icon = Object.keys(iconMap).find(k => w.includes(k)) ? iconMap[Object.keys(iconMap).find(k => w.includes(k))] : "❓";
 
-  const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000).toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "UTC"
-  });
+    document.getElementById("live-icon").textContent = icon;
+    document.getElementById("top-weather-icon").textContent = icon;
 
-  const ss = new Date((ow.sys.sunset + ow.timezone) * 1000).toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "UTC"
-  });
+    /* OpenWeather liefert:
+       sunrise = UTC
+       timezone = Offset in Sekunden
+       → wir rechnen: (UTC + Offset) und zeigen als UTC an */
+    const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000)
+      .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
 
-  document.getElementById("sunrise").textContent = "🌅 " + sr;
-  document.getElementById("sunset").textContent = "🌇 " + ss;
-}
+    const ss = new Date((ow.sys.sunset + ow.timezone) * 1000)
+      .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
+
+    document.getElementById("sunrise").textContent = "🌅 " + sr;
+    document.getElementById("sunset").textContent = "🌇 " + ss;
+  }
+});
 
 /* Min/Max */
 async function updateMinMax() {
@@ -280,22 +282,12 @@ async function loadHistory(path) {
     let label = "";
 
     if (path.includes("24h")) {
-      label = d.toLocaleTimeString("de-DE", {
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-    }
-    else if (path.includes("week")) {
-      label = d.toLocaleDateString("de-DE", {
-        weekday: "short"
-      }).replace(".", "");
-    }
-    else if (path.includes("month")) {
-      label = d.toLocaleDateString("de-DE", {
-        month: "short"
-      }).replace(".", "");
-    }
-    else if (path.includes("year")) {
+      label = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    } else if (path.includes("week")) {
+      label = d.toLocaleDateString("de-DE", { weekday: "short" }).replace(".", "");
+    } else if (path.includes("month")) {
+      label = d.toLocaleDateString("de-DE", { month: "short" }).replace(".", "");
+    } else if (path.includes("year")) {
       label = d.getFullYear().toString();
     }
 
@@ -362,11 +354,7 @@ async function drawChart(canvasId, path, title) {
         y2: { grid: { display: false }, ticks: { color: "#ccc" } },
         x: { 
           grid: { display: false }, 
-          ticks: { 
-            color: "#ccc",
-            autoSkip: true,
-            maxTicksLimit: 12
-          } 
+          ticks: { color: "#ccc", autoSkip: true, maxTicksLimit: 12 }
         }
       }
     }
@@ -397,7 +385,7 @@ async function updateOpenWeather() {
 updateOpenWeather();
 setInterval(updateOpenWeather, 10 * 60 * 1000);
 
-/* Forecast */
+/* Forecast – jetzt mit korrekter Zeit */
 async function loadForecast() {
   const lat = 47.43599;
   const lon = 16.25597;
@@ -412,18 +400,20 @@ async function loadForecast() {
   box.innerHTML = "";
 
   data.list.slice(0, 10).forEach(item => {
-  const d = new Date((item.dt + data.city.timezone) * 1000);
-  const textTime = d.toLocaleString("de-DE", {
-    timeZone: "UTC"
-  });
+    const d = new Date((item.dt + data.city.timezone) * 1000);
 
-  const div = document.createElement("div");
-  div.innerHTML =
-    `<b>${textTime}</b><br>
-     🌡 ${item.main.temp.toFixed(1)}°C<br>
-     🌦 ${item.weather[0].description}<br><br>`;
-  box.appendChild(div);
-});
+    const textTime = d.toLocaleString("de-DE", {
+      timeZone: "UTC"
+    });
+
+    const div = document.createElement("div");
+    div.innerHTML =
+      `<b>${textTime}</b><br>
+       🌡 ${item.main.temp.toFixed(1)}°C<br>
+       🌦 ${item.weather[0].description}<br><br>`;
+    box.appendChild(div);
+  });
+}
 
 /* Radar */
 function initRadar() {
@@ -504,4 +494,3 @@ window.onload = () => {
 </script>
 </body>
 </html>  
-
