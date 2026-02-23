@@ -175,11 +175,11 @@ button {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, get, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-/* FirebaseConfig – API-Key eintragen */
+/* FirebaseConfig */
 const firebaseConfig = {
-  apiKey: "DEIN_API_KEY_HIER",
+  apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
   authDomain: "meine-wetterstation.firebaseapp.com",
   databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "meine-wetterstation",
@@ -370,9 +370,31 @@ async function drawChart(canvasId, path, title) {
   });
 }
 
-/* Forecast */
+/* OpenWeather in Firebase speichern */
 const OW_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
 
+async function updateOpenWeather() {
+  const lat = 47.43599;
+  const lon = 16.25597;
+
+  const url =
+    `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${OW_KEY}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("OpenWeather Fehler");
+    const data = await res.json();
+
+    await set(ref(db, "weather/live/openweather"), data);
+  } catch (e) {
+    console.error("OpenWeather lädt nicht:", e);
+  }
+}
+
+updateOpenWeather();
+setInterval(updateOpenWeather, 10 * 60 * 1000);
+
+/* Forecast */
 async function loadForecast() {
   const snap = await get(ref(db, "weather/live/openweather"));
   const ow = snap.val();
