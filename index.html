@@ -2,22 +2,39 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Wetterstation von Martin Huber</title>
+<title>Wetterstation Dashboard</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Wetterstation">
+<link rel="apple-touch-icon" href="icon.png">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <style>
+:root {
+  --bg: #0d0d0d;
+  --fg: #f5f5f5;
+  --card: #1a1a1a;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, Arial;
-  background: #0d0d0d;
-  color: #fff;
+  background: var(--bg);
+  color: var(--fg);
   padding: 20px;
 }
 
+#container {
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* Topbar */
 #topbar {
   width: 100%;
   background: #111;
@@ -38,37 +55,78 @@ body {
   font-size: 40px;
 }
 
+/* Charts */
 canvas {
+  max-width: 100%;
   width: 100%;
-  background: #1a1a1a;
-  border-radius: 12px;
+  min-height: 260px !important;
+  background: var(--card);
   padding: 10px;
+  border-radius: 12px;
 }
 
 button {
   padding: 8px 14px;
   margin-right: 6px;
+  cursor: pointer;
   background: #222;
-  color: #fff;
+  color: var(--fg);
   border: 1px solid #444;
   border-radius: 6px;
 }
 
 .hidden { display: none; }
 
+/* Live */
+#livebox {
+  display: flex;
+  align-items: center;
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+#live-icon {
+  font-size: 32px;
+  margin-right: 12px;
+  animation: pulse 1.2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}
+
+/* Forecast */
+#forecast-box {
+  background: var(--card);
+  padding: 10px;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+/* Radar */
 #radar {
   width: 100%;
   height: 400px;
   border-radius: 12px;
   margin-top: 20px;
-  background: #1a1a1a;
+  background: var(--card);
+}
+
+.leaflet-marker-icon.myicon {
+  filter: drop-shadow(0 0 4px black);
 }
 </style>
 </head>
 
 <body>
+<div id="container">
 
-<h1 style="text-align:center;">🌤 Wetterstation von Martin Huber</h1>
+<h1 style="text-align:center;">🌤 Wetterstation</h1>
+<div style="text-align:center; font-size:12px; opacity:0.5; margin-top:-8px;">
+  von Martin Huber
+</div>
 
 <div id="topbar">
   <div id="top-left">
@@ -80,13 +138,18 @@ button {
   </div>
 </div>
 
-<h2>Aktuelle Messwerte</h2>
+<h2 id="livebox">
+  <span id="live-icon">❓</span>
+  Aktuelle Messwerte
+</h2>
 
 <div id="livevalues">
   <p id="live-temp"></p>
   <p id="live-hum"></p>
   <p id="live-press"></p>
+  <p id="live-time"></p>
   <p id="live-trend"></p>
+  <p id="minmax"></p>
 </div>
 
 <div class="tab">
@@ -104,15 +167,20 @@ button {
 <h2>Interaktives Regenradar</h2>
 <div id="radar"></div>
 
-<h2>OpenWeather Vorhersage (5 Tage)</h2>
-<div id="forecast"></div>
+<div id="forecast-box">
+  <h2>OpenWeather Vorhersage (5 Tage)</h2>
+  <div id="forecast"></div>
+</div>
+
+</div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
+/* FirebaseConfig */
 const firebaseConfig = {
-  apiKey: "xx",
+  apiKey: "DEIN_API_KEY_HIER",
   authDomain: "meine-wetterstation.firebaseapp.com",
   databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "meine-wetterstation",
@@ -124,7 +192,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* LIVE-DATEN */
+/* Live-Werte */
 const liveRef = ref(db, "weather/live");
 let lastTemp = null;
 
@@ -143,6 +211,16 @@ onValue(liveRef, (snap) => {
   document.getElementById("live-press").textContent =
     "🌍 Luftdruck: " + d.pressure.toFixed(1) + " hPa";
 
+  /* Live-Zeit */
+  if (d.timestamp) {
+    const lt = new Date(d.timestamp * 1000)
+      .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+
+    document.getElementById("live-time").textContent =
+      "⏱ Aktualisiert: " + lt;
+  }
+
+  /* Trend */
   if (lastTemp !== null) {
     if (t > lastTemp) document.getElementById("live-trend").textContent = "📈 Temperatur steigt";
     else if (t < lastTemp) document.getElementById("live-trend").textContent = "📉 Temperatur fällt";
@@ -150,28 +228,50 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
-  /* OPENWEATHER ICONS + SUNRISE/SUNSET */
-  if (d.openweather && d.openweather.weather) {
+  /* OpenWeather */
+  if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
+    const ow = d.openweather;
+    const w = ow.weather[0].main.toLowerCase();
 
-    const w = d.openweather.weather[0].main.toLowerCase();
-    let icon = "☀️";
-    if (w.includes("cloud")) icon = "☁️";
-    if (w.includes("rain")) icon = "🌧️";
-    if (w.includes("snow")) icon = "❄️";
+    let icon = "❓";
+    if (w.includes("clear")) icon = "☀️";
+    else if (w.includes("cloud")) icon = "☁️";
+    else if (w.includes("rain")) icon = "🌧️";
+    else if (w.includes("snow")) icon = "❄️";
 
+    document.getElementById("live-icon").textContent = icon;
     document.getElementById("top-weather-icon").textContent = icon;
 
-    const sr = new Date((d.openweather.sys.sunrise + d.openweather.timezone) * 1000)
+    /* Sunrise/Sunset – korrekt */
+    const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000)
       .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-    const ss = new Date((d.openweather.sys.sunset + d.openweather.timezone) * 1000)
+    const ss = new Date((ow.sys.sunset + ow.timezone) * 1000)
       .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
     document.getElementById("sunrise").textContent = "🌅 " + sr;
     document.getElementById("sunset").textContent = "🌇 " + ss;
   }
 });
-  /* HISTORY LADEN */
+
+/* Min/Max */
+async function updateMinMax() {
+  const snap = await get(ref(db, "weather/history/24h"));
+  const data = snap.val();
+  if (!data) return;
+
+  const temps = Object.values(data).map(v => v.t);
+  const min = Math.min(...temps).toFixed(1);
+  const max = Math.max(...temps).toFixed(1);
+
+  document.getElementById("minmax").textContent =
+    "Min/Max (24h): " + min + "°C / " + max + "°C";
+}
+
+setInterval(updateMinMax, 60000);
+updateMinMax();
+
+/* HISTORY LADEN */
 async function loadHistory(path) {
   const snap = await get(ref(db, path));
   const data = snap.val();
@@ -183,8 +283,6 @@ async function loadHistory(path) {
   const press = [];
 
   for (const ts in data) {
-
-    // Deine Firmware liefert ORTSZEIT → KEINE KORREKTUR!
     const d = new Date(ts * 1000);
 
     let label = "";
@@ -288,7 +386,7 @@ async function drawChart(canvasId, path, title) {
 async function loadForecast() {
   const lat = 47.43599;
   const lon = 16.25597;
-  const key = "xx";
+  const key = "DEIN_OPENWEATHER_KEY";
 
   const url =
     `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${key}`;
@@ -300,8 +398,6 @@ async function loadForecast() {
   box.innerHTML = "";
 
   data.list.slice(0, 10).forEach(item => {
-
-    // OpenWeather liefert UTC → timezone addieren → dann lokale Zeit
     const d = new Date((item.dt + data.city.timezone) * 1000);
 
     const textTime = d.toLocaleString("de-DE");
