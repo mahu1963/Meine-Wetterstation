@@ -217,7 +217,6 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
-  /* Sunrise/Sunset – jetzt korrekt */
   if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
     const ow = d.openweather;
     const w = ow.weather[0].main.toLowerCase();
@@ -394,7 +393,7 @@ async function updateOpenWeather() {
 updateOpenWeather();
 setInterval(updateOpenWeather, 10 * 60 * 1000);
 
-/* Forecast – jetzt zuverlässig */
+/* Forecast */
 async function loadForecast() {
   const lat = 47.43599;
   const lon = 16.25597;
@@ -483,4 +482,19 @@ window.showTab = function(name) {
   if (name === "24h") drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
   if (name === "week") drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
   if (name === "month") drawChart("chartMonth", "weather/history/month", "Letzter Monat");
-  if
+  if (name === "year") drawChart("chartYear", "weather/history/year", "Letztes Jahr");
+};
+
+/* Start */
+window.onload = () => {
+  drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
+  drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
+  drawChart("chartMonth", "weather/history/month", "Letzter Monat");
+  drawChart("chartYear", "weather/history/year", "Letztes Jahr");
+  initRadar();
+  loadForecast();
+};
+</script>
+
+</body>
+</html>
