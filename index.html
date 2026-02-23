@@ -217,6 +217,7 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
+  /* Sunrise/Sunset – jetzt korrekt */
   if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
     const ow = d.openweather;
     const w = ow.weather[0].main.toLowerCase();
@@ -230,14 +231,13 @@ onValue(liveRef, (snap) => {
     document.getElementById("live-icon").textContent = icon;
     document.getElementById("top-weather-icon").textContent = icon;
 
-    const sr = new Date(ow.sys.sunrise * 1000).toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-    const ss = new Date(ow.sys.sunset * 1000).toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
+    const offset = ow.timezone * 1000;
+
+    const sr = new Date(ow.sys.sunrise * 1000 + offset)
+      .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+
+    const ss = new Date(ow.sys.sunset * 1000 + offset)
+      .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
     document.getElementById("sunrise").textContent = "🌅 " + sr;
     document.getElementById("sunset").textContent = "🌇 " + ss;
@@ -261,7 +261,7 @@ async function updateMinMax() {
 setInterval(updateMinMax, 60000);
 updateMinMax();
 
-/* History mit deinen neuen Labels */
+/* History */
 async function loadHistory(path) {
   const snap = await get(ref(db, path));
   const data = snap.val();
@@ -305,7 +305,7 @@ async function loadHistory(path) {
   return { labels, temps, hums, press };
 }
 
-/* iOS-Style Charts */
+/* Charts */
 async function drawChart(canvasId, path, title) {
   const ctx = document.getElementById(canvasId).getContext("2d");
   const { labels, temps, hums, press } = await loadHistory(path);
@@ -394,14 +394,10 @@ async function updateOpenWeather() {
 updateOpenWeather();
 setInterval(updateOpenWeather, 10 * 60 * 1000);
 
-/* Forecast */
+/* Forecast – jetzt zuverlässig */
 async function loadForecast() {
-  const snap = await get(ref(db, "weather/live/openweather"));
-  const ow = snap.val();
-  if (!ow) return;
-
-  const lat = ow.coord.lat;
-  const lon = ow.coord.lon;
+  const lat = 47.43599;
+  const lon = 16.25597;
 
   const url =
     `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${OW_KEY}`;
@@ -413,7 +409,7 @@ async function loadForecast() {
   box.innerHTML = "";
 
   data.list.slice(0, 10).forEach(item => {
-    const d = new Date(item.dt * 1000);
+    const d = new Date((item.dt + data.city.timezone) * 1000);
     const div = document.createElement("div");
     div.innerHTML =
       `<b>${d.toLocaleString("de-DE")}</b><br>
@@ -487,19 +483,4 @@ window.showTab = function(name) {
   if (name === "24h") drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
   if (name === "week") drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
   if (name === "month") drawChart("chartMonth", "weather/history/month", "Letzter Monat");
-  if (name === "year") drawChart("chartYear", "weather/history/year", "Letztes Jahr");
-};
-
-/* Start */
-window.onload = () => {
-  drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
-  drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
-  drawChart("chartMonth", "weather/history/month", "Letzter Monat");
-  drawChart("chartYear", "weather/history/year", "Letztes Jahr");
-  initRadar();
-  loadForecast();
-};
-</script>
-
-</body>
-</html>
+  if
