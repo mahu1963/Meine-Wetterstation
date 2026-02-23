@@ -211,7 +211,7 @@ onValue(liveRef, (snap) => {
   document.getElementById("live-press").textContent =
     "🌍 Luftdruck: " + d.pressure.toFixed(1) + " hPa";
 
-  /* Live-Zeit */
+  /* Live-Zeit (UTC → lokal) */
   if (d.timestamp) {
     const lt = new Date(d.timestamp * 1000)
       .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
@@ -242,15 +242,17 @@ onValue(liveRef, (snap) => {
     document.getElementById("live-icon").textContent = icon;
     document.getElementById("top-weather-icon").textContent = icon;
 
-    /* Sunrise/Sunset – korrekt */
-    const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000)
-      .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    /* Sunrise/Sunset – korrekt mit timezone */
+    if (ow.sys && ow.sys.sunrise && ow.sys.sunset && ow.timezone !== undefined) {
+      const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000)
+        .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-    const ss = new Date((ow.sys.sunset + ow.timezone) * 1000)
-      .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+      const ss = new Date((ow.sys.sunset + ow.timezone) * 1000)
+        .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-    document.getElementById("sunrise").textContent = "🌅 " + sr;
-    document.getElementById("sunset").textContent = "🌇 " + ss;
+      document.getElementById("sunrise").textContent = "🌅 " + sr;
+      document.getElementById("sunset").textContent = "🌇 " + ss;
+    }
   }
 });
 
@@ -271,7 +273,7 @@ async function updateMinMax() {
 setInterval(updateMinMax, 60000);
 updateMinMax();
 
-/* HISTORY LADEN */
+/* HISTORY LADEN (UTC → Browser macht lokal) */
 async function loadHistory(path) {
   const snap = await get(ref(db, path));
   const data = snap.val();
@@ -382,11 +384,11 @@ async function drawChart(canvasId, path, title) {
   });
 }
 
-/* OPENWEATHER FORECAST */
+/* OPENWEATHER FORECAST (direkt von API) */
 async function loadForecast() {
   const lat = 47.43599;
   const lon = 16.25597;
-  const key = "27602f1bbb8e3dd3587a1da6e3de24b6";
+  const key = "DEIN_OPENWEATHER_KEY";
 
   const url =
     `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${key}`;
@@ -411,7 +413,7 @@ async function loadForecast() {
   });
 }
 
-/* RADAR */
+/* RADAR MIT STANDORT + WETTERLAYER */
 function initRadar() {
   const map = L.map('radar').setView([47.43599, 16.25597], 8);
 
@@ -420,10 +422,18 @@ function initRadar() {
     attribution: '© OpenStreetMap'
   }).addTo(map);
 
-  // Standortmarker hinzufügen
+  // Standortmarker
   L.marker([47.43599, 16.25597]).addTo(map)
     .bindPopup("Mein Standort")
     .openPopup();
+
+  // Regen/Wolken-Layer von OpenWeather
+  const owmKey = "27602f1bbb8e3dd3587a1da6e3de24b6";
+
+  L.tileLayer(
+    `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${owmKey}`,
+    { opacity: 0.6 }
+  ).addTo(map);
 }
 
 /* TABS */
@@ -455,6 +465,3 @@ window.onload = () => {
 
 </body>
 </html>
-
-
-
