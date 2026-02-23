@@ -217,7 +217,7 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
-  /* Sunrise/Sunset – korrekt ohne doppelte Zeitzone */
+  /* Sunrise/Sunset – korrekt ohne Sommerzeitfehler */
   if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
     const ow = d.openweather;
 
@@ -234,10 +234,7 @@ onValue(liveRef, (snap) => {
     document.getElementById("live-icon").textContent = icon;
     document.getElementById("top-weather-icon").textContent = icon;
 
-    /* OpenWeather liefert:
-       sunrise = UTC
-       timezone = Offset in Sekunden
-       → wir rechnen: (UTC + Offset) und zeigen als UTC an */
+    /* OpenWeather liefert UTC + timezone → wir zeigen als UTC an */
     const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000)
       .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
 
@@ -385,7 +382,7 @@ async function updateOpenWeather() {
 updateOpenWeather();
 setInterval(updateOpenWeather, 10 * 60 * 1000);
 
-/* Forecast – jetzt mit korrekter Zeit */
+/* Forecast – mit korrekter Zeit */
 async function loadForecast() {
   const lat = 47.43599;
   const lon = 16.25597;
@@ -479,10 +476,10 @@ window.showTab = function(name) {
   if (name === "24h") drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
   if (name === "week") drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
   if (name === "month") drawChart("chartMonth", "weather/history/month", "Letzter Monat");
-  if (name === "year") drawChart("chartYear", "weather/history/year", "Letztes Jahr");
-};
+  if (name === "year") drawChart("
+  };
 
-/* Start */
+ /* Start */
 window.onload = () => {
   drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
   drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
@@ -492,5 +489,6 @@ window.onload = () => {
   loadForecast();
 };
 </script>
+
 </body>
-</html>  
+</html>                               
