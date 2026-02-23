@@ -419,6 +419,11 @@ function initRadar() {
     maxZoom: 19,
     attribution: '© OpenStreetMap'
   }).addTo(map);
+
+  // Standortmarker hinzufügen
+  L.marker([47.43599, 16.25597]).addTo(map)
+    .bindPopup("Mein Standort")
+    .openPopup();
 }
 
 /* TABS */
@@ -450,5 +455,6 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
