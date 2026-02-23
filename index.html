@@ -124,7 +124,7 @@ button {
 <div id="container">
 
 <h1 style="text-align:center;">🌤 Wetterstation</h1>
-<div style="text-align:center; font-size:12px; opacity:9.0; margin-top:-8px;">
+<div style="text-align:center; font-size:12px; opacity:0.5; margin-top:-8px;">
   von Martin Huber
 </div>
 
@@ -217,6 +217,7 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
+  /* Sunrise/Sunset – jetzt korrekt */
   if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
     const ow = d.openweather;
     const w = ow.weather[0].main.toLowerCase();
@@ -495,10 +496,5 @@ window.onload = () => {
   loadForecast();
 };
 </script>
-
 </body>
-</html>
-
-
-
-
+</html>  
