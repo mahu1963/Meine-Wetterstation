@@ -219,30 +219,33 @@ onValue(liveRef, (snap) => {
 
   /* Sunrise/Sunset – jetzt korrekt */
   if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
-    const ow = d.openweather;
-    const w = ow.weather[0].main.toLowerCase();
+  const ow = d.openweather;
+  const w = ow.weather[0].main.toLowerCase();
 
-    let icon = "❓";
-    if (w.includes("clear")) icon = "☀️";
-    else if (w.includes("cloud")) icon = "☁️";
-    else if (w.includes("rain")) icon = "🌧️";
-    else if (w.includes("snow")) icon = "❄️";
+  let icon = "❓";
+  if (w.includes("clear")) icon = "☀️";
+  else if (w.includes("cloud")) icon = "☁️";
+  else if (w.includes("rain")) icon = "🌧️";
+  else if (w.includes("snow")) icon = "❄️";
 
-    document.getElementById("live-icon").textContent = icon;
-    document.getElementById("top-weather-icon").textContent = icon;
+  document.getElementById("live-icon").textContent = icon;
+  document.getElementById("top-weather-icon").textContent = icon;
 
-    const offset = ow.timezone * 1000;
+  const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000).toLocaleTimeString("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "UTC"
+  });
 
-    const sr = new Date(ow.sys.sunrise * 1000 + offset)
-      .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  const ss = new Date((ow.sys.sunset + ow.timezone) * 1000).toLocaleTimeString("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "UTC"
+  });
 
-    const ss = new Date(ow.sys.sunset * 1000 + offset)
-      .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-
-    document.getElementById("sunrise").textContent = "🌅 " + sr;
-    document.getElementById("sunset").textContent = "🌇 " + ss;
-  }
-});
+  document.getElementById("sunrise").textContent = "🌅 " + sr;
+  document.getElementById("sunset").textContent = "🌇 " + ss;
+}
 
 /* Min/Max */
 async function updateMinMax() {
@@ -409,15 +412,18 @@ async function loadForecast() {
   box.innerHTML = "";
 
   data.list.slice(0, 10).forEach(item => {
-    const d = new Date((item.dt + data.city.timezone) * 1000);
-    const div = document.createElement("div");
-    div.innerHTML =
-      `<b>${d.toLocaleString("de-DE")}</b><br>
-       🌡 ${item.main.temp.toFixed(1)}°C<br>
-       🌦 ${item.weather[0].description}<br><br>`;
-    box.appendChild(div);
+  const d = new Date((item.dt + data.city.timezone) * 1000);
+  const textTime = d.toLocaleString("de-DE", {
+    timeZone: "UTC"
   });
-}
+
+  const div = document.createElement("div");
+  div.innerHTML =
+    `<b>${textTime}</b><br>
+     🌡 ${item.main.temp.toFixed(1)}°C<br>
+     🌦 ${item.weather[0].description}<br><br>`;
+  box.appendChild(div);
+});
 
 /* Radar */
 function initRadar() {
@@ -498,3 +504,4 @@ window.onload = () => {
 </script>
 </body>
 </html>  
+
