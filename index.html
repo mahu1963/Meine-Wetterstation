@@ -306,13 +306,13 @@ async function loadHistory(path) {
     } 
     else if (path.includes("month")) {
       label = d.toLocaleDateString("de-DE", {
-        day: "2-digit"
-      });
+        month: "short"
+      }).replace(".", "");
     } 
     else if (path.includes("year")) {
       label = d.toLocaleDateString("de-DE", {
-        month: "short"
-      }).replace(".", "");
+        year: "numeric"
+      });
     }
 
     labels.push(label);
@@ -469,6 +469,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
