@@ -117,6 +117,26 @@ button {
 .leaflet-marker-icon.myicon {
   filter: drop-shadow(0 0 4px black);
 }
+
+/* Neon Wetterbox */
+@keyframes fadeIn {
+  from { opacity:0; transform: translateY(10px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+@keyframes neonPulse {
+  0%   { box-shadow: 0 0 10px rgba(0,255,255,0.4); }
+  50%  { box-shadow: 0 0 20px rgba(0,255,255,0.8); }
+  100% { box-shadow: 0 0 10px rgba(0,255,255,0.4); }
+}
+
+.neon-glow {
+  animation: neonPulse 2.5s infinite ease-in-out;
+}
+
+.rotate {
+  transition: transform 0.6s ease;
+}
 </style>
 </head>
 
@@ -167,6 +187,23 @@ button {
 <h2>Interaktives Regenradar</h2>
 <div id="radar"></div>
 
+<!-- ⭐ Neon Wetterbox -->
+<div id="currentWeatherBox" 
+     style="
+       margin-top:20px;
+       padding:20px;
+       background:rgba(0,0,0,0.25);
+       border-radius:15px;
+       color:white;
+       font-size:18px;
+       backdrop-filter: blur(8px);
+       border: 1px solid rgba(0,255,255,0.4);
+       box-shadow: 0 0 15px rgba(0,255,255,0.4);
+       animation: fadeIn 0.8s ease-out;
+     ">
+  Wetter wird geladen...
+</div>
+
 <div id="forecast-box">
   <h2>OpenWeather Vorhersage (5 Tage)</h2>
   <div id="forecast"></div>
@@ -188,7 +225,6 @@ const firebaseConfig = {
   appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
   measurementId: "G-ST9RCRW888"
 };
-
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
@@ -212,7 +248,7 @@ onValue(liveRef, (snap) => {
   document.getElementById("live-press").textContent =
     "🌍 Luftdruck: " + d.pressure.toFixed(1) + " hPa";
 
-  /* Live-Zeit (UTC → lokal) */
+  /* Live-Zeit */
   if (d.timestamp) {
     const lt = new Date(d.timestamp * 1000)
       .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
@@ -229,7 +265,7 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
-  /* OpenWeather */
+  /* OpenWeather Icons */
   if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
     const ow = d.openweather;
     const w = ow.weather[0].main.toLowerCase();
@@ -243,7 +279,7 @@ onValue(liveRef, (snap) => {
     document.getElementById("live-icon").textContent = icon;
     document.getElementById("top-weather-icon").textContent = icon;
 
-    /* Sunrise/Sunset – korrekt mit timezone */
+    /* Sunrise/Sunset */
     if (ow.sys && ow.sys.sunrise && ow.sys.sunset && ow.timezone !== undefined) {
       const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000)
         .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
@@ -274,7 +310,7 @@ async function updateMinMax() {
 setInterval(updateMinMax, 60000);
 updateMinMax();
 
-/* HISTORY LADEN (UTC → Browser macht lokal) */
+/* HISTORY LADEN */
 async function loadHistory(path) {
   const snap = await get(ref(db, path));
   const data = snap.val();
@@ -285,7 +321,6 @@ async function loadHistory(path) {
   const hums = [];
   const press = [];
 
-  // 🔥 WICHTIG: Timestamps numerisch sortieren!
   const timestamps = Object.keys(data).sort((a, b) => Number(a) - Number(b));
 
   for (const ts of timestamps) {
@@ -324,7 +359,7 @@ async function loadHistory(path) {
   return { labels, temps, hums, press };
 }
 
-/* CHARTS ZEICHNEN */
+/* CHARTS */
 async function drawChart(canvasId, path, title) {
   const ctx = document.getElementById(canvasId).getContext("2d");
   const { labels, temps, hums, press } = await loadHistory(path);
@@ -388,7 +423,7 @@ async function drawChart(canvasId, path, title) {
   });
 }
 
-/* OPENWEATHER FORECAST (direkt von API) */
+/* FORECAST */
 async function loadForecast() {
   const lat = 47.43599;
   const lon = 16.25597;
@@ -417,7 +452,7 @@ async function loadForecast() {
   });
 }
 
-/* RADAR MIT STANDORT + WETTERLAYER */
+/* RADAR */
 function initRadar() {
   const map = L.map('radar').setView([47.43599, 16.25597], 8);
 
@@ -426,12 +461,10 @@ function initRadar() {
     attribution: '© OpenStreetMap'
   }).addTo(map);
 
-  // Standortmarker
   L.marker([47.43599, 16.25597]).addTo(map)
     .bindPopup("Mein Standort")
     .openPopup();
 
-  // Regen/Wolken-Layer von OpenWeather
   const owmKey = "27602f1bbb8e3dd3587a1da6e3de24b6";
 
   L.tileLayer(
@@ -440,38 +473,31 @@ function initRadar() {
   ).addTo(map);
 }
 
-/* TABS */
-window.showTab = function(name) {
-  document.getElementById("24h").classList.add("hidden");
-  document.getElementById("week").classList.add("hidden");
-  document.getElementById("month").classList.add("hidden");
-  document.getElementById("year").classList.add("hidden");
+/* ⭐ NEON WETTERBOX */
+async function loadCurrentWeather() {
+  const url = `https://api.openweathermap.org/data/2.5/weather?lat=47.43599&lon=16.25597&units=metric&lang=de&appid=DEIN_OPENWEATHER_KEY`;
 
-  const tab = document.getElementById(name);
-  tab.classList.remove("hidden");
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
 
-  if (name === "24h") drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
-  if (name === "week") drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
-  if (name === "month") drawChart("chartMonth", "weather/history/month", "Letzter Monat");
-  if (name === "year") drawChart("chartYear", "weather/history/year", "Letztes Jahr");
-};
+    const icon = data.weather[0].icon;
+    const temp = Math.round(data.main.temp);
+    const desc = data.weather[0].description;
 
-/* START */
-window.onload = () => {
-  drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
-  drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
-  drawChart("chartMonth", "weather/history/month", "Letzter Monat");
-  drawChart("chartYear", "weather/history/year", "Letztes Jahr");
-  initRadar();
-  loadForecast();
-};
-</script>
+    const hum = data.main.humidity;
+    const wind = data.wind.speed;
+    const windDeg = data.wind.deg;
+    const press = data.main.pressure;
 
-</body>
-</html>
+    const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
 
+    const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
 
-
-
-
-
+    const windArrow = `
