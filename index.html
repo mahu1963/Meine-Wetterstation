@@ -285,7 +285,10 @@ async function loadHistory(path) {
   const hums = [];
   const press = [];
 
-  for (const ts in data) {
+  // 🔥 WICHTIG: Timestamps numerisch sortieren!
+  const timestamps = Object.keys(data).sort((a, b) => Number(a) - Number(b));
+
+  for (const ts of timestamps) {
     const d = new Date(ts * 1000);
 
     let label = "";
@@ -466,6 +469,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
