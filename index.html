@@ -187,7 +187,7 @@ button {
 <h2>Interaktives Regenradar</h2>
 <div id="radar"></div>
 
-<!-- ⭐ Neon Wetterbox -->
+<!-- ⭐ NEON WETTERBOX (sichtbar unter dem Radar) -->
 <div id="currentWeatherBox" 
      style="
        margin-top:20px;
@@ -207,8 +207,6 @@ button {
 <div id="forecast-box">
   <h2>OpenWeather Vorhersage (5 Tage)</h2>
   <div id="forecast"></div>
-</div>
-
 </div>
 
 <script type="module">
@@ -478,26 +476,4 @@ async function loadCurrentWeather() {
   const url = `https://api.openweathermap.org/data/2.5/weather?lat=47.43599&lon=16.25597&units=metric&lang=de&appid=DEIN_OPENWEATHER_KEY`;
 
   try {
-    const res = await fetch(url);
-    const data = await res.json();
-
-    const icon = data.weather[0].icon;
-    const temp = Math.round(data.main.temp);
-    const desc = data.weather[0].description;
-
-    const hum = data.main.humidity;
-    const wind = data.wind.speed;
-    const windDeg = data.wind.deg;
-    const press = data.main.pressure;
-
-    const sunrise = new Date(data.sys.sunrise * 1000).toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-    const sunset = new Date(data.sys.sunset * 1000).toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-    const windArrow = `
+    const res = await fetch(url);  
