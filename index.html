@@ -205,7 +205,7 @@ button {
   <div id="forecast"></div>
 </div>
 
- <script type="module">
+  <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
@@ -454,7 +454,7 @@ function initRadar() {
     .bindPopup("Mein Standort")
     .openPopup();
 
-  const owmKey = 27602f1bbb8e3dd3587a1da6e3de24b6"";
+  const owmKey = "27602f1bbb8e3dd3587a1da6e3de24b6";
 
   L.tileLayer(
     `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${owmKey}`,
@@ -462,11 +462,24 @@ function initRadar() {
   ).addTo(map);
 }
 
-          <span>${wind} m/s</span>
-      </div>
-    `;
+/* ⭐ NEON WETTERBOX */
+async function loadCurrentWeather() {
+  const url = `https://api.openweathermap.org/data/2.5/weather?lat=47.43599&lon=16.25597&units=metric&lang=de&appid="27602f1bbb8e3dd3587a1da6e3de24b6";
 
-    document.getElementById("currentWeatherBox").innerHTML = `
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const icon = data.weather[0].icon;
+    const temp = Math.round(data.main.temp);
+    const desc = data.weather[0].description;
+
+    const hum = data.main.humidity;
+    const wind = data.wind.speed;
+    const windDeg = data.wind.deg;
+    const press = data.main.pressure;
+
+      document.getElementById("currentWeatherBox").innerHTML = `
       <div style="display:flex; align-items:center; gap:20px;" class="neon-glow">
 
         <img src="https://openweathermap.org/img/wn/${icon}@2x.png"
@@ -528,4 +541,4 @@ window.onload = () => {
 </script>
 
 </body>
-</html> 
+</html>
