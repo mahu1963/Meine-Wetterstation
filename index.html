@@ -205,7 +205,7 @@ button {
   <div id="forecast"></div>
 </div>
 
-  <script type="module">
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
@@ -464,7 +464,7 @@ function initRadar() {
 
 /* ⭐ NEON WETTERBOX */
 async function loadCurrentWeather() {
-  const url = `https://api.openweathermap.org/data/2.5/weather?lat=47.43599&lon=16.25597&units=metric&lang=de&appid="27602f1bbb8e3dd3587a1da6e3de24b6";
+  const url = `https://api.openweathermap.org/data/2.5/weather?lat=47.43599&lon=16.25597&units=metric&lang=de&appid=27602f1bbb8e3dd3587a1da6e3de24b6`;
 
   try {
     const res = await fetch(url);
@@ -477,9 +477,15 @@ async function loadCurrentWeather() {
     const hum = data.main.humidity;
     const wind = data.wind.speed;
     const windDeg = data.wind.deg;
-    const press = data.main.pressure;
+    const press = data.main.pressure;  
+     const windArrow = `
+      <span style="display:inline-block; transform: rotate(${windDeg}deg); font-size:22px; margin-right:6px;">
+        ➤
+      </span>
+      <span>${wind} m/s</span>
+    `;
 
-      document.getElementById("currentWeatherBox").innerHTML = `
+    document.getElementById("currentWeatherBox").innerHTML = `
       <div style="display:flex; align-items:center; gap:20px;" class="neon-glow">
 
         <img src="https://openweathermap.org/img/wn/${icon}@2x.png"
@@ -495,11 +501,11 @@ async function loadCurrentWeather() {
           </div>
 
           <div style="font-size:16px; line-height:1.4;">
-            <b style="color:#00ffff;">Wind:</b> ${windArrow}
+            <b style="color:#00ffff;">Wind:</b> ${windArrow}<br>
             <b style="color:#00ffff;">Feuchtigkeit:</b> ${hum}%<br>
             <b style="color:#00ffff;">Luftdruck:</b> ${press} hPa<br>
-            <b style="color:#00ffff;">Sonnenaufgang:</b> ${sunrise}<br>
-            <b style="color:#00ffff;">Sonnenuntergang:</b> ${sunset}
+            <b style="color:#00ffff;">Sonnenaufgang:</b> ${new Date((data.sys.sunrise + data.timezone) * 1000).toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit"})}<br>
+            <b style="color:#00ffff;">Sonnenuntergang:</b> ${new Date((data.sys.sunset + data.timezone) * 1000).toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit"})}
           </div>
         </div>
       </div>
@@ -541,4 +547,4 @@ window.onload = () => {
 </script>
 
 </body>
-</html>
+</html> 
