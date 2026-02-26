@@ -469,7 +469,17 @@ async function loadCurrentWeather() {
     const data = await res.json();
 
     const icon = data.weather[0].icon;
-    const temp = Math.round(data.main.temp);
+    let temp = null;
+
+// OpenWeather Temperatur
+if (data.main && data.main.temp !== undefined) {
+    temp = Math.round(data.main.temp);
+}
+
+// Falls OpenWeather keine Temperatur liefert → Firebase-Wert verwenden
+if (temp === null && lastTemp !== null) {
+    temp = Math.round(lastTemp);
+}
     const desc = data.weather[0].description;
 
     const hum = data.main.humidity;
@@ -551,3 +561,4 @@ window.onload = () => {
 
 </body>
 </html>
+
