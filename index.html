@@ -278,7 +278,70 @@ onValue(liveRef, (snap) => {
     }
   }
 });
+
+/* Min/Max */
+async function updateMinMax() {
+  const snap = await get(ref(db, "weather/history/24h"));
+  const data = snap.val();
+  if (!data) return;
+
+  const temps = Object.values(data).map(v => v.t);
+  const min = Math.min(...temps).toFixed(1);
+  const max = Math.max(...temps).toFixed(1);
+
+  document.getElementById("minmax").textContent =
+    "Min/Max (24h): " + min + "°C / " + max + "°C";
+}
+setInterval(updateMinMax, 60000);
+updateMinMax();
+
+/* HISTORY LADEN */
+async function loadHistory(path) {
+  const snap = await get(ref(db, path));
+  const data = snap.val();
+  if (!data) return { labels: [], temps: [], hums: [], press: [] };
+
+  const labels = [];
+  const temps = [];
+  const hums = [];
+  const press = [];
+
+  const timestamps = Object.keys(data).sort((a, b) => Number(a) - Number(b));
+
+  for (const ts of timestamps) {
+    const d = new Date(ts * 1000);
+    let label = "";
+
+    if (path.includes("24h")) {
+      label = d.toLocaleTimeString("de-DE", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "UTC"
+      });
+    } else if (path.includes("week")) {
+      label = d.toLocaleDateString("de-DE", {
+        weekday: "short",
+        timeZone: "UTC"
+      }).replace(".", "");
+    } else if (path.includes("month")) {
+      label = d.toLocaleDateString("de-DE", {
+        month: "short",
+        timeZone: "UTC"
+      }).replace(".", "");
+    } else if (path.includes("year")) {
+      label = d.toLocaleDateString("de-DE", {
+        year: "numeric",
+        timeZone: "UTC"
+      });
+    }
+
+    labels.push(label);
+    temps.push(data[ts].t);
+    hums.push(data[ts].h);
+    press.push(data[ts].p);
   }
+
+  return { labels, temps, hums, press };
 }
 
 /* CHARTS */
@@ -428,8 +491,8 @@ async function loadCurrentWeather() {
              style="width:90px; height:90px; animation: fadeIn 1s ease; filter: drop-shadow(0 0 8px #00ffff);">
 
         <div>
-          <div style="font-size:32px; font-weight:bold; color:#00ffff; text-shadow:0 0 8px #00ffff;">
-            ${temp}°C
+          <div style="font-size:32px; font-weight:bold; color:#00ffff; text-shadow:0 0 8px #
+                      ${temp}°C
           </div>
 
           <div style="font-size:20px; margin-bottom:8px; text-shadow:0 0 6px #00ffff;">
