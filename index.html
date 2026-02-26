@@ -427,7 +427,7 @@ async function loadForecast() {
   const key = "27602f1bbb8e3dd3587a1da6e3de24b6";
 
   const url =
-    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${27602f1bbb8e3dd3587a1da6e3de24b6}`;
+    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${}`;
 
   const res = await fetch(url);
   const data = await res.json();
@@ -557,6 +557,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
