@@ -210,7 +210,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebas
 import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
+  apiKey: "XXX",
   authDomain: "meine-wetterstation.firebaseapp.com",
   databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "meine-wetterstation",
@@ -242,17 +242,20 @@ onValue(liveRef, (snap) => {
   document.getElementById("live-press").textContent =
     "🌍 Luftdruck: " + d.pressure.toFixed(1) + " hPa";
 
+  /* ⭐ KORREKTUR: Live-Zeit in UTC anzeigen */
   if (d.timestamp) {
     const lt = new Date(d.timestamp * 1000)
-  .toLocaleTimeString("de-DE", { 
-    hour: "2-digit", 
-    minute: "2-digit",
-    timeZone: "UTC"
-  });
+      .toLocaleTimeString("de-DE", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "UTC"
+      });
+
     document.getElementById("live-time").textContent =
       "⏱ Aktualisiert: " + lt;
   }
 
+  /* Trend */
   if (lastTemp !== null) {
     if (t > lastTemp) document.getElementById("live-trend").textContent = "📈 Temperatur steigt";
     else if (t < lastTemp) document.getElementById("live-trend").textContent = "📉 Temperatur fällt";
@@ -260,6 +263,7 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
+  /* Wetter-Icon + Sunrise/Sunset */
   if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
     const ow = d.openweather;
     const w = ow.weather[0].main.toLowerCase();
@@ -273,21 +277,29 @@ onValue(liveRef, (snap) => {
     document.getElementById("live-icon").textContent = icon;
     document.getElementById("top-weather-icon").textContent = icon;
 
+    /* ⭐ KORREKTUR: Sunrise/Sunset in UTC anzeigen */
     if (ow.sys && ow.sys.sunrise && ow.sys.sunset && ow.timezone !== undefined) {
-     const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000)
-  .toLocaleTimeString("de-DE", { 
-    hour: "2-digit", 
-    minute: "2-digit",
-    timeZone: "UTC"
-  });
 
-const ss = new Date((ow.sys.sunset + ow.timezone) * 1000)
-  .toLocaleTimeString("de-DE", { 
-    hour: "2-digit", 
-    minute: "2-digit",
-    timeZone: "UTC"
-  }); 
+      const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000)
+        .toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "UTC"
+        });
 
+      const ss = new Date((ow.sys.sunset + ow.timezone) * 1000)
+        .toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit",
+          timeZone: "UTC"
+        });
+
+      document.getElementById("sunrise").textContent = "🌅 " + sr;
+      document.getElementById("sunset").textContent = "🌇 " + ss;
+    }
+  }
+});
+</script>
     
 
 /* Min/Max */
@@ -557,6 +569,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
