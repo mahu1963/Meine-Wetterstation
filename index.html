@@ -244,7 +244,11 @@ onValue(liveRef, (snap) => {
 
   if (d.timestamp) {
     const lt = new Date(d.timestamp * 1000)
-      .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  .toLocaleTimeString("de-DE", { 
+    hour: "2-digit", 
+    minute: "2-digit",
+    timeZone: "UTC"
+  });
     document.getElementById("live-time").textContent =
       "⏱ Aktualisiert: " + lt;
   }
@@ -270,16 +274,21 @@ onValue(liveRef, (snap) => {
     document.getElementById("top-weather-icon").textContent = icon;
 
     if (ow.sys && ow.sys.sunrise && ow.sys.sunset && ow.timezone !== undefined) {
-      const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000)
-        .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+     const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000)
+  .toLocaleTimeString("de-DE", { 
+    hour: "2-digit", 
+    minute: "2-digit",
+    timeZone: "UTC"
+  });
 
-      const ss = new Date((ow.sys.sunset + ow.timezone) * 1000)
-        .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-      document.getElementById("sunrise").textContent = "🌅 " + sr;
-      document.getElementById("sunset").textContent = "🌇 " + ss;
-    }
-  }
-});
+const ss = new Date((ow.sys.sunset + ow.timezone) * 1000)
+  .toLocaleTimeString("de-DE", { 
+    hour: "2-digit", 
+    minute: "2-digit",
+    timeZone: "UTC"
+  }); 
+
+    
 
 /* Min/Max */
 async function updateMinMax() {
@@ -548,6 +557,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
