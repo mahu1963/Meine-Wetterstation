@@ -113,26 +113,6 @@ button {
   margin-top: 20px;
   background: var(--card);
 }
-
-/* Neon Wetterbox */
-@keyframes fadeIn {
-  from { opacity:0; transform: translateY(10px); }
-  to   { opacity:1; transform: translateY(0); }
-}
-
-@keyframes neonPulse {
-  0%   { box-shadow: 0 0 10px rgba(0,255,255,0.4); }
-  50%  { box-shadow: 0 0 20px rgba(0,255,255,0.8); }
-  100% { box-shadow: 0 0 10px rgba(0,255,255,0.4); }
-}
-
-.neon-glow {
-  animation: neonPulse 2.5s infinite ease-in-out;
-}
-
-.rotate {
-  transition: transform 0.6s ease;
-}
 </style>
 </head>
 
@@ -184,7 +164,7 @@ button {
 <div id="radar"></div>
 
 <!-- ⭐ NEON WETTERBOX -->
-<div id="currentWeatherBox" 
+<div id="currentWeatherBox"
      style="
        margin-top:20px;
        padding:20px;
@@ -242,7 +222,7 @@ onValue(liveRef, (snap) => {
   document.getElementById("live-press").textContent =
     "🌍 Luftdruck: " + d.pressure.toFixed(1) + " hPa";
 
-  /* ⭐ KORREKTUR: Live-Zeit in UTC anzeigen */
+  /* ⭐ Live-Zeit korrekt */
   if (d.timestamp) {
     const lt = new Date(d.timestamp * 1000)
       .toLocaleTimeString("de-DE", {
@@ -250,7 +230,6 @@ onValue(liveRef, (snap) => {
         minute: "2-digit",
         timeZone: "UTC"
       });
-
     document.getElementById("live-time").textContent =
       "⏱ Aktualisiert: " + lt;
   }
@@ -277,7 +256,7 @@ onValue(liveRef, (snap) => {
     document.getElementById("live-icon").textContent = icon;
     document.getElementById("top-weather-icon").textContent = icon;
 
-    /* ⭐ KORREKTUR: Sunrise/Sunset in UTC anzeigen */
+    /* ⭐ Sunrise/Sunset korrekt */
     if (ow.sys && ow.sys.sunrise && ow.sys.sunset && ow.timezone !== undefined) {
 
       const sr = new Date((ow.sys.sunrise + ow.timezone) * 1000)
@@ -299,10 +278,8 @@ onValue(liveRef, (snap) => {
     }
   }
 });
-</script>
-    
 
-/* Min/Max */
+/* ⭐ Min/Max */
 async function updateMinMax() {
   const snap = await get(ref(db, "weather/history/24h"));
   const data = snap.val();
@@ -315,11 +292,10 @@ async function updateMinMax() {
   document.getElementById("minmax").textContent =
     "Min/Max (24h): " + min + "°C / " + max + "°C";
 }
-
 setInterval(updateMinMax, 60000);
 updateMinMax();
 
-/* HISTORY LADEN */
+/* ⭐ HISTORY LADEN – komplett korrigiert */
 async function loadHistory(path) {
   const snap = await get(ref(db, path));
   const data = snap.val();
@@ -334,28 +310,28 @@ async function loadHistory(path) {
 
   for (const ts of timestamps) {
     const d = new Date(ts * 1000);
-
     let label = "";
 
     if (path.includes("24h")) {
       label = d.toLocaleTimeString("de-DE", {
         hour: "2-digit",
-        minute: "2-digit"
+        minute: "2-digit",
+        timeZone: "UTC"
       });
-    } 
-    else if (path.includes("week")) {
+    } else if (path.includes("week")) {
       label = d.toLocaleDateString("de-DE", {
-        weekday: "short"
+        weekday: "short",
+        timeZone: "UTC"
       }).replace(".", "");
-    } 
-    else if (path.includes("month")) {
+    } else if (path.includes("month")) {
       label = d.toLocaleDateString("de-DE", {
-        month: "short"
+        month: "short",
+        timeZone: "UTC"
       }).replace(".", "");
-    } 
-    else if (path.includes("year")) {
+    } else if (path.includes("year")) {
       label = d.toLocaleDateString("de-DE", {
-        year: "numeric"
+        year: "numeric",
+        timeZone: "UTC"
       });
     }
 
@@ -378,9 +354,9 @@ async function drawChart(canvasId, path, title) {
     data: {
       labels: labels,
       datasets: [
-        { 
-          label: "Temperatur (°C)", 
-          data: temps, 
+        {
+          label: "Temperatur (°C)",
+          data: temps,
           borderColor: "rgba(255, 99, 99, 1)",
           backgroundColor: "rgba(255, 99, 99, 0.15)",
           borderWidth: 1.5,
@@ -389,9 +365,9 @@ async function drawChart(canvasId, path, title) {
           fill: true,
           yAxisID: "y"
         },
-        { 
-          label: "Luftfeuchtigkeit (%)", 
-          data: hums, 
+        {
+          label: "Luftfeuchtigkeit (%)",
+          data: hums,
           borderColor: "rgba(80, 160, 255, 1)",
           backgroundColor: "rgba(80, 160, 255, 0.15)",
           borderWidth: 1.5,
@@ -400,9 +376,9 @@ async function drawChart(canvasId, path, title) {
           fill: true,
           yAxisID: "y1"
         },
-        { 
-          label: "Luftdruck (hPa)", 
-          data: press, 
+        {
+          label: "Luftdruck (hPa)",
+          data: press,
           borderColor: "rgba(120, 255, 120, 1)",
           backgroundColor: "rgba(120, 255, 120, 0.15)",
           borderWidth: 1.5,
@@ -415,12 +391,12 @@ async function drawChart(canvasId, path, title) {
     },
     options: {
       responsive: true,
-      plugins: { 
-        title: { 
-          display: true, 
-          text: title, 
-          color: "#fff" 
-        } 
+      plugins: {
+        title: {
+          display: true,
+          text: title,
+          color: "#fff"
+        }
       },
       scales: {
         y: { ticks: { color: "#ccc" } },
@@ -439,7 +415,7 @@ async function loadForecast() {
   const key = "27602f1bbb8e3dd3587a1da6e3de24b6";
 
   const url =
-    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${}`;
+    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${key}`;
 
   const res = await fetch(url);
   const data = await res.json();
@@ -450,7 +426,9 @@ async function loadForecast() {
   data.list.slice(0, 10).forEach(item => {
     const d = new Date((item.dt + data.city.timezone) * 1000);
 
-    const textTime = d.toLocaleString("de-DE");
+    const textTime = d.toLocaleString("de-DE", {
+      timeZone: "UTC"
+    });
 
     const div = document.createElement("div");
     div.innerHTML =
@@ -511,7 +489,6 @@ async function loadCurrentWeather() {
 
         <img src="https://openweathermap.org/img/wn/${icon}@2x.png"
              style="width:90px; height:90px; animation: fadeIn 1s ease; filter: drop-shadow(0 0 8px #00ffff);">
-
         <div>
           <div style="font-size:32px; font-weight:bold; color:#00ffff; text-shadow:0 0 8px #00ffff;">
             ${temp}°C
@@ -525,8 +502,12 @@ async function loadCurrentWeather() {
             <b style="color:#00ffff;">Wind:</b> ${windArrow}<br>
             <b style="color:#00ffff;">Feuchtigkeit:</b> ${hum}%<br>
             <b style="color:#00ffff;">Luftdruck:</b> ${press} hPa<br>
-            <b style="color:#00ffff;">Sonnenaufgang:</b> ${new Date((data.sys.sunrise + data.timezone) * 1000).toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit"})}<br>
-            <b style="color:#00ffff;">Sonnenuntergang:</b> ${new Date((data.sys.sunset + data.timezone) * 1000).toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit"})}
+            <b style="color:#00ffff;">Sonnenaufgang:</b> 
+              ${new Date((data.sys.sunrise + data.timezone) * 1000)
+                .toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit", timeZone:"UTC"})}<br>
+            <b style="color:#00ffff;">Sonnenuntergang:</b> 
+              ${new Date((data.sys.sunset + data.timezone) * 1000)
+                .toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit", timeZone:"UTC"})}
           </div>
         </div>
       </div>
@@ -569,30 +550,3 @@ window.onload = () => {
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
