@@ -272,14 +272,10 @@ onValue(liveRef, (snap) => {
           minute: "2-digit",
           timeZone: "UTC"
         });
-
       document.getElementById("sunrise").textContent = "🌅 " + sr;
       document.getElementById("sunset").textContent = "🌇 " + ss;
     }
   }
-});
-  }
-}
 
 /* CHARTS */
 async function drawChart(canvasId, path, title) {
@@ -488,3 +484,4 @@ window.onload = () => {
 
 </body>
 </html>  
+
