@@ -222,7 +222,6 @@ onValue(liveRef, (snap) => {
   document.getElementById("live-press").textContent =
     "🌍 Luftdruck: " + d.pressure.toFixed(1) + " hPa";
 
-  // Live-Zeit
   if (d.timestamp) {
     const lt = new Date(d.timestamp * 1000)
       .toLocaleTimeString("de-DE", {
@@ -233,15 +232,13 @@ onValue(liveRef, (snap) => {
       "⏱ Aktualisiert: " + lt;
   }
 
-  // Trend
   if (lastTemp !== null) {
     if (t > lastTemp) document.getElementById("live-trend").textContent = "📈 Temperatur steigt";
     else if (t < lastTemp) document.getElementById("live-trend").textContent = "📉 Temperatur fällt";
     else document.getElementById("live-trend").textContent = "➡️ stabil";
   }
   lastTemp = t;
-
-  /* Wetter-Icon basierend auf BME280 als Hauptquelle */
+    /* Wetter-Icon basierend auf BME280 als Hauptquelle */
   let icon = "❓";
 
   const highPressure = d.pressure > 1015;
@@ -442,6 +439,7 @@ async function loadForecast() {
     box.appendChild(div);
   });
 }
+ }
 
 /* RADAR */
 function initRadar() {
@@ -502,8 +500,7 @@ onValue(ref(db, "weather/live"), snap => {
 
         <div style="font-size:16px; line-height:1.4;">
           <b style="color:#00ffff;">Feuchtigkeit:</b> ${data.humidity.toFixed(1)}%<br>
-          <
-                 <b style="color:#00ffff;">Luftdruck:</b> ${data.pressure.toFixed(1)} hPa<br>
+          <b style="color:#00ffff;">Luftdruck:</b> ${data.pressure.toFixed(1)} hPa<br>
           <b style="color:#00ffff;">Sonnenaufgang:</b> ${sunriseStr}<br>
           <b style="color:#00ffff;">Sonnenuntergang:</b> ${sunsetStr}
         </div>
@@ -541,4 +538,4 @@ window.onload = () => {
 </script>
 
 </body>
-</html>   
+</html> 
