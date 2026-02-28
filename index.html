@@ -468,39 +468,55 @@ function initRadar() {
 /* ⭐ NEON WETTERBOX – Live-Daten vom ESP32 */
 onValue(ref(db, "weather/live"), snap => {
   const data = snap.val();
-  if (!data) return;
+  if (!data || !data.openweather) return;
 
-  const icon = data.openweather.weather[0].icon;
-  const desc = data.openweather.weather[0].description;
+  const ow = data.openweather;
 
-  const temp = data.temperature;
-  const hum  = data.humidity;
-  const press = data.pressure;
+  // OpenWeather-Daten
+  const icon = ow.weather[0].icon;
+  const desc = ow.weather[0].description;
 
-  const sunrise = data.sunrise;
-  const sunset  = data.sunset;
+  const sunrise = new Date((ow.sys.sunrise + ow.timezone) * 1000)
+    .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+
+  const sunset = new Date((ow.sys.sunset + ow.timezone) * 1000)
+    .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+
+  // BME280 + OpenWeather Temperatur
+  const t_local = data.temperature;     // BME280
+  const t_ow    = data.ow_temp;         // OpenWeather
 
   document.getElementById("currentWeatherBox").innerHTML = `
     <div style="display:flex; align-items:center; gap:20px;" class="neon-glow">
 
       <img src="https://openweathermap.org/img/wn/${icon}@2x.png"
-           style="width:90px; height:90px; animation: fadeIn 1s ease; filter: drop-shadow(0 0 8px #00ffff);">
+           style="width:90px; height:90px; filter: drop-shadow(0 0 8px #00ffff);">
 
       <div>
-        <div style="font-size:32px; font-weight:bold; color:#00ffff; text-shadow:0 0 8px #00ffff;">
-          ${temp.toFixed(1)}°C
+
+        <!-- Lokale Temperatur (BME280) -->
+        <div style="font-size:32px; font-weight:bold; color:#00ffff;">
+          ${t_local.toFixed(1)}°C
         </div>
 
-        <div style="font-size:20px; margin-bottom:8px; text-shadow:0 0 6px #00ffff;">
+        <!-- OpenWeather Temperatur -->
+        <div style="font-size:18px; margin-top:-4px; color:#88ffff;">
+          OW: ${t_ow.toFixed(1)}°C
+        </div>
+
+        <!-- Beschreibung -->
+        <div style="font-size:20px; margin-bottom:8px;">
           ${desc}
         </div>
 
+        <!-- Weitere Werte -->
         <div style="font-size:16px; line-height:1.4;">
-          <b style="color:#00ffff;">Feuchtigkeit:</b> ${hum.toFixed(1)}%<br>
-          <b style="color:#00ffff;">Luftdruck:</b> ${press} hPa<br>
+          <b style="color:#00ffff;">Feuchtigkeit:</b> ${data.humidity.toFixed(1)}%<br>
+          <b style="color:#00ffff;">Luftdruck:</b> ${data.pressure.toFixed(1)} hPa<br>
           <b style="color:#00ffff;">Sonnenaufgang:</b> ${sunrise}<br>
           <b style="color:#00ffff;">Sonnenuntergang:</b> ${sunset}
         </div>
+
       </div>
     </div>
   `;
@@ -535,4 +551,5 @@ window.onload = () => {
 
 </body>
 </html>
+
 
