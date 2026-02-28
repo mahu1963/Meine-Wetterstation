@@ -222,7 +222,7 @@ onValue(liveRef, (snap) => {
   document.getElementById("live-press").textContent =
     "🌍 Luftdruck: " + d.pressure.toFixed(1) + " hPa";
 
-  /* ⭐ Live-Zeit korrekt (ruhiges Dashboard) */
+  // Live-Zeit
   if (d.timestamp) {
     const lt = new Date(d.timestamp * 1000)
       .toLocaleTimeString("de-DE", {
@@ -232,45 +232,35 @@ onValue(liveRef, (snap) => {
     document.getElementById("live-time").textContent =
       "⏱ Aktualisiert: " + lt;
   }
-  /* ⭐ Live-Zeit korrekt (ruhiges Dashboard) */
-if (d.timestamp) {
-  const lt = new Date(d.timestamp * 1000)
-    .toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-  document.getElementById("live-time").textContent =
-    "⏱ Aktualisiert: " + lt;
-}
 
-/* Trend */
-if (lastTemp !== null) {
-  if (t > lastTemp) document.getElementById("live-trend").textContent = "📈 Temperatur steigt";
-  else if (t < lastTemp) document.getElementById("live-trend").textContent = "📉 Temperatur fällt";
-  else document.getElementById("live-trend").textContent = "➡️ stabil";
-}
-lastTemp = t;
+  // Trend
+  if (lastTemp !== null) {
+    if (t > lastTemp) document.getElementById("live-trend").textContent = "📈 Temperatur steigt";
+    else if (t < lastTemp) document.getElementById("live-trend").textContent = "📉 Temperatur fällt";
+    else document.getElementById("live-trend").textContent = "➡️ stabil";
+  }
+  lastTemp = t;
 
-/* Wetter-Icon + Sunrise/Sunset */
-if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
-  const ow = d.openweather;
-  const w = ow.weather[0].main.toLowerCase();
+  // Wetter-Icon + Sunrise/Sunset
+  if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
+    const ow = d.openweather;
+    const w = ow.weather[0].main.toLowerCase();
 
-  let icon = "❓";
-  if (w.includes("clear")) icon = "☀️";
-  else if (w.includes("cloud")) icon = "☁️";
-  else if (w.includes("rain")) icon = "🌧️";
-  else if (w.includes("snow")) icon = "❄️";
+    let icon = "❓";
+    if (w.includes("clear")) icon = "☀️";
+    else if (w.includes("cloud")) icon = "☁️";
+    else if (w.includes("rain")) icon = "🌧️";
+    else if (w.includes("snow")) icon = "❄️";
 
-  document.getElementById("live-icon").textContent = icon;
-  document.getElementById("top-weather-icon").textContent = icon;
+    document.getElementById("live-icon").textContent = icon;
+    document.getElementById("top-weather-icon").textContent = icon;
+  }
 
-  /* ⭐ Sunrise/Sunset – ESP32 liefert bereits lokale Zeit */
+  // Sunrise/Sunset – direkt vom ESP32 (lokale Zeitstrings)
   if (d.sunrise && d.sunset) {
     document.getElementById("sunrise").textContent = "🌅 " + d.sunrise;
     document.getElementById("sunset").textContent = "🌇 " + d.sunset;
   }
-}
 });
 
 /* Min/Max */
@@ -306,7 +296,7 @@ async function loadHistory(path) {
     let label = "";
     let d;
 
-    /* 24h → UNIX Timestamp */
+    // 24h → UNIX Timestamp
     if (path.includes("24h")) {
       d = new Date(Number(key) * 1000);
 
@@ -320,7 +310,7 @@ async function loadHistory(path) {
       press.push(data[key].p);
     }
 
-    /* week / month / year → YYYY-MM-DD */
+    // week / month / year → YYYY-MM-DD
     else {
       const [y, m, day] = key.split("-");
       d = new Date(Number(y), Number(m) - 1, Number(day));
@@ -341,7 +331,6 @@ async function loadHistory(path) {
         label = d.getFullYear().toString();
       }
 
-      /* Min/Max Mittelwert */
       const t = (data[key].t_min + data[key].t_max) / 2;
       const h = (data[key].h_min + data[key].h_max) / 2;
       const p = (data[key].p_min + data[key].p_max) / 2;
@@ -412,10 +401,10 @@ async function drawChart(canvasId, path, title) {
   });
 }
 
-/* FORECAST */
+/* FORECAST – Koordinaten wie im ESP32 */
 async function loadForecast() {
-  const lat = 47.43599;
-  const lon = 16.25597;
+  const lat = 47.4027;
+  const lon = 16.2604;
   const key = "27602f1bbb8e3dd3587a1da6e3de24b6";
 
   const url =
@@ -444,16 +433,16 @@ async function loadForecast() {
   });
 }
 
-/* RADAR */
+/* RADAR – Koordinaten wie im ESP32 */
 function initRadar() {
-  const map = L.map('radar').setView([47.43599, 16.25597], 8);
+  const map = L.map('radar').setView([47.4027, 16.2604], 8);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap'
   }).addTo(map);
 
-  L.marker([47.43599, 16.25597]).addTo(map)
+  L.marker([47.4027, 16.2604]).addTo(map)
     .bindPopup("Mein Standort")
     .openPopup();
 
@@ -465,26 +454,21 @@ function initRadar() {
   ).addTo(map);
 }
 
-/* ⭐ NEON WETTERBOX – Live-Daten vom ESP32 */
+/* NEON WETTERBOX – Live-Daten vom ESP32 */
 onValue(ref(db, "weather/live"), snap => {
   const data = snap.val();
   if (!data || !data.openweather) return;
 
   const ow = data.openweather;
 
-  // OpenWeather-Daten
   const icon = ow.weather[0].icon;
   const desc = ow.weather[0].description;
 
-  const sunrise = new Date((ow.sys.sunrise + ow.timezone) * 1000)
-    .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  const t_local = data.temperature;
+  const t_ow    = data.ow_temp;
 
-  const sunset = new Date((ow.sys.sunset + ow.timezone) * 1000)
-    .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-
-  // BME280 + OpenWeather Temperatur
-  const t_local = data.temperature;     // BME280
-  const t_ow    = data.ow_temp;         // OpenWeather
+  const sunriseStr = data.sunrise || "--:--";
+  const sunsetStr  = data.sunset || "--:--";
 
   document.getElementById("currentWeatherBox").innerHTML = `
     <div style="display:flex; align-items:center; gap:20px;" class="neon-glow">
@@ -494,27 +478,23 @@ onValue(ref(db, "weather/live"), snap => {
 
       <div>
 
-        <!-- Lokale Temperatur (BME280) -->
         <div style="font-size:32px; font-weight:bold; color:#00ffff;">
           ${t_local.toFixed(1)}°C
         </div>
 
-        <!-- OpenWeather Temperatur -->
         <div style="font-size:18px; margin-top:-4px; color:#88ffff;">
           OW: ${t_ow.toFixed(1)}°C
         </div>
 
-        <!-- Beschreibung -->
         <div style="font-size:20px; margin-bottom:8px;">
           ${desc}
         </div>
 
-        <!-- Weitere Werte -->
         <div style="font-size:16px; line-height:1.4;">
           <b style="color:#00ffff;">Feuchtigkeit:</b> ${data.humidity.toFixed(1)}%<br>
           <b style="color:#00ffff;">Luftdruck:</b> ${data.pressure.toFixed(1)} hPa<br>
-          <b style="color:#00ffff;">Sonnenaufgang:</b> ${sunrise}<br>
-          <b style="color:#00ffff;">Sonnenuntergang:</b> ${sunset}
+          <b style="color:#00ffff;">Sonnenaufgang:</b> ${sunriseStr}<br>
+          <b style="color:#00ffff;">Sonnenuntergang:</b> ${sunsetStr}
         </div>
 
       </div>
@@ -551,5 +531,3 @@ window.onload = () => {
 
 </body>
 </html>
-
-
