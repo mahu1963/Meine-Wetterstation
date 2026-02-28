@@ -306,108 +306,56 @@ async function loadHistory(path) {
   const hums = [];
   const press = [];
 
-  const timestamps = Object.keys(data).sort((a, b) => Number(a) - Number(b));
+  const keys = Object.keys(data).sort();
 
-  for (const ts of timestamps) {
-    const d = new Date(ts * 1000);
+  for (const key of keys) {
+
     let label = "";
+    let d;
 
+    // 24h → UNIX Timestamp
     if (path.includes("24h")) {
+      d = new Date(Number(key) * 1000);
       label = d.toLocaleTimeString("de-DE", {
         hour: "2-digit",
-        minute: "2-digit",
-        timeZone: "UTC"
-      });
-    } else if (path.includes("week")) {
-      label = d.toLocaleDateString("de-DE", {
-        weekday: "short",
-        timeZone: "UTC"
-      }).replace(".", "");
-    } else if (path.includes("month")) {
-      label = d.toLocaleDateString("de-DE", {
-        month: "short",
-        timeZone: "UTC"
-      }).replace(".", "");
-    } else if (path.includes("year")) {
-      label = d.toLocaleDateString("de-DE", {
-        year: "numeric",
-        timeZone: "UTC"
+        minute: "2-digit"
       });
     }
 
+    // week/month/year → YYYY-MM-DD
+    else {
+      const [y, m, day] = key.split("-");
+      d = new Date(Number(y), Number(m) - 1, Number(day));
+
+      if (path.includes("week")) {
+        label = d.toLocaleDateString("de-DE", {
+          weekday: "short"
+        }).replace(".", "");
+      }
+
+      else if (path.includes("month")) {
+        label = d.toLocaleDateString("de-DE", {
+          day: "2-digit"
+        });
+      }
+
+      else if (path.includes("year")) {
+        label = d.toLocaleDateString("de-DE", {
+          month: "short"
+        }).replace(".", "");
+      }
+    }
+
     labels.push(label);
-    temps.push(data[ts].t);
-    hums.push(data[ts].h);
-    press.push(data[ts].p);
+
+    // Min/Max oder einfache Werte?
+    temps.push(data[key].t ?? (data[key].t_min + data[key].t_max) / 2);
+    hums.push(data[key].h ?? (data[key].h_min + data[key].h_max) / 2);
+    press.push(data[key].p ?? (data[key].p_min + data[key].p_max) / 2);
   }
 
   return { labels, temps, hums, press };
 }
-
-/* CHARTS */
-async function drawChart(canvasId, path, title) {
-  const ctx = document.getElementById(canvasId).getContext("2d");
-  const { labels, temps, hums, press } = await loadHistory(path);
-
-  new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: "Temperatur (°C)",
-          data: temps,
-          borderColor: "rgba(255, 99, 99, 1)",
-          backgroundColor: "rgba(255, 99, 99, 0.15)",
-          borderWidth: 1.5,
-          tension: 0.35,
-          pointRadius: 0,
-          fill: true,
-          yAxisID: "y"
-        },
-        {
-          label: "Luftfeuchtigkeit (%)",
-          data: hums,
-          borderColor: "rgba(80, 160, 255, 1)",
-          backgroundColor: "rgba(80, 160, 255, 0.15)",
-          borderWidth: 1.5,
-          tension: 0.35,
-          pointRadius: 0,
-          fill: true,
-          yAxisID: "y1"
-        },
-        {
-          label: "Luftdruck (hPa)",
-          data: press,
-          borderColor: "rgba(120, 255, 120, 1)",
-          backgroundColor: "rgba(120, 255, 120, 0.15)",
-          borderWidth: 1.5,
-          tension: 0.35,
-          pointRadius: 0,
-          fill: true,
-          yAxisID: "y2"
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: {
-          display: true,
-          text: title,
-          color: "#fff"
-        }
-      },
-      scales: {
-        y: { ticks: { color: "#ccc" } },
-        y1: { ticks: { color: "#ccc" } },
-        y2: { ticks: { color: "#ccc" } },
-        x: { ticks: { color: "#ccc" } }
-      }
-    }
-  });
-}
-
 /* FORECAST */
 async function loadForecast() {
   const lat = 47.43599;
@@ -566,5 +514,6 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
