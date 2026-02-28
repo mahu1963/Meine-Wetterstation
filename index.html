@@ -370,41 +370,62 @@ async function loadHistory(path) {
 async function drawChart(canvasId, path, title) {
   const ctx = document.getElementById(canvasId).getContext("2d");
 
-  const { labels, temps, hums, press } = await loadHistory(path);
+  const { labels, temps, hums, press, tMin, tMax } = await loadHistory(path);
 
-  if (!labels.length) {
-    console.warn("Keine Daten für", path);
-    return;
-  }
+  if (!labels.length) return;
 
   new Chart(ctx, {
     type: "line",
     data: {
       labels: labels,
       datasets: [
+
+        /* Min/Max-Band (rot transparent) */
+        {
+          label: "Temp Min",
+          data: tMin,
+          borderColor: "rgba(255,0,0,0)",
+          backgroundColor: "rgba(255,0,0,0.15)",
+          fill: "+1",
+          tension: 0.4
+        },
+        {
+          label: "Temp Max",
+          data: tMax,
+          borderColor: "rgba(255,0,0,0)",
+          backgroundColor: "rgba(255,0,0,0.15)",
+          fill: "-1",
+          tension: 0.4
+        },
+
+        /* Temperatur = ROT */
         {
           label: "Temperatur (°C)",
           data: temps,
-          borderColor: "#00ffff",
-          backgroundColor: "rgba(0,255,255,0.2)",
+          borderColor: "rgb(255,0,0)",
+          backgroundColor: "rgba(255,0,0,0.25)",
           borderWidth: 2,
-          tension: 0.3
+          tension: 0.4
         },
+
+        /* Feuchtigkeit = GRÜN */
         {
           label: "Feuchtigkeit (%)",
           data: hums,
-          borderColor: "#ffff00",
-          backgroundColor: "rgba(255,255,0,0.2)",
+          borderColor: "rgb(0,200,0)",
+          backgroundColor: "rgba(0,200,0,0.25)",
           borderWidth: 2,
-          tension: 0.3
+          tension: 0.4
         },
+
+        /* Luftdruck = BLAU */
         {
           label: "Luftdruck (hPa)",
           data: press,
-          borderColor: "#ff8800",
-          backgroundColor: "rgba(255,136,0,0.2)",
+          borderColor: "rgb(0,120,255)",
+          backgroundColor: "rgba(0,120,255,0.25)",
           borderWidth: 2,
-          tension: 0.3,
+          tension: 0.4,
           yAxisID: "y2"
         }
       ]
@@ -412,27 +433,13 @@ async function drawChart(canvasId, path, title) {
     options: {
       responsive: true,
       plugins: {
-        title: {
-          display: true,
-          text: title,
-          color: "#fff",
-          font: { size: 18 }
-        },
-        legend: {
-          labels: { color: "#fff" }
-        }
+        legend: { labels: { color: "#fff" } },
+        title: { display: true, text: title, color: "#fff" }
       },
       scales: {
-        x: {
-          ticks: { color: "#fff" }
-        },
-        y: {
-          ticks: { color: "#fff" }
-        },
-        y2: {
-          position: "right",
-          ticks: { color: "#fff" }
-        }
+        x: { ticks: { color: "#fff" } },
+        y: { ticks: { color: "#fff" } },
+        y2: { position: "right", ticks: { color: "#fff" } }
       }
     }
   });
@@ -595,6 +602,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
