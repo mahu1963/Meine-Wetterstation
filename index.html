@@ -365,7 +365,79 @@ async function loadHistory(path) {
 
   return { labels, temps, hums, press };
 }
-/* FORECAST */
+
+  /* CHART ZEICHNEN */
+async function drawChart(canvasId, path, title) {
+  const ctx = document.getElementById(canvasId).getContext("2d");
+
+  const { labels, temps, hums, press } = await loadHistory(path);
+
+  if (!labels.length) {
+    console.warn("Keine Daten für", path);
+    return;
+  }
+
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: "Temperatur (°C)",
+          data: temps,
+          borderColor: "#00ffff",
+          backgroundColor: "rgba(0,255,255,0.2)",
+          borderWidth: 2,
+          tension: 0.3
+        },
+        {
+          label: "Feuchtigkeit (%)",
+          data: hums,
+          borderColor: "#ffff00",
+          backgroundColor: "rgba(255,255,0,0.2)",
+          borderWidth: 2,
+          tension: 0.3
+        },
+        {
+          label: "Luftdruck (hPa)",
+          data: press,
+          borderColor: "#ff8800",
+          backgroundColor: "rgba(255,136,0,0.2)",
+          borderWidth: 2,
+          tension: 0.3,
+          yAxisID: "y2"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: title,
+          color: "#fff",
+          font: { size: 18 }
+        },
+        legend: {
+          labels: { color: "#fff" }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: "#fff" }
+        },
+        y: {
+          ticks: { color: "#fff" }
+        },
+        y2: {
+          position: "right",
+          ticks: { color: "#fff" }
+        }
+      }
+    }
+  });
+}
+  /* FORECAST */
 async function loadForecast() {
   const lat = 47.43599;
   const lon = 16.25597;
@@ -523,6 +595,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
