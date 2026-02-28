@@ -240,8 +240,7 @@ onValue(liveRef, (snap) => {
     else document.getElementById("live-trend").textContent = "➡️ stabil";
   }
   lastTemp = t;
-
-  /* Wetter-Icon basierend auf BME280 als Hauptquelle */
+    /* Wetter-Icon basierend auf BME280 als Hauptquelle */
   let icon = "❓";
 
   // 1) BME280-basierte Einschätzung
@@ -416,7 +415,6 @@ async function drawChart(canvasId, path, title) {
     }
   });
 }
-
 /* FORECAST – Koordinaten wie im ESP32 */
 async function loadForecast() {
   const lat = 47.4027;
@@ -502,4 +500,48 @@ onValue(ref(db, "weather/live"), snap => {
           OW: ${t_ow.toFixed(1)}°C
         </div>
 
-        <div style
+        <div style="font-size:20px; margin-bottom:8px;">
+          ${desc}
+        </div>
+
+        <div style="font-size:16px; line-height:1.4;">
+          <b style="color:#00ffff;">Feuchtigkeit:</b> ${data.humidity.toFixed(1)}%<br>
+          <b style="color:#00ffff;">Luftdruck:</b> ${data.pressure.toFixed(1)} hPa<br>
+          <b style="color:#00ffff;">Sonnenaufgang:</b> ${sunriseStr}<br>
+          <b style="color:#00ffff;">Sonnenuntergang:</b> ${sunsetStr}
+        </div>
+
+      </div>
+    </div>
+  `;
+});
+
+/* TABS */
+window.showTab = function(name) {
+  document.getElementById("24h").classList.add("hidden");
+  document.getElementById("week").classList.add("hidden");
+  document.getElementById("month").classList.add("hidden");
+  document.getElementById("year").classList.add("hidden");
+
+  const tab = document.getElementById(name);
+  tab.classList.remove("hidden");
+
+  if (name === "24h") drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
+  if (name === "week") drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
+  if (name === "month") drawChart("chartMonth", "weather/history/month", "Letzter Monat");
+  if (name === "year") drawChart("chartYear", "weather/history/year", "Letztes Jahr");
+};
+
+/* START */
+window.onload = () => {
+  drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
+  drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
+  drawChart("chartMonth", "weather/history/month", "Letzter Monat");
+  drawChart("chartYear", "weather/history/year", "Letztes Jahr");
+  initRadar();
+  loadForecast();
+};
+</script>
+
+</body>
+</html>  
