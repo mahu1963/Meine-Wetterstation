@@ -313,16 +313,21 @@ async function loadHistory(path) {
     let label = "";
     let d;
 
-    // 24h → UNIX Timestamp
+    /* 24h → UNIX Timestamp */
     if (path.includes("24h")) {
       d = new Date(Number(key) * 1000);
+
       label = d.toLocaleTimeString("de-DE", {
         hour: "2-digit",
         minute: "2-digit"
       });
+      
+      temps.push(data[key].t);
+      hums.push(data[key].h);
+      press.push(data[key].p);
     }
 
-    // week/month/year → YYYY-MM-DD
+    /* week / month / year → YYYY-MM-DD */
     else {
       const [y, m, day] = key.split("-");
       d = new Date(Number(y), Number(m) - 1, Number(day));
@@ -344,14 +349,18 @@ async function loadHistory(path) {
           month: "short"
         }).replace(".", "");
       }
+
+      /* Min/Max Mittelwert */
+      const t = (data[key].t_min + data[key].t_max) / 2;
+      const h = (data[key].h_min + data[key].h_max) / 2;
+      const p = (data[key].p_min + data[key].p_max) / 2;
+
+      temps.push(t);
+      hums.push(h);
+      press.push(p);
     }
 
     labels.push(label);
-
-    // Min/Max oder einfache Werte?
-    temps.push(data[key].t ?? (data[key].t_min + data[key].t_max) / 2);
-    hums.push(data[key].h ?? (data[key].h_min + data[key].h_max) / 2);
-    press.push(data[key].p ?? (data[key].p_min + data[key].p_max) / 2);
   }
 
   return { labels, temps, hums, press };
@@ -514,6 +523,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
