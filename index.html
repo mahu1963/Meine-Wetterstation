@@ -286,12 +286,7 @@ if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
 // Icon setzen
 document.getElementById("live-icon").textContent = icon;
 document.getElementById("top-weather-icon").textContent = icon;
-
-// Sunrise/Sunset – direkt vom ESP32 (lokale Zeitstrings)
-if (d.sunrise && d.sunset) {
-  document.getElementById("sunrise").textContent = "🌅 " + d.sunrise;
-  document.getElementById("sunset").textContent = "🌇 " + d.sunset;
-}
+  
   // Sunrise/Sunset – direkt vom ESP32 (lokale Zeitstrings)
   if (d.sunrise && d.sunset) {
     document.getElementById("sunrise").textContent = "🌅 " + d.sunrise;
@@ -567,4 +562,5 @@ window.onload = () => {
 
 </body>
 </html>
+
 
