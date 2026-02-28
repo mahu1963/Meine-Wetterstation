@@ -531,23 +531,8 @@ window.onload = () => {
   initRadar();
   loadForecast();
 };
-});
-
-/* TABS */
-window.showTab = function(name) {
-  document.getElementById("24h").classList.add("hidden");
-  document.getElementById("week").classList.add("hidden");
-  document.getElementById("month").classList.add("hidden");
-  document.getElementById("year").classList.add("hidden");
-
-  const tab = document.getElementById(name);
-  tab.classList.remove("hidden");
-
-  if (name === "24h") drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
-  if (name === "week") drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
-  if (name === "month") drawChart("chartMonth", "weather/history/month", "Letzter Monat");
-  if (name === "year") drawChart("chartYear", "weather/history/year", "Letztes Jah
 </script>
 
 </body>
-</html>  
+</html>
+
