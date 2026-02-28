@@ -256,6 +256,42 @@ onValue(liveRef, (snap) => {
     document.getElementById("top-weather-icon").textContent = icon;
   }
 
+  /* Wetter-Icon basierend auf BME280 als Hauptquelle */
+let icon = "❓";
+
+// 1) BME280-basierte Einschätzung
+const highPressure = d.pressure > 1015;
+const lowHumidity = d.humidity < 80;
+const cooling = lastTemp !== null && t < lastTemp;
+
+if (highPressure && lowHumidity && cooling) {
+  icon = "☀️"; // klarer Himmel
+}
+
+// 2) OpenWeather nur ergänzend und nur wenn plausibel
+if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
+  const ow = d.openweather;
+  const owTemp = d.ow_temp;
+  const diff = Math.abs(owTemp - t);
+
+  if (diff <= 3) {
+    const w = ow.weather[0].main.toLowerCase();
+    if (w.includes("clear")) icon = "☀️";
+    else if (w.includes("cloud")) icon = "☁️";
+    else if (w.includes("rain")) icon = "🌧️";
+    else if (w.includes("snow")) icon = "❄️";
+  }
+}
+
+// Icon setzen
+document.getElementById("live-icon").textContent = icon;
+document.getElementById("top-weather-icon").textContent = icon;
+
+// Sunrise/Sunset – direkt vom ESP32 (lokale Zeitstrings)
+if (d.sunrise && d.sunset) {
+  document.getElementById("sunrise").textContent = "🌅 " + d.sunrise;
+  document.getElementById("sunset").textContent = "🌇 " + d.sunset;
+}
   // Sunrise/Sunset – direkt vom ESP32 (lokale Zeitstrings)
   if (d.sunrise && d.sunset) {
     document.getElementById("sunrise").textContent = "🌅 " + d.sunrise;
@@ -531,3 +567,4 @@ window.onload = () => {
 
 </body>
 </html>
+
