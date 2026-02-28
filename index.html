@@ -338,16 +338,16 @@ async function loadHistory(path) {
         }).replace(".", "");
       }
 
+      /* Monat → Jan, Feb, Mär … */
       else if (path.includes("month")) {
-        label = d.toLocaleDateString("de-DE", {
-          day: "2-digit"
-        });
+      label = d.toLocaleDateString("de-DE", {
+       month: "short"
+      }).replace(".", "");
       }
 
+      /* Jahr → 2026, 2027, 2028 … */
       else if (path.includes("year")) {
-        label = d.toLocaleDateString("de-DE", {
-          month: "short"
-        }).replace(".", "");
+      label = d.getFullYear().toString();
       }
 
       /* Min/Max Mittelwert */
@@ -595,6 +595,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
