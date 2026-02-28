@@ -241,50 +241,38 @@ onValue(liveRef, (snap) => {
   }
   lastTemp = t;
 
- /* Wetter-Icon basierend auf BME280 als Hauptquelle */
-let icon = "❓";
+  /* Wetter-Icon basierend auf BME280 als Hauptquelle */
+  let icon = "❓";
 
-// 1) BME280-basierte Einschätzung
-const highPressure = d.pressure > 1015;
-const lowHumidity = d.humidity < 80;
-const cooling = lastTemp !== null && t < lastTemp;
+  // 1) BME280-basierte Einschätzung
+  const highPressure = d.pressure > 1015;
+  const lowHumidity = d.humidity < 80;
+  const cooling = lastTemp !== null && t < lastTemp;
 
-if (highPressure && lowHumidity && cooling) {
-  icon = "☀️"; // klarer Himmel
-}
-
-// 2) OpenWeather nur ergänzend und nur wenn plausibel
-if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
-  const ow = d.openweather;
-  const owTemp = d.ow_temp;
-  const diff = Math.abs(owTemp - t);
-
-  if (diff <= 3) {
-    const w = ow.weather[0].main.toLowerCase();
-    if (w.includes("clear")) icon = "☀️";
-    else if (w.includes("cloud")) icon = "☁️";
-    else if (w.includes("rain")) icon = "🌧️";
-    else if (w.includes("snow")) icon = "❄️";
+  if (highPressure && lowHumidity && cooling) {
+    icon = "☀️"; // klarer Himmel
   }
-}
 
-// Icon setzen
-document.getElementById("live-icon").textContent = icon;
-document.getElementById("top-weather-icon").textContent = icon;
+  // 2) OpenWeather nur ergänzend und nur wenn plausibel
+  if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
+    const ow = d.openweather;
+    const owTemp = d.ow_temp;
+    const diff = Math.abs(owTemp - t);
 
-// Sunrise/Sunset – direkt vom ESP32 (lokale Zeitstrings)
-if (d.sunrise && d.sunset) {
-  document.getElementById("sunrise").textContent = "🌅 " + d.sunrise;
-  document.getElementById("sunset").textContent = "🌇 " + d.sunset;
-}
+    if (diff <= 3) {
+      const w = ow.weather[0].main.toLowerCase();
+      if (w.includes("clear")) icon = "☀️";
+      else if (w.includes("cloud")) icon = "☁️";
+      else if (w.includes("rain")) icon = "🌧️";
+      else if (w.includes("snow")) icon = "❄️";
+    }
+  }
 
+  // Icon setzen
+  document.getElementById("live-icon").textContent = icon;
+  document.getElementById("top-weather-icon").textContent = icon;
 
-
-// Icon setzen
-document.getElementById("live-icon").textContent = icon;
-document.getElementById("top-weather-icon").textContent = icon;
-  
-  // Sunrise/Sunset – direkt vom ESP32 (lokale Zeitstrings)
+  // Sunrise/Sunset – direkt vom ESP32
   if (d.sunrise && d.sunset) {
     document.getElementById("sunrise").textContent = "🌅 " + d.sunrise;
     document.getElementById("sunset").textContent = "🌇 " + d.sunset;
@@ -514,51 +502,4 @@ onValue(ref(db, "weather/live"), snap => {
           OW: ${t_ow.toFixed(1)}°C
         </div>
 
-        <div style="font-size:20px; margin-bottom:8px;">
-          ${desc}
-        </div>
-
-        <div style="font-size:16px; line-height:1.4;">
-          <b style="color:#00ffff;">Feuchtigkeit:</b> ${data.humidity.toFixed(1)}%<br>
-          <b style="color:#00ffff;">Luftdruck:</b> ${data.pressure.toFixed(1)} hPa<br>
-          <b style="color:#00ffff;">Sonnenaufgang:</b> ${sunriseStr}<br>
-          <b style="color:#00ffff;">Sonnenuntergang:</b> ${sunsetStr}
-        </div>
-
-      </div>
-    </div>
-  `;
-});
-
-/* TABS */
-window.showTab = function(name) {
-  document.getElementById("24h").classList.add("hidden");
-  document.getElementById("week").classList.add("hidden");
-  document.getElementById("month").classList.add("hidden");
-  document.getElementById("year").classList.add("hidden");
-
-  const tab = document.getElementById(name);
-  tab.classList.remove("hidden");
-
-  if (name === "24h") drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
-  if (name === "week") drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
-  if (name === "month") drawChart("chartMonth", "weather/history/month", "Letzter Monat");
-  if (name === "year") drawChart("chartYear", "weather/history/year", "Letztes Jahr");
-};
-
-/* START */
-window.onload = () => {
-  drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
-  drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
-  drawChart("chartMonth", "weather/history/month", "Letzter Monat");
-  drawChart("chartYear", "weather/history/year", "Letztes Jahr");
-  initRadar();
-  loadForecast();
-};
-</script>
-
-</body>
-</html>
-
-
-
+        <div style
