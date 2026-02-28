@@ -432,14 +432,12 @@ async function loadForecast() {
     });
 
     const div = document.createElement("div");
-    div.innerHTML =
-      `<b>${textTime}</b><br>
-       🌡 ${item.main.temp.toFixed(1)}°C<br>
-       🌦 ${item.weather[0].description}<br><br>`;
-    box.appendChild(div);
+  div.innerHTML =
+    `<b>${textTime}</b><br>
+     🌡 ${item.main.temp.toFixed(1)}°C<br>
+     🌦 ${item.weather[0].description}<br><br>`;
+  box.appendChild(div);
   });
-}
- }
 }
 
 /* RADAR */
@@ -540,3 +538,4 @@ window.onload = () => {
 
 </body>
 </html>
+
