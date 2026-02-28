@@ -495,83 +495,47 @@ function initRadar() {
     { opacity: 0.6 }
   ).addTo(map);
 }
-/* ⭐ NEON WETTERBOX */
-async function loadCurrentWeather() {
-  const url = `https://api.openweathermap.org/data/2.5/weather?lat=47.43599&lon=16.25597&units=metric&lang=de&appid=27602f1bbb8e3dd3587a1da6e3de24b6`;
 
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
+/* ⭐ NEON WETTERBOX – Live-Daten vom ESP32 */
+onValue(ref(db, "weather/live"), snap => {
+  const data = snap.val();
+  if (!data) return;
 
-    // Temperatur robust ermitteln
-    let temp = null;
+  const icon = data.openweather.weather[0].icon;
+  const desc = data.openweather.weather[0].description;
 
-    if (data.main && data.main.temp !== undefined) {
-      temp = Math.round(data.main.temp);
-    }
+  const temp = data.temperature;
+  const hum  = data.humidity;
+  const press = data.pressure;
 
-    if (temp === null && lastTemp !== null) {
-      temp = Math.round(lastTemp);
-    }
+  const sunrise = data.sunrise;
+  const sunset  = data.sunset;
 
-    if (temp === null) {
-      temp = "--";
-    }
+  document.getElementById("currentWeatherBox").innerHTML = `
+    <div style="display:flex; align-items:center; gap:20px;" class="neon-glow">
 
-    const icon = data.weather[0].icon;
-    const desc = data.weather[0].description;
+      <img src="https://openweathermap.org/img/wn/${icon}@2x.png"
+           style="width:90px; height:90px; animation: fadeIn 1s ease; filter: drop-shadow(0 0 8px #00ffff);">
 
-    const hum = data.main.humidity;
-    const wind = data.wind.speed;
-    const windDeg = data.wind.deg;
-    const press = data.main.pressure;
+      <div>
+        <div style="font-size:32px; font-weight:bold; color:#00ffff; text-shadow:0 0 8px #00ffff;">
+          ${temp.toFixed(1)}°C
+        </div>
 
-    const windArrow = `
-      <span style="display:inline-block; transform: rotate(${windDeg}deg); font-size:22px; margin-right:6px;">
-        ➤
-      </span>
-      <span>${wind} m/s</span>
-    `;
+        <div style="font-size:20px; margin-bottom:8px; text-shadow:0 0 6px #00ffff;">
+          ${desc}
+        </div>
 
-    document.getElementById("currentWeatherBox").innerHTML = `
-      <div style="display:flex; align-items:center; gap:20px;" class="neon-glow">
-
-        <img src="https://openweathermap.org/img/wn/${icon}@2x.png"
-             style="width:90px; height:90px; animation: fadeIn 1s ease; filter: drop-shadow(0 0 8px #00ffff);">
-
-        <div>
-          <div style="font-size:32px; font-weight:bold; color:#00ffff; text-shadow:0 0 8px #00ffff;">
-            ${temp}°C
-          </div>
-
-          <div style="font-size:20px; margin-bottom:8px; text-shadow:0 0 6px #00ffff;">
-            ${desc}
-          </div>
-
-          <div style="font-size:16px; line-height:1.4;">
-            <b style="color:#00ffff;">Wind:</b> ${windArrow}<br>
-            <b style="color:#00ffff;">Feuchtigkeit:</b> ${hum}%<br>
-            <b style="color:#00ffff;">Luftdruck:</b> ${press} hPa<br>
-            <b style="color:#00ffff;">Sonnenaufgang:</b> 
-              ${new Date((data.sys.sunrise + data.timezone) * 1000)
-                .toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit", timeZone:"UTC"})}<br>
-            <b style="color:#00ffff;">Sonnenuntergang:</b> 
-              ${new Date((data.sys.sunset + data.timezone) * 1000)
-                .toLocaleTimeString("de-DE", {hour:"2-digit", minute:"2-digit", timeZone:"UTC"})}
-          </div>
+        <div style="font-size:16px; line-height:1.4;">
+          <b style="color:#00ffff;">Feuchtigkeit:</b> ${hum.toFixed(1)}%<br>
+          <b style="color:#00ffff;">Luftdruck:</b> ${press} hPa<br>
+          <b style="color:#00ffff;">Sonnenaufgang:</b> ${sunrise}<br>
+          <b style="color:#00ffff;">Sonnenuntergang:</b> ${sunset}
         </div>
       </div>
-    `;
-  } catch (e) {
-    document.getElementById("currentWeatherBox").innerHTML =
-      "Fehler beim Laden des Wetters";
-  }
-}
-
-             
-
-loadCurrentWeather();
-setInterval(loadCurrentWeather, 600000);
+    </div>
+  `;
+});
 
 /* TABS */
 window.showTab = function(name) {
@@ -602,6 +566,7 @@ window.onload = () => {
 
 </body>
 </html>
+
 
 
 
