@@ -262,32 +262,21 @@ onValue(liveRef, (snap) => {
   lastTemp = t;
 
   /* Wetter-Icon */
-  let icon = "❓";
+  
+    let icon = "❓";
 
-  const highPressure = d.pressure > 1015;
-  const lowHumidity = d.humidity < 80;
-  const cooling = lastTemp !== null && t < lastTemp;
+    if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
+    const w = d.openweather.weather[0].main.toLowerCase();
 
-  if (highPressure && lowHumidity && cooling) {
-    icon = "☀️";
-  }
+    if (w.includes("clear")) icon = "☀️";
+    else if (w.includes("cloud")) icon = "☁️";
+    else if (w.includes("rain")) icon = "🌧️";
+    else if (w.includes("snow")) icon = "❄️";
+    else icon = "🌡️"; // fallback
+}
 
-  if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
-    const ow = d.openweather;
-    const owTemp = d.ow_temp;
-    const diff = Math.abs(owTemp - t);
-
-    if (diff <= 3) {
-      const w = ow.weather[0].main.toLowerCase();
-      if (w.includes("clear")) icon = "☀️";
-      else if (w.includes("cloud")) icon = "☁️";
-      else if (w.includes("rain")) icon = "🌧️";
-      else if (w.includes("snow")) icon = "❄️";
-    }
-  }
-
-  document.getElementById("live-icon").textContent = icon;
-  document.getElementById("top-weather-icon").textContent = icon;
+document.getElementById("live-icon").textContent = icon;
+document.getElementById("top-weather-icon").textContent = icon;
 
   /* ⭐ Sonnenzeiten jetzt korrekt */
   if (d.openweather) {
@@ -550,3 +539,4 @@ window.onload = () => {
 
 </body>
 </html>  
+
