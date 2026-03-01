@@ -203,6 +203,28 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
+/* ⭐ AUTOMATISCHE SOMMERZEIT (EU / ÖSTERREICH) */
+function isDST(date = new Date()) {
+  const year = date.getFullYear();
+  const march = new Date(year, 2, 31);
+  const lastSundayMarch = new Date(year, 2, 31 - march.getDay());
+  const october = new Date(year, 9, 31);
+  const lastSundayOctober = new Date(year, 9, 31 - october.getDay());
+  const dstStart = new Date(year, 2, lastSundayMarch.getDate(), 2, 0, 0);
+  const dstEnd   = new Date(year, 9, lastSundayOctober.getDate(), 3, 0, 0);
+  return date >= dstStart && date < dstEnd;
+}
+
+function getLocalOffsetSeconds() {
+  return isDST() ? 7200 : 3600;
+}
+
+function formatLocalSunTime(utcSeconds) {
+  const offset = getLocalOffsetSeconds();
+  return new Date((utcSeconds + offset) * 1000)
+    .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+}
+
 /* Live-Werte */
 const liveRef = ref(db, "weather/live");
 let lastTemp = null;
@@ -238,7 +260,8 @@ onValue(liveRef, (snap) => {
     else document.getElementById("live-trend").textContent = "➡️ stabil";
   }
   lastTemp = t;
-    /* Wetter-Icon basierend auf BME280 als Hauptquelle */
+
+  /* Wetter-Icon */
   let icon = "❓";
 
   const highPressure = d.pressure > 1015;
@@ -266,28 +289,14 @@ onValue(liveRef, (snap) => {
   document.getElementById("live-icon").textContent = icon;
   document.getElementById("top-weather-icon").textContent = icon;
 
-  if (d.sunrise && d.sunset) {
-    document.getElementById("sunrise").textContent = "🌅 " + d.sunrise;
-    document.getElementById("sunset").textContent = "🌇 " + d.sunset;
+  /* ⭐ Sonnenzeiten jetzt korrekt */
+  if (d.openweather) {
+    document.getElementById("sunrise").textContent =
+      "🌅 " + formatLocalSunTime(d.openweather.sys.sunrise);
+    document.getElementById("sunset").textContent =
+      "🌇 " + formatLocalSunTime(d.openweather.sys.sunset);
   }
 });
-
-/* Min/Max */
-async function updateMinMax() {
-  const snap = await get(ref(db, "weather/history/24h"));
-  const data = snap.val();
-  if (!data) return;
-
-  const temps = Object.values(data).map(v => v.t);
-  const min = Math.min(...temps).toFixed(1);
-  const max = Math.max(...temps).toFixed(1);
-
-  document.getElementById("minmax").textContent =
-    "Min/Max (24h): " + min + "°C / " + max + "°C";
-}
-setInterval(updateMinMax, 60000);
-updateMinMax();
-
 /* HISTORY LADEN */
 async function loadHistory(path) {
   const snap = await get(ref(db, path));
@@ -353,7 +362,7 @@ async function loadHistory(path) {
   return { labels, temps, hums, press };
 }
 
-/* CHART ZEICHNEN */
+/* CHART ZEICHNEN — dünne Linien, keine Punkte */
 async function drawChart(canvasId, path, title) {
   const ctx = document.getElementById(canvasId).getContext("2d");
 
@@ -370,25 +379,28 @@ async function drawChart(canvasId, path, title) {
           label: "Temperatur (°C)",
           data: temps,
           borderColor: "rgb(255,0,0)",
-          backgroundColor: "rgba(255,0,0,0.25)",
-          borderWidth: 2,
-          tension: 0.4
+          backgroundColor: "rgba(255,0,0,0.15)",
+          borderWidth: 1,
+          tension: 0.4,
+          pointRadius: 0
         },
         {
           label: "Feuchtigkeit (%)",
           data: hums,
           borderColor: "rgb(0,200,0)",
-          backgroundColor: "rgba(0,200,0,0.25)",
-          borderWidth: 2,
-          tension: 0.4
+          backgroundColor: "rgba(0,200,0,0.15)",
+          borderWidth: 1,
+          tension: 0.4,
+          pointRadius: 0
         },
         {
           label: "Luftdruck (hPa)",
           data: press,
           borderColor: "rgb(0,120,255)",
-          backgroundColor: "rgba(0,120,255,0.25)",
-          borderWidth: 2,
+          backgroundColor: "rgba(0,120,255,0.15)",
+          borderWidth: 1,
           tension: 0.4,
+          pointRadius: 0,
           yAxisID: "y2"
         }
       ]
@@ -408,7 +420,7 @@ async function drawChart(canvasId, path, title) {
   });
 }
 
-/* FORECAST */
+/* FORECAST — repariert */
 async function loadForecast() {
   const lat = 47.4027;
   const lon = 16.2604;
@@ -432,11 +444,11 @@ async function loadForecast() {
     });
 
     const div = document.createElement("div");
-  div.innerHTML =
-    `<b>${textTime}</b><br>
-     🌡 ${item.main.temp.toFixed(1)}°C<br>
-     🌦 ${item.weather[0].description}<br><br>`;
-  box.appendChild(div);
+    div.innerHTML =
+      `<b>${textTime}</b><br>
+       🌡 ${item.main.temp.toFixed(1)}°C<br>
+       🌦 ${item.weather[0].description}<br><br>`;
+    box.appendChild(div);
   });
 }
 
@@ -461,7 +473,7 @@ function initRadar() {
   ).addTo(map);
 }
 
-/* NEON WETTERBOX */
+/* NEON WETTERBOX — korrigiert + DST */
 onValue(ref(db, "weather/live"), snap => {
   const data = snap.val();
   if (!data || !data.openweather) return;
@@ -474,8 +486,8 @@ onValue(ref(db, "weather/live"), snap => {
   const t_local = data.temperature;
   const t_ow    = data.ow_temp;
 
-  const sunriseStr = data.sunrise || "--:--";
-  const sunsetStr  = data.sunset || "--:--";
+  const sunriseStr = formatLocalSunTime(ow.sys.sunrise);
+  const sunsetStr  = formatLocalSunTime(ow.sys.sunset);
 
   document.getElementById("currentWeatherBox").innerHTML = `
     <div style="display:flex; align-items:center; gap:20px;" class="neon-glow">
@@ -537,6 +549,4 @@ window.onload = () => {
 </script>
 
 </body>
-</html>
-
-
+</html>  
