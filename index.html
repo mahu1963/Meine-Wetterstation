@@ -12,9 +12,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <style>
 :root {
   --bg: #0d0d0d;
@@ -52,7 +49,18 @@ body {
 }
 
 #top-right {
-  font-size: 40px;
+  text-align: right;
+}
+
+/* Live Werte */
+.live-row {
+  background: var(--card);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  font-size: 20px;
+  display: flex;
+  justify-content: space-between;
 }
 
 /* Charts */
@@ -77,41 +85,12 @@ button {
 
 .hidden { display: none; }
 
-/* Live */
-#livebox {
-  display: flex;
-  align-items: center;
-  font-size: 22px;
-  margin-bottom: 10px;
-}
-
-#live-icon {
-  font-size: 32px;
-  margin-right: 12px;
-  animation: pulse 1.2s infinite;
-}
-
-@keyframes pulse {
-  0% { opacity: 0.4; }
-  50% { opacity: 1; }
-  100% { opacity: 0.4; }
-}
-
 /* Forecast */
 #forecast-box {
   background: var(--card);
   padding: 10px;
   border-radius: 12px;
   margin-top: 20px;
-}
-
-/* Radar */
-#radar {
-  width: 100%;
-  height: 400px;
-  border-radius: 12px;
-  margin-top: 20px;
-  background: var(--card);
 }
 </style>
 </head>
@@ -129,23 +108,39 @@ button {
     <div id="sunrise">🌅 --:--</div>
     <div id="sunset">🌇 --:--</div>
   </div>
+
   <div id="top-right">
-    <span id="top-weather-icon">☀️</span>
+    <div id="top-weather-icon" style="font-size:40px;">☀️</div>
+    <div id="top-ow-temp" style="font-size:22px; font-weight:bold; color:#00eaff;">-- °C</div>
+    <div id="top-live-temp" style="font-size:18px; font-weight:bold; color:#ccc;">Live: -- °C ➝</div>
   </div>
 </div>
 
-<h2 id="livebox">
-  <span id="live-icon">❓</span>
-  Aktuelle Messwerte
-</h2>
+<h2>Aktuelle Messwerte</h2>
 
-<div id="livevalues">
-  <p id="live-temp"></p>
-  <p id="live-hum"></p>
-  <p id="live-press"></p>
-  <p id="live-time"></p>
-  <p id="live-trend"></p>
-  <p id="minmax"></p>
+<div class="live-row">
+  <span>🌡 Temperatur</span>
+  <span id="live-temp">-- °C</span>
+</div>
+
+<div class="live-row">
+  <span>💧 Luftfeuchtigkeit</span>
+  <span id="live-hum">-- %</span>
+</div>
+
+<div class="live-row">
+  <span>🌍 Luftdruck</span>
+  <span id="live-press">-- hPa</span>
+</div>
+
+<div class="live-row">
+  <span>⏱ Aktualisiert</span>
+  <span id="live-time">--:--</span>
+</div>
+
+<div class="live-row">
+  <span>Trend</span>
+  <span id="live-trend">--</span>
 </div>
 
 <div class="tab">
@@ -159,26 +154,6 @@ button {
 <div id="week" class="hidden"><canvas id="chartWeek"></canvas></div>
 <div id="month" class="hidden"><canvas id="chartMonth"></canvas></div>
 <div id="year" class="hidden"><canvas id="chartYear"></canvas></div>
-
-<h2>Interaktives Regenradar</h2>
-<div id="radar"></div>
-
-<!-- ⭐ NEON WETTERBOX -->
-<div id="currentWeatherBox"
-     style="
-       margin-top:20px;
-       padding:20px;
-       background:rgba(0,0,0,0.25);
-       border-radius:15px;
-       color:white;
-       font-size:18px;
-       backdrop-filter: blur(8px);
-       border: 1px solid rgba(0,255,255,0.4);
-       box-shadow: 0 0 15px rgba(0,255,255,0.4);
-       animation: fadeIn 0.8s ease-out;
-     ">
-  Wetter wird geladen...
-</div>
 
 <div id="forecast-box">
   <h2>OpenWeather Vorhersage (5 Tage)</h2>
@@ -196,14 +171,13 @@ const firebaseConfig = {
   projectId: "meine-wetterstation",
   storageBucket: "meine-wetterstation.appspot.com",
   messagingSenderId: "593494014586",
-  appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
-  measurementId: "G-ST9RCRW888"
+  appId: "1:593494014586:web:a05ed68495b1b16d6059c3"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* ⭐ AUTOMATISCHE SOMMERZEIT (EU / ÖSTERREICH) */
+/* Sommerzeit */
 function isDST(date = new Date()) {
   const year = date.getFullYear();
   const march = new Date(year, 2, 31);
@@ -235,309 +209,228 @@ onValue(liveRef, (snap) => {
 
   const t = d.temperature;
 
-  document.getElementById("live-temp").textContent =
-    "🌡 Temperatur: " + t.toFixed(1) + " °C";
-
-  document.getElementById("live-hum").textContent =
-    "💧 Luftfeuchtigkeit: " + d.humidity.toFixed(1) + " %";
-
-  document.getElementById("live-press").textContent =
-    "🌍 Luftdruck: " + d.pressure.toFixed(1) + " hPa";
+  document.getElementById("live-temp").textContent = t.toFixed(1) + " °C";
+  document.getElementById("live-hum").textContent = d.humidity.toFixed(1) + " %";
+  document.getElementById("live-press").textContent = d.pressure.toFixed(1) + " hPa";
 
   if (d.timestamp) {
     const lt = new Date(d.timestamp * 1000)
-      .toLocaleTimeString("de-DE", {
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-    document.getElementById("live-time").textContent =
-      "⏱ Aktualisiert: " + lt;
+      .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    document.getElementById("live-time").textContent = lt;
   }
 
+  /* Trend */
+  let trendText = "";
+  let trendColor = "";
+  let trendArrow = "";
+
   if (lastTemp !== null) {
-    if (t > lastTemp) document.getElementById("live-trend").textContent = "📈 Temperatur steigt";
-    else if (t < lastTemp) document.getElementById("live-trend").textContent = "📉 Temperatur fällt";
-    else document.getElementById("live-trend").textContent = "➡️ stabil";
+    if (t > lastTemp) {
+      trendText = "steigt";
+      trendColor = "#00ff6a";
+      trendArrow = "▲";
+    } else if (t < lastTemp) {
+      trendText = "fällt";
+      trendColor = "#ff4444";
+      trendArrow = "▼";
+    } else {
+      trendText = "stabil";
+      trendColor = "#cccccc";
+      trendArrow = "➝";
+    }
   }
+
+  document.getElementById("live-trend").textContent = trendText;
+  document.getElementById("live-trend").style.color = trendColor;
+
+  document.getElementById("top-live-temp").style.color = trendColor;
+  document.getElementById("top-live-temp").textContent =
+    `Live: ${t.toFixed(1)} °C ${trendArrow}`;
+
   lastTemp = t;
 
   /* Wetter-Icon */
-  
-    let icon = "❓";
+  let icon = "❓";
 
-    if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
+  if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
     const w = d.openweather.weather[0].main.toLowerCase();
 
     if (w.includes("clear")) icon = "☀️";
     else if (w.includes("cloud")) icon = "☁️";
     else if (w.includes("rain")) icon = "🌧️";
     else if (w.includes("snow")) icon = "❄️";
-    else icon = "🌡️"; // fallback
-}
-
-document.getElementById("live-icon").textContent = icon;
-document.getElementById("top-weather-icon").textContent = icon;
-
-  /* ⭐ Sonnenzeiten jetzt korrekt */
-  if (d.openweather) {
-    document.getElementById("sunrise").textContent =
-      "🌅 " + formatLocalSunTime(d.openweather.sys.sunrise);
-    document.getElementById("sunset").textContent =
-      "🌇 " + formatLocalSunTime(d.openweather.sys.sunset);
-  }
-});
-/* HISTORY LADEN */
-async function loadHistory(path) {
-  const snap = await get(ref(db, path));
-  const data = snap.val();
-  if (!data) return { labels: [], temps: [], hums: [], press: [] };
-
-  const labels = [];
-  const temps = [];
-  const hums = [];
-  const press = [];
-
-  const keys = Object.keys(data).sort();
-
-  for (const key of keys) {
-    let label = "";
-    let d;
-
-    if (path.includes("24h")) {
-      d = new Date(Number(key) * 1000);
-
-      label = d.toLocaleTimeString("de-DE", {
-        hour: "2-digit",
-        minute: "2-digit"
-      });
-
-      temps.push(data[key].t);
-      hums.push(data[key].h);
-      press.push(data[key].p);
-    }
-
-    else {
-      const [y, m, day] = key.split("-");
-      d = new Date(Number(y), Number(m) - 1, Number(day));
-
-      if (path.includes("week")) {
-        label = d.toLocaleDateString("de-DE", {
-          weekday: "short"
-        }).replace(".", "");
-      }
-
-      else if (path.includes("month")) {
-        label = d.toLocaleDateString("de-DE", {
-          month: "short"
-        }).replace(".", "");
-      }
-
-      else if (path.includes("year")) {
-        label = d.getFullYear().toString();
-      }
-
-      const t = (data[key].t_min + data[key].t_max) / 2;
-      const h = (data[key].h_min + data[key].h_max) / 2;
-      const p = (data[key].p_min + data[key].p_max) / 2;
-
-      temps.push(t);
-      hums.push(h);
-      press.push(p);
-    }
-
-    labels.push(label);
+    else icon = "🌡️";
   }
 
-  return { labels, temps, hums, press };
-}
+  document.getElementById("top-weather-icon").textContent = icon;
 
-/* CHART ZEICHNEN — dünne Linien, keine Punkte */
-async function drawChart(canvasId, path, title) {
-  const ctx = document.getElementById(canvasId).getContext("2d");
+  /* OpenWeather Temperatur */
+  if (d.openweather && d.openweather.main && d.openweather.main.temp) {
+    document.getElementById("top-ow-temp").textContent =
+      d.openweather.main.temp.toFixed(1) + " °C";
+  }
 
-  const { labels, temps, hums, press } = await loadHistory(path);
+  /* Sonnenzeiten */
+  if (d.openweather && d.openweather.sys) {
+    if (d.openweather.sys.sunrise)
+      document.getElementById("sunrise").textContent =
+        "🌅 " + formatLocalSunTime(d.openweather.sys.sunrise);
 
-  if (!labels.length) return;
-
-  new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: "Temperatur (°C)",
-          data: temps,
-          borderColor: "rgb(255,0,0)",
-          backgroundColor: "rgba(255,0,0,0.15)",
-          borderWidth: 1,
-          tension: 0.4,
-          pointRadius: 0
-        },
-        {
-          label: "Feuchtigkeit (%)",
-          data: hums,
-          borderColor: "rgb(0,200,0)",
-          backgroundColor: "rgba(0,200,0,0.15)",
-          borderWidth: 1,
-          tension: 0.4,
-          pointRadius: 0
-        },
-        {
-          label: "Luftdruck (hPa)",
-          data: press,
-          borderColor: "rgb(0,120,255)",
-          backgroundColor: "rgba(0,120,255,0.15)",
-          borderWidth: 1,
-          tension: 0.4,
-          pointRadius: 0,
-          yAxisID: "y2"
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { labels: { color: "#fff" } },
-        title: { display: true, text: title, color: "#fff" }
-      },
-      scales: {
-        x: { ticks: { color: "#fff" } },
-        y: { ticks: { color: "#fff" } },
-        y2: { position: "right", ticks: { color: "#fff" } }
-      }
-    }
-  });
-}
-
-/* FORECAST — repariert */
-async function loadForecast() {
-  const lat = 47.4027;
-  const lon = 16.2604;
-  const key = "27602f1bbb8e3dd3587a1da6e3de24b6";
-
-  const url =
-    `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&lang=de&appid=${key}`;
-
-  const res = await fetch(url);
-  const data = await res.json();
-
-  const box = document.getElementById("forecast");
-  box.innerHTML = "";
-
-  data.list.slice(0, 10).forEach(item => {
-    const d = new Date((item.dt + data.city.timezone) * 1000);
-
-    const textTime = d.toLocaleString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-    const div = document.createElement("div");
-    div.innerHTML =
-      `<b>${textTime}</b><br>
-       🌡 ${item.main.temp.toFixed(1)}°C<br>
-       🌦 ${item.weather[0].description}<br><br>`;
-    box.appendChild(div);
-  });
-}
-
-/* RADAR */
-function initRadar() {
-  const map = L.map('radar').setView([47.4027, 16.2604], 8);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
-
-  L.marker([47.4027, 16.2604]).addTo(map)
-    .bindPopup("Mein Standort")
-    .openPopup();
-
-  const owmKey = "27602f1bbb8e3dd3587a1da6e3de24b6";
-
-  L.tileLayer(
-    `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${owmKey}`,
-    { opacity: 0.6 }
-  ).addTo(map);
-}
-
-/* NEON WETTERBOX — korrigiert + DST */
-onValue(ref(db, "weather/live"), snap => {
-  const data = snap.val();
-  if (!data || !data.openweather) return;
-
-  const ow = data.openweather;
-
-  const icon = ow.weather[0].icon;
-  const desc = ow.weather[0].description;
-
-  const t_local = data.temperature;
-  const t_ow    = data.ow_temp;
-
-  const sunriseStr = formatLocalSunTime(ow.sys.sunrise);
-  const sunsetStr  = formatLocalSunTime(ow.sys.sunset);
-
-  document.getElementById("currentWeatherBox").innerHTML = `
-    <div style="display:flex; align-items:center; gap:20px;" class="neon-glow">
-
-      <img src="https://openweathermap.org/img/wn/${icon}@2x.png"
-           style="width:90px; height:90px; filter: drop-shadow(0 0 8px #00ffff);">
-
-      <div>
-
-        <div style="font-size:32px; font-weight:bold; color:#00ffff;">
-          ${t_local.toFixed(1)}°C
-        </div>
-
-        <div style="font-size:18px; margin-top:-4px; color:#88ffff;">
-          OW: ${t_ow.toFixed(1)}°C
-        </div>
-
-        <div style="font-size:20px; margin-bottom:8px;">
-          ${desc}
-        </div>
-
-        <div style="font-size:16px; line-height:1.4;">
-          <b style="color:#00ffff;">Feuchtigkeit:</b> ${data.humidity.toFixed(1)}%<br>
-          <b style="color:#00ffff;">Luftdruck:</b> ${data.pressure.toFixed(1)} hPa<br>
-          <b style="color:#00ffff;">Sonnenaufgang:</b> ${sunriseStr}<br>
-          <b style="color:#00ffff;">Sonnenuntergang:</b> ${sunsetStr}
-        </div>
-
-      </div>
-    </div>
-  `;
+    if (d.openweather.sys.sunset)
+      document.getElementById("sunset").textContent =
+        "🌇 " + formatLocalSunTime(d.openweather.sys.sunset);
+  }
 });
 
-/* TABS */
-window.showTab = function(name) {
+/* Tabs */
+function showTab(id) {
   document.getElementById("24h").classList.add("hidden");
   document.getElementById("week").classList.add("hidden");
   document.getElementById("month").classList.add("hidden");
   document.getElementById("year").classList.add("hidden");
 
-  const tab = document.getElementById(name);
-  tab.classList.remove("hidden");
+  document.getElementById(id).classList.remove("hidden");
+}
 
-  if (name === "24h") drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
-  if (name === "week") drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
-  if (name === "month") drawChart("chartMonth", "weather/history/month", "Letzter Monat");
-  if (name === "year") drawChart("chartYear", "weather/history/year", "Letztes Jahr");
-};
+/* History laden */
+async function loadHistory(path) {
+  const snap = await get(ref(db, path));
+  return snap.val();
+}
 
-/* START */
-window.onload = () => {
-  drawChart("chart24h", "weather/history/24h", "Letzte 24 Stunden");
-  drawChart("chartWeek", "weather/history/week", "Letzte 7 Tage");
-  drawChart("chartMonth", "weather/history/month", "Letzter Monat");
-  drawChart("chartYear", "weather/history/year", "Letztes Jahr");
-  initRadar();
-  loadForecast();
-};
+/* Charts zeichnen */
+async function drawCharts() {
+  const h24 = await loadHistory("weather/history/24h");
+  const week = await loadHistory("weather/history/week");
+  const month = await loadHistory("weather/history/month");
+  const year = await loadHistory("weather/history/year");
+
+  drawChart24h(h24);
+  drawChartWeek(week);
+  drawChartMonth(month);
+  drawChartYear(year);
+}
+
+function drawChart24h(data) {
+  if (!data) return;
+
+  const labels = [];
+  const t = [];
+  const h = [];
+  const p = [];
+
+  Object.keys(data).sort().forEach(ts => {
+    const d = data[ts];
+    const date = new Date(Number(ts) * 1000);
+    labels.push(date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
+    t.push(d.t);
+    h.push(d.h);
+    p.push(d.p);
+  });
+
+  new Chart(document.getElementById("chart24h"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "Temperatur (°C)", data: t, borderColor: "red" },
+        { label: "Feuchte (%)", data: h, borderColor: "cyan" },
+        { label: "Druck (hPa)", data: p, borderColor: "yellow" }
+      ]
+    }
+  });
+}
+
+function drawChartWeek(data) {
+  if (!data) return;
+
+  const labels = [];
+  const t = [];
+  const h = [];
+  const p = [];
+
+  Object.keys(data).sort().forEach(day => {
+    const d = data[day];
+    labels.push(day);
+    t.push((d.t_min + d.t_max) / 2);
+    h.push((d.h_min + d.h_max) / 2);
+    p.push((d.p_min + d.p_max) / 2);
+  });
+
+  new Chart(document.getElementById("chartWeek"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "Temperatur (°C)", data: t, borderColor: "red" },
+        { label: "Feuchte (%)", data: h, borderColor: "cyan" },
+        { label: "Druck (hPa)", data: p, borderColor: "yellow" }
+      ]
+    }
+  });
+}
+
+function drawChartMonth(data) {
+  if (!data) return;
+
+  const labels = [];
+  const t = [];
+  const h = [];
+  const p = [];
+
+  Object.keys(data).sort().forEach(day => {
+    const d = data[day];
+    labels.push(day);
+    t.push((d.t_min + d.t_max) / 2);
+    h.push((d.h_min + d.h_max) / 2);
+    p.push((d.p_min + d.p_max) / 2);
+  });
+
+  new Chart(document.getElementById("chartMonth"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "Temperatur (°C)", data: t, borderColor: "red" },
+        { label: "Feuchte (%)", data: h, borderColor: "cyan" },
+        { label: "Druck (hPa)", data: p, borderColor: "yellow" }
+      ]
+    }
+  });
+}
+
+function drawChartYear(data) {
+  if (!data) return;
+
+  const labels = [];
+  const t = [];
+  const h = [];
+  const p = [];
+
+  Object.keys(data).sort().forEach(day => {
+    const d = data[day];
+    labels.push(day);
+    t.push((d.t_min + d.t_max) / 2);
+    h.push((d.h_min + d.h_max) / 2);
+    p.push((d.p_min + d.p_max) / 2);
+  });
+
+  new Chart(document.getElementById("chartYear"), {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "Temperatur (°C)", data: t, borderColor: "red" },
+        { label: "Feuchte (%)", data: h, borderColor: "cyan" },
+        { label: "Druck (hPa)", data: p, borderColor: "yellow" }
+      ]
+    }
+  });
+}
+
+drawCharts();
 </script>
 
+</div>
 </body>
-</html>  
-
-
+</html>
