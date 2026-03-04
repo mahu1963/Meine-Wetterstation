@@ -85,12 +85,44 @@ button {
 
 .hidden { display: none; }
 
-/* Forecast */
+/* Forecast Box */
 #forecast-box {
   background: var(--card);
   padding: 10px;
   border-radius: 12px;
   margin-top: 20px;
+}
+
+/* Forecast Cards */
+.forecast-card {
+  background: var(--card);
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+}
+
+.forecast-left {
+  display: flex;
+  flex-direction: column;
+}
+
+.forecast-date {
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.forecast-icon {
+  font-size: 32px;
+}
+
+.forecast-values {
+  text-align: right;
+  font-size: 16px;
+  opacity: 0.9;
 }
 </style>
 </head>
@@ -160,126 +192,41 @@ button {
   <div id="forecast"></div>
 </div>
 
+<!-- Teil 2 beginnt hier -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
-  authDomain: "meine-wetterstation.firebaseapp.com",
-  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "meine-wetterstation",
-  storageBucket: "meine-wetterstation.appspot.com",
-  messagingSenderId: "593494014586",
-  appId: "1:593494014586:web:a05ed68495b1b16d6059c3"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-/* Sommerzeit */
-function isDST(date = new Date()) {
-  const year = date.getFullYear();
-  const march = new Date(year, 2, 31);
-  const lastSundayMarch = new Date(year, 2, 31 - march.getDay());
-  const october = new Date(year, 9, 31);
-  const lastSundayOctober = new Date(year, 9, 31 - october.getDay());
-  const dstStart = new Date(year, 2, lastSundayMarch.getDate(), 2, 0, 0);
-  const dstEnd   = new Date(year, 9, lastSundayOctober.getDate(), 3, 0, 0);
-  return date >= dstStart && date < dstEnd;
-}
-
-function getLocalOffsetSeconds() {
-  return isDST() ? 7200 : 3600;
-}
-
-function formatLocalSunTime(utcSeconds) {
-  const offset = getLocalOffsetSeconds();
-  return new Date((utcSeconds + offset) * 1000)
-    .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-}
-
-/* Live-Werte */
-const liveRef = ref(db, "weather/live");
-let lastTemp = null;
-
-onValue(liveRef, (snap) => {
-  const d = snap.val();
-  if (!d) return;
-
-  const t = d.temperature;
-
-  document.getElementById("live-temp").textContent = t.toFixed(1) + " °C";
-  document.getElementById("live-hum").textContent = d.humidity.toFixed(1) + " %";
-  document.getElementById("live-press").textContent = d.pressure.toFixed(1) + " hPa";
-
-  if (d.timestamp) {
-    const lt = new Date(d.timestamp * 1000)
-      .toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-    document.getElementById("live-time").textContent = lt;
-  }
-
-  /* Trend */
-  let trendText = "";
-  let trendColor = "";
-  let trendArrow = "";
-
-  if (lastTemp !== null) {
-    if (t > lastTemp) {
-      trendText = "steigt";
-      trendColor = "#00ff6a";
-      trendArrow = "▲";
-    } else if (t < lastTemp) {
-      trendText = "fällt";
-      trendColor = "#ff4444";
-      trendArrow = "▼";
-    } else {
-      trendText = "stabil";
-      trendColor = "#cccccc";
-      trendArrow = "➝";
-    }
-  }
-
-  document.getElementById("live-trend").textContent = trendText;
-  document.getElementById("live-trend").style.color = trendColor;
-
-  document.getElementById("top-live-temp").style.color = trendColor;
-  document.getElementById("top-live-temp").textContent =
-    `Live: ${t.toFixed(1)} °C ${trendArrow}`;
-
-  lastTemp = t;
-
   /* Wetter-Icon */
-  let icon = "❓";
+let icon = "❓";
 
-  if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
-    const w = d.openweather.weather[0].main.toLowerCase();
+if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
+  const w = d.openweather.weather[0].main.toLowerCase();
 
-    if (w.includes("clear")) icon = "☀️";
-    else if (w.includes("cloud")) icon = "☁️";
-    else if (w.includes("rain")) icon = "🌧️";
-    else if (w.includes("snow")) icon = "❄️";
-    else icon = "🌡️";
-  }
+  if (w.includes("clear")) icon = "☀️";
+  else if (w.includes("cloud")) icon = "☁️";
+  else if (w.includes("rain")) icon = "🌧️";
+  else if (w.includes("snow")) icon = "❄️";
+  else if (w.includes("thunder")) icon = "⛈️";
+  else if (w.includes("mist") || w.includes("fog") || w.includes("haze")) icon = "🌫️";
+  else icon = "🌡️";
+}
 
-  document.getElementById("top-weather-icon").textContent = icon;
+document.getElementById("top-weather-icon").textContent = icon;
 
-  /* OpenWeather Temperatur */
-  if (d.openweather && d.openweather.main && d.openweather.main.temp) {
-    document.getElementById("top-ow-temp").textContent =
-      d.openweather.main.temp.toFixed(1) + " °C";
-  }
+/* OpenWeather Temperatur */
+if (d.openweather && d.openweather.main && d.openweather.main.temp) {
+  document.getElementById("top-ow-temp").textContent =
+    d.openweather.main.temp.toFixed(1) + " °C";
+}
 
-  /* Sonnenzeiten */
-  if (d.openweather && d.openweather.sys) {
-    if (d.openweather.sys.sunrise)
-      document.getElementById("sunrise").textContent =
-        "🌅 " + formatLocalSunTime(d.openweather.sys.sunrise);
+/* Sonnenzeiten */
+if (d.openweather && d.openweather.sys) {
+  if (d.openweather.sys.sunrise)
+    document.getElementById("sunrise").textContent =
+      "🌅 " + formatLocalSunTime(d.openweather.sys.sunrise);
 
-    if (d.openweather.sys.sunset)
-      document.getElementById("sunset").textContent =
-        "🌇 " + formatLocalSunTime(d.openweather.sys.sunset);
-  }
+  if (d.openweather.sys.sunset)
+    document.getElementById("sunset").textContent =
+      "🌇 " + formatLocalSunTime(d.openweather.sys.sunset);
+}
 });
 
 /* Tabs */
@@ -311,6 +258,7 @@ async function drawCharts() {
   drawChartYear(year);
 }
 
+/* 24h Chart */
 function drawChart24h(data) {
   if (!data) return;
 
@@ -323,9 +271,10 @@ function drawChart24h(data) {
     const d = data[ts];
     const date = new Date(Number(ts) * 1000);
     labels.push(date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
-    t.push(d.t);
-    h.push(d.h);
-    p.push(d.p);
+
+    t.push(d.temperature);
+    h.push(d.humidity);
+    p.push(d.pressure);
   });
 
   new Chart(document.getElementById("chart24h"), {
@@ -341,6 +290,7 @@ function drawChart24h(data) {
   });
 }
 
+/* Woche */
 function drawChartWeek(data) {
   if (!data) return;
 
@@ -352,9 +302,10 @@ function drawChartWeek(data) {
   Object.keys(data).sort().forEach(day => {
     const d = data[day];
     labels.push(day);
-    t.push((d.t_min + d.t_max) / 2);
-    h.push((d.h_min + d.h_max) / 2);
-    p.push((d.p_min + d.p_max) / 2);
+
+    t.push(d.temperature);
+    h.push(d.humidity);
+    p.push(d.pressure);
   });
 
   new Chart(document.getElementById("chartWeek"), {
@@ -370,6 +321,7 @@ function drawChartWeek(data) {
   });
 }
 
+/* Monat */
 function drawChartMonth(data) {
   if (!data) return;
 
@@ -381,9 +333,10 @@ function drawChartMonth(data) {
   Object.keys(data).sort().forEach(day => {
     const d = data[day];
     labels.push(day);
-    t.push((d.t_min + d.t_max) / 2);
-    h.push((d.h_min + d.h_max) / 2);
-    p.push((d.p_min + d.p_max) / 2);
+
+    t.push(d.temperature);
+    h.push(d.humidity);
+    p.push(d.pressure);
   });
 
   new Chart(document.getElementById("chartMonth"), {
@@ -399,6 +352,7 @@ function drawChartMonth(data) {
   });
 }
 
+/* Jahr */
 function drawChartYear(data) {
   if (!data) return;
 
@@ -407,12 +361,13 @@ function drawChartYear(data) {
   const h = [];
   const p = [];
 
-  Object.keys(data).sort().forEach(day => {
-    const d = data[day];
-    labels.push(day);
-    t.push((d.t_min + d.t_max) / 2);
-    h.push((d.h_min + d.h_max) / 2);
-    p.push((d.p_min + d.p_max) / 2);
+  Object.keys(data).sort().forEach(month => {
+    const d = data[month];
+    labels.push(month);
+
+    t.push(d.temperature);
+    h.push(d.humidity);
+    p.push(d.pressure);
   });
 
   new Chart(document.getElementById("chartYear"), {
@@ -428,9 +383,56 @@ function drawChartYear(data) {
   });
 }
 
-drawCharts();
-</script>
+/* Forecast laden (echter Wetterzustand + Beschreibung) */
+const refForecast = ref(db, "weather/forecast");
 
-</div>
-</body>
-</html>
+onValue(refForecast, (snap) => {
+  const data = snap.val();
+  if (!data) return;
+
+  const container = document.getElementById("forecast");
+  container.innerHTML = "";
+
+  const keys = Object.keys(data).sort();
+
+  keys.forEach(day => {
+    const entry = data[day];
+
+    let main = "";
+    let desc = "";
+
+    if (entry.weather && entry.weather[0]) {
+      main = entry.weather[0].main.toLowerCase();
+      desc = entry.weather[0].description || "";
+    }
+
+    let icon = "🌡️";
+    if (main.includes("clear")) icon = "☀️";
+    else if (main.includes("cloud")) icon = "☁️";
+    else if (main.includes("rain")) icon = "🌧️";
+    else if (main.includes("drizzle")) icon = "🌦️";
+    else if (main.includes("thunder")) icon = "⛈️";
+    else if (main.includes("snow")) icon = "❄️";
+    else if (main.includes("mist") || main.includes("fog") || main.includes("haze")) icon = "🌫️";
+
+    const card = `
+      <div class="forecast-card">
+        <div class="forecast-left">
+          <div class="forecast-date">${day}</div>
+          <div class="forecast-icon">${icon}</div>
+        </div>
+
+        <div class="forecast-values">
+          <div>${entry.temperature.toFixed(1)} °C</div>
+          <div>${entry.humidity.toFixed(0)} %</div>
+          <div>${entry.pressure.toFixed(0)} hPa</div>
+          <div style="font-size:14px; opacity:0.8;">${desc}</div>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML += card;
+  });
+});
+
+drawCharts();
