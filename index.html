@@ -194,42 +194,101 @@ button {
 
 <!-- Teil 2 beginnt hier -->
 <script type="module">
-  /* Wetter-Icon */
-let icon = "❓";
 
-if (d.openweather && d.openweather.weather && d.openweather.weather[0]) {
-  const w = d.openweather.weather[0].main.toLowerCase();
+// Firebase Live-Daten laden
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-  if (w.includes("clear")) icon = "☀️";
-  else if (w.includes("cloud")) icon = "☁️";
-  else if (w.includes("rain")) icon = "🌧️";
-  else if (w.includes("snow")) icon = "❄️";
-  else if (w.includes("thunder")) icon = "⛈️";
-  else if (w.includes("mist") || w.includes("fog") || w.includes("haze")) icon = "🌫️";
-  else icon = "🌡️";
-}
+const firebaseConfig = {
+  databaseURL: "DEINE_URL_HIER"
+};
 
-document.getElementById("top-weather-icon").textContent = icon;
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-/* OpenWeather Temperatur */
-if (d.openweather && d.openweather.main && d.openweather.main.temp) {
-  document.getElementById("top-ow-temp").textContent =
-    d.openweather.main.temp.toFixed(1) + " °C";
-}
+// Live-Daten Listener
+const refLive = ref(db, "weather/live");
 
-/* Sonnenzeiten */
-if (d.openweather && d.openweather.sys) {
-  if (d.openweather.sys.sunrise)
-    document.getElementById("sunrise").textContent =
-      "🌅 " + formatLocalSunTime(d.openweather.sys.sunrise);
+onValue(refLive, (snap) => {
+  const d = snap.val();
+  if (!d) return;
 
-  if (d.openweather.sys.sunset)
-    document.getElementById("sunset").textContent =
-      "🌇 " + formatLocalSunTime(d.openweather.sys.sunset);
-}
+  // -----------------------------
+  // 🌤 Wetter-Icon (OpenWeather)
+  // -----------------------------
+  let icon = "❓";
+
+  if (d.openweather_raw && d.openweather_raw.weather && d.openweather_raw.weather[0]) {
+    const w = d.openweather_raw.weather[0].main.toLowerCase();
+
+    if (w.includes("clear")) icon = "☀️";
+    else if (w.includes("cloud")) icon = "☁️";
+    else if (w.includes("rain")) icon = "🌧️";
+    else if (w.includes("snow")) icon = "❄️";
+    else if (w.includes("thunder")) icon = "⛈️";
+    else if (w.includes("mist") || w.includes("fog") || w.includes("haze")) icon = "🌫️";
+    else icon = "🌡️";
+  }
+
+  document.getElementById("top-weather-icon").textContent = icon;
+
+  // -----------------------------
+  // 🌡 OpenWeather Temperatur
+  // -----------------------------
+  if (d.openweather_raw && d.openweather_raw.main && d.openweather_raw.main.temp !== undefined) {
+    document.getElementById("top-ow-temp").textContent =
+      d.openweather_raw.main.temp.toFixed(1) + " °C";
+  }
+
+  // -----------------------------
+  // 🌅 Sonnenaufgang / 🌇 Sonnenuntergang
+  // -----------------------------
+  if (d.openweather_raw && d.openweather_raw.sys) {
+    if (d.openweather_raw.sys.sunrise)
+      document.getElementById("sunrise").textContent =
+        "🌅 " + formatLocalSunTime(d.openweather_raw.sys.sunrise);
+
+    if (d.openweather_raw.sys.sunset)
+      document.getElementById("sunset").textContent =
+        "🌇 " + formatLocalSunTime(d.openweather_raw.sys.sunset);
+  }
+
+  // -----------------------------
+  // 🌡 Live Temperatur (BME280)
+  // -----------------------------
+  if (d.temperature !== undefined)
+    document.getElementById("live-temp").textContent = d.temperature.toFixed(1) + " °C";
+
+  if (d.temperature !== undefined)
+    document.getElementById("top-live-temp").textContent =
+      "Live: " + d.temperature.toFixed(1) + " °C ➝";
+
+  // -----------------------------
+  // 💧 Luftfeuchtigkeit
+  // -----------------------------
+  if (d.humidity !== undefined)
+    document.getElementById("live-hum").textContent = d.humidity.toFixed(1) + " %";
+
+  // -----------------------------
+  // 🌍 Luftdruck
+  // -----------------------------
+  if (d.pressure !== undefined)
+    document.getElementById("live-press").textContent = d.pressure.toFixed(1) + " hPa";
+
+  // -----------------------------
+  // ⏱ Zeit
+  // -----------------------------
+  if (d.timestamp)
+    document.getElementById("live-time").textContent =
+      new Date(d.timestamp * 1000).toLocaleTimeString("de-DE", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
 });
 
-/* Tabs */
+// -----------------------------
+// 📅 Tabs
+// -----------------------------
 function showTab(id) {
   document.getElementById("24h").classList.add("hidden");
   document.getElementById("week").classList.add("hidden");
@@ -239,13 +298,17 @@ function showTab(id) {
   document.getElementById(id).classList.remove("hidden");
 }
 
-/* History laden */
+// -----------------------------
+// 📊 History laden
+// -----------------------------
 async function loadHistory(path) {
   const snap = await get(ref(db, path));
   return snap.val();
 }
 
-/* Charts zeichnen */
+// -----------------------------
+// 📈 Charts zeichnen
+// -----------------------------
 async function drawCharts() {
   const h24 = await loadHistory("weather/history/24h");
   const week = await loadHistory("weather/history/week");
@@ -258,7 +321,9 @@ async function drawCharts() {
   drawChartYear(year);
 }
 
-/* 24h Chart */
+// -----------------------------
+// 📈 24h Chart
+// -----------------------------
 function drawChart24h(data) {
   if (!data) return;
 
@@ -272,9 +337,9 @@ function drawChart24h(data) {
     const date = new Date(Number(ts) * 1000);
     labels.push(date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
 
-    t.push(d.temperature);
-    h.push(d.humidity);
-    p.push(d.pressure);
+    t.push(d.t);
+    h.push(d.h);
+    p.push(d.p);
   });
 
   new Chart(document.getElementById("chart24h"), {
@@ -290,100 +355,9 @@ function drawChart24h(data) {
   });
 }
 
-/* Woche */
-function drawChartWeek(data) {
-  if (!data) return;
-
-  const labels = [];
-  const t = [];
-  const h = [];
-  const p = [];
-
-  Object.keys(data).sort().forEach(day => {
-    const d = data[day];
-    labels.push(day);
-
-    t.push(d.temperature);
-    h.push(d.humidity);
-    p.push(d.pressure);
-  });
-
-  new Chart(document.getElementById("chartWeek"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        { label: "Temperatur (°C)", data: t, borderColor: "red" },
-        { label: "Feuchte (%)", data: h, borderColor: "cyan" },
-        { label: "Druck (hPa)", data: p, borderColor: "yellow" }
-      ]
-    }
-  });
-}
-
-/* Monat */
-function drawChartMonth(data) {
-  if (!data) return;
-
-  const labels = [];
-  const t = [];
-  const h = [];
-  const p = [];
-
-  Object.keys(data).sort().forEach(day => {
-    const d = data[day];
-    labels.push(day);
-
-    t.push(d.temperature);
-    h.push(d.humidity);
-    p.push(d.pressure);
-  });
-
-  new Chart(document.getElementById("chartMonth"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        { label: "Temperatur (°C)", data: t, borderColor: "red" },
-        { label: "Feuchte (%)", data: h, borderColor: "cyan" },
-        { label: "Druck (hPa)", data: p, borderColor: "yellow" }
-      ]
-    }
-  });
-}
-
-/* Jahr */
-function drawChartYear(data) {
-  if (!data) return;
-
-  const labels = [];
-  const t = [];
-  const h = [];
-  const p = [];
-
-  Object.keys(data).sort().forEach(month => {
-    const d = data[month];
-    labels.push(month);
-
-    t.push(d.temperature);
-    h.push(d.humidity);
-    p.push(d.pressure);
-  });
-
-  new Chart(document.getElementById("chartYear"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        { label: "Temperatur (°C)", data: t, borderColor: "red" },
-        { label: "Feuchte (%)", data: h, borderColor: "cyan" },
-        { label: "Druck (hPa)", data: p, borderColor: "yellow" }
-      ]
-    }
-  });
-}
-
-/* Forecast laden (echter Wetterzustand + Beschreibung) */
+// -----------------------------
+// 📅 Forecast
+// -----------------------------
 const refForecast = ref(db, "weather/forecast");
 
 onValue(refForecast, (snap) => {
@@ -436,3 +410,5 @@ onValue(refForecast, (snap) => {
 });
 
 drawCharts();
+
+</script>
