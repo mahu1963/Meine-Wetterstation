@@ -191,6 +191,7 @@ button {
   <h2>OpenWeather Vorhersage (5 Tage)</h2>
   <div id="forecast"></div>
 </div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
@@ -233,13 +234,11 @@ onValue(refLive, (snap) => {
 
   // 🌅 Sonnenaufgang / 🌇 Sonnenuntergang
   if (d.openweather_raw?.sys) {
-    if (d.openweather_raw.sys.sunrise)
-      document.getElementById("sunrise").textContent =
-        "🌅 " + formatLocalSunTime(d.openweather_raw.sys.sunrise);
+    document.getElementById("sunrise").textContent =
+      "🌅 " + formatLocalSunTime(d.openweather_raw.sys.sunrise);
 
-    if (d.openweather_raw.sys.sunset)
-      document.getElementById("sunset").textContent =
-        "🌇 " + formatLocalSunTime(d.openweather_raw.sys.sunset);
+    document.getElementById("sunset").textContent =
+      "🌇 " + formatLocalSunTime(d.openweather_raw.sys.sunset);
   }
 
   // 🌡 Live Temperatur
@@ -327,21 +326,17 @@ function drawChart24h(data) {
     data: {
       labels,
       datasets: [
-        { label: "Temperatur (°C)", data: t, borderColor: "red" },
-        { label: "Feuchte (%)", data: h, borderColor: "cyan" },
-        { label: "Druck (hPa)", data: p, borderColor: "yellow" }
+        { label: "Temperatur (°C)", data: t, borderColor: "red", pointRadius: 0 },
+        { label: "Feuchte (%)", data: h, borderColor: "cyan", pointRadius: 0 },
+        { label: "Druck (hPa)", data: p, borderColor: "yellow", pointRadius: 0 }
       ]
     }
   });
 }
 
 // -----------------------------------------------------
-// WEEK / MONTH / YEAR CHARTS
+// GENERISCHE CHART-FUNKTION (Woche, Monat, Jahr)
 // -----------------------------------------------------
-function drawChartWeek(data) { drawGenericChart(data, "chartWeek"); }
-function drawChartMonth(data) { drawGenericChart(data, "chartMonth"); }
-function drawChartYear(data) { drawGenericChart(data, "chartYear"); }
-
 function drawGenericChart(data, canvasId) {
   if (!data) return;
 
@@ -350,13 +345,13 @@ function drawGenericChart(data, canvasId) {
   const h = [];
   const p = [];
 
-  Object.keys(data).sort().forEach(day => {
-    const d = data[day];
-    labels.push(day);
+  Object.keys(data).sort().forEach(key => {
+    const d = data[key];
+    labels.push(key);
 
-    t.push(d.t_min ?? d.temperature ?? d.t);
-    h.push(d.h_min ?? d.humidity ?? d.h);
-    p.push(d.p_min ?? d.pressure ?? d.p);
+    t.push(d.t_min ?? d.t ?? null);
+    h.push(d.h_min ?? d.h ?? null);
+    p.push(d.p_min ?? d.p ?? null);
   });
 
   new Chart(document.getElementById(canvasId), {
@@ -364,13 +359,17 @@ function drawGenericChart(data, canvasId) {
     data: {
       labels,
       datasets: [
-        { label: "Temperatur (°C)", data: t, borderColor: "red" },
-        { label: "Feuchte (%)", data: h, borderColor: "cyan" },
-        { label: "Druck (hPa)", data: p, borderColor: "yellow" }
+        { label: "Temperatur (°C)", data: t, borderColor: "red", pointRadius: 0 },
+        { label: "Feuchte (%)", data: h, borderColor: "cyan", pointRadius: 0 },
+        { label: "Druck (hPa)", data: p, borderColor: "yellow", pointRadius: 0 }
       ]
     }
   });
 }
+
+function drawChartWeek(data) { drawGenericChart(data, "chartWeek"); }
+function drawChartMonth(data) { drawGenericChart(data, "chartMonth"); }
+function drawChartYear(data) { drawGenericChart(data, "chartYear"); }
 
 // -----------------------------------------------------
 // FORECAST
@@ -413,10 +412,10 @@ onValue(refForecast, (snap) => {
           <div class="forecast-icon">${icon}</div>
         </div>
 
-        <div class="forecast-values">
-          <div>${entry.temperature.toFixed(1)} °C</div>
-          <div>${entry.humidity.toFixed(0)} %</div>
-          <div>${entry.pressure.toFixed(0)} hPa</div>
+        <div class="forecast-values" style="display:flex; flex-direction:column; gap:4px;">
+          <div>🌡 ${entry.temperature.toFixed(1)} °C</div>
+          <div>💧 ${entry.humidity.toFixed(0)} %</div>
+          <div>🌍 ${entry.pressure.toFixed(0)} hPa</div>
           <div style="font-size:14px; opacity:0.8;">${desc}</div>
         </div>
       </div>
@@ -437,4 +436,4 @@ function formatLocalSunTime(ts) {
     minute: "2-digit"
   });
 }
-</script>
+</script>  
