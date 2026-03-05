@@ -278,7 +278,13 @@ window.showTab = function(id) {
   document.getElementById("week").classList.add("hidden");
   document.getElementById("month").classList.add("hidden");
   document.getElementById("year").classList.add("hidden");
+
   document.getElementById(id).classList.remove("hidden");
+
+  if (id === "24h")   lade24h();
+  if (id === "week")  ladeWeek();
+  if (id === "month") ladeMonth();
+  if (id === "year")  ladeYear();
 };
 
 // -----------------------------------------------------
@@ -338,6 +344,39 @@ function drawChart24h(data) {
   });
 }
 
+  function lade24h() {
+  const ref24 = ref(db, "weather/history/24h");
+  onValue(ref24, snap => drawChart24h(snap.val()));
+}
+
+function ladeWeek() {
+  const refW = ref(db, "weather/history/week");
+  onValue(refW, snap => drawChartWeek(snap.val()));
+}
+
+function ladeMonth() {
+  const refM = ref(db, "weather/history/month");
+  onValue(refM, snap => drawChartMonth(snap.val()));
+}
+
+function ladeYear() {
+  const refY = ref(db, "weather/history/year");
+  onValue(refY, snap => drawChartYear(snap.val()));
+}
+
+window.showTab = function(id) {
+  document.getElementById("24h").classList.add("hidden");
+  document.getElementById("week").classList.add("hidden");
+  document.getElementById("month").classList.add("hidden");
+  document.getElementById("year").classList.add("hidden");
+
+  document.getElementById(id).classList.remove("hidden");
+
+  if (id === "24h")   lade24h();
+  if (id === "week")  ladeWeek();
+  if (id === "month") ladeMonth();
+  if (id === "year")  ladeYear();
+};
 // -----------------------------------------------------
 // GENERISCHE CHART-FUNKTION (Woche, Monat, Jahr)
 // -----------------------------------------------------
@@ -351,7 +390,40 @@ function drawGenericChart(data, canvasId) {
 
   Object.keys(data).sort().forEach(key => {
     const d = data[key];
-    labels.push(key);
+    let label;
+
+    // 24h: UNIX timestamp
+    if (/^\d+$/.test(key)) {
+      const ts = Number(key) * 1000;
+      label = new Date(ts).toLocaleTimeString("de-DE", {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    // Woche/Monat: YYYY-MM-DD
+    else if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
+      const ts = new Date(key).getTime();
+      label = new Date(ts).toLocaleDateString("de-DE", {
+        day: "2-digit",
+        month: "short"
+      });
+    }
+
+    // Jahr: YYYY-MM
+    else if (/^\d{4}-\d{2}$/.test(key)) {
+      const ts = new Date(key + "-01").getTime();
+      label = new Date(ts).toLocaleDateString("de-DE", {
+        month: "short",
+        year: "numeric"
+      });
+    }
+
+    else {
+      label = key;
+    }
+
+    labels.push(label);
 
     t.push(d.t_min ?? d.t ?? null);
     h.push(d.h_min ?? d.h ?? null);
@@ -370,11 +442,6 @@ function drawGenericChart(data, canvasId) {
     }
   });
 }
-
-function drawChartWeek(data) { drawGenericChart(data, "chartWeek"); }
-function drawChartMonth(data) { drawGenericChart(data, "chartMonth"); }
-function drawChartYear(data) { drawGenericChart(data, "chartYear"); }
-
 // -----------------------------------------------------
 // FORECAST
 // -----------------------------------------------------
@@ -444,3 +511,4 @@ function formatLocalSunTime(ts) {
 
 </body>
 </html>
+
