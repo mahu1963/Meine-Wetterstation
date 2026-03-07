@@ -65,46 +65,43 @@ async function updateWeather() {
   });
 
   // ------------------------------
-  // ARCHIVIERUNG
-  // ------------------------------
+// ARCHIVIERUNG
+// ------------------------------
 
-  function getWeekNumber(date) {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-  }
-
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const week = getWeekNumber(now);
-
-  const archiveData = {
-    temperatur: data.current.temp,
-    feuchtigkeit: data.current.humidity,
-    druck: data.current.pressure,
-    wind: data.current.wind_speed,
-    regen: data.current.rain?.["1h"] ?? 0,
-    icon: data.current.weather[0].main.toLowerCase(),
-    timestamp: now.toISOString()
-  };
-
-  await update(ref(db, `weather/history/week`), {
-    [`${year}-W${week}`]: archiveData
-  });
-
-  await update(ref(db, `weather/history/month`), {
-    [`${year}-${month}`]: archiveData
-  });
-
-  await update(ref(db, `weather/history/year`), {
-    [year]: archiveData
-  });
+function getWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
-// Funktion starten
-updateWeather().then(() => {
-  console.log("Wetterdaten erfolgreich aktualisiert!");
+const now = new Date();
+const year = now.getFullYear();
+const month = now.getMonth() + 1;
+const week = getWeekNumber(now);
+
+const archiveData = {
+  temperatur: data.current.temp,
+  feuchtigkeit: data.current.humidity,
+  druck: data.current.pressure,
+  wind: data.current.wind_speed,
+  regen: data.current.rain?.["1h"] ?? 0,
+  icon: data.current.weather[0].main.toLowerCase(),
+  timestamp: now.toISOString()
+};
+
+// Woche speichern
+await update(ref(db, `weather/history/week`), {
+  [`${year}-W${week}`]: archiveData
+});
+
+// Monat speichern
+await update(ref(db, `weather/history/month`), {
+  [`${year}-${month}`]: archiveData
+});
+
+// Jahr speichern
+await update(ref(db, `weather/history/year`), {
+  [year]: archiveData
 });
