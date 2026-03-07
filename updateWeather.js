@@ -96,3 +96,7 @@ await set(ref(db, `weather/history/month/${year}-${month}`), archiveData);
 
 // Jahr speichern
 await set(ref(db, `weather/history/year/${year}`), archiveData);
+
+  updateWeather().then(() => {
+  console.log("Wetterdaten erfolgreich aktualisiert!");
+});
