@@ -1,69 +1,66 @@
 <!DOCTYPE html>
-<html>
+<html lang="de">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Meine Wetterstation</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Theme Color für Android -->
+  <meta name="theme-color" content="#4a90e2">
+
+  <!-- iOS PWA Support -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <h1>Live</h1>
-  <div id="live-temp"></div>
-  <div id="live-hum"></div>
-  <div id="live-pres"></div>
 
-  <h2>Vorhersage (nächste Stunden)</h2>
-  <div id="forecast-hours"></div>
+  <header>
+    <h1>🌦️ Meine Wetterstation</h1>
+    <p id="timestamp"></p>
+  </header>
 
-  <h2>5-Tage-Vorhersage</h2>
-  <div id="forecast-days"></div>
+  <!-- LIVE -->
+  <section id="live" class="card">
+    <h2>Aktuelles Wetter</h2>
+    <div class="live-grid">
+      <div class="value"><span id="live-temp"></span>°C</div>
+      <div class="value"><span id="live-hum"></span>%</div>
+      <div class="value"><span id="live-pres"></span> hPa</div>
+    </div>
+  </section>
 
-  <script type="module">
-    // Firebase SDKs per <script> oder bundler einbinden
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+  <!-- STUNDEN -->
+  <section id="forecast-hours" class="card">
+    <h2>Vorhersage (nächste Stunden)</h2>
+    <div id="hours-container" class="scroll-row"></div>
+  </section>
 
-    const firebaseConfig = {
-      apiKey: "DEIN_API_KEY",
-      authDomain: "DEIN_PROJEKT.firebaseapp.com",
-      databaseURL: "https://DEIN_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "DEIN_PROJEKT",
-    };
+  <!-- TAGE -->
+  <section id="forecast-days" class="card">
+    <h2>5‑Tage‑Vorhersage</h2>
+    <div id="days-container" class="grid-days"></div>
+  </section>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+  <!-- App Script -->
+  <script type="module" src="app.js"></script>
 
-    // Live
-    onValue(ref(db, "weather/live"), snap => {
-      const d = snap.val();
-      document.getElementById("live-temp").textContent = `Temp: ${d.temperatur} °C`;
-      document.getElementById("live-hum").textContent  = `Feuchte: ${d.feuchtigkeit} %`;
-      document.getElementById("live-pres").textContent = `Druck: ${d.druck} hPa`;
-    });
-
-    // Stunden-forecast
-    onValue(ref(db, "weather/forecast/stunden"), snap => {
-      const data = snap.val();
-      const container = document.getElementById("forecast-hours");
-      container.innerHTML = "";
-      Object.keys(data).forEach(k => {
-        const e = data[k];
-        const div = document.createElement("div");
-        div.textContent = `${e.timestamp}: ${e.temperatur} °C, ${e.icon}`;
-        container.appendChild(div);
-      });
-    });
-
-    // Daily-forecast
-    onValue(ref(db, "weather/forecast_daily"), snap => {
-      const data = snap.val();
-      const container = document.getElementById("forecast-days");
-      container.innerHTML = "";
-      Object.keys(data).forEach(k => {
-        const e = data[k];
-        const div = document.createElement("div");
-        div.textContent = `${e.datum}: ${e.t_min}–${e.t_max} °C, ${e.icon}`;
-        container.appendChild(div);
-      });
-    });
+  <!-- Service Worker Registrierung -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js")
+        .then(() => console.log("Service Worker registriert"))
+        .catch(err => console.log("SW Fehler:", err));
+    }
   </script>
+
 </body>
 </html>
