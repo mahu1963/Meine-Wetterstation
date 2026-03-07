@@ -9,7 +9,7 @@
   <!-- PWA Manifest -->
   <link rel="manifest" href="manifest.json">
 
-  <!-- Theme Color für Android -->
+  <!-- Theme Color -->
   <meta name="theme-color" content="#4a90e2">
 
   <!-- iOS PWA Support -->
@@ -19,6 +19,12 @@
 
   <!-- Stylesheet -->
   <link rel="stylesheet" href="style.css">
+
+  <!-- Chart.js für Diagramme -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Lottie für animierte Icons -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.2/lottie.min.js"></script>
 </head>
 
 <body>
@@ -26,11 +32,15 @@
   <header>
     <h1>🌦️ Meine Wetterstation</h1>
     <p id="timestamp"></p>
+    <button id="dark-toggle">🌙 / ☀️</button>
   </header>
 
   <!-- LIVE -->
   <section id="live" class="card">
     <h2>Aktuelles Wetter</h2>
+
+    <div id="live-icon" style="width:120px;height:120px;margin:auto;"></div>
+
     <div class="live-grid">
       <div class="value"><span id="live-temp"></span>°C</div>
       <div class="value"><span id="live-hum"></span>%</div>
@@ -48,6 +58,14 @@
   <section id="forecast-days" class="card">
     <h2>5‑Tage‑Vorhersage</h2>
     <div id="days-container" class="grid-days"></div>
+  </section>
+
+  <!-- DIAGRAMME -->
+  <section class="card">
+    <h2>Diagramme</h2>
+    <canvas id="chart-temp"></canvas>
+    <canvas id="chart-wind"></canvas>
+    <canvas id="chart-rain"></canvas>
   </section>
 
   <!-- App Script -->
