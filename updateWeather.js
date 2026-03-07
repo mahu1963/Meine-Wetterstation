@@ -61,7 +61,7 @@ async function updateWeather() {
   await set(ref(db, "weather/forecast_daily"), days);
 
 // ------------------------------
-// W / M / J – Archivierung
+// ARCHIVIERUNG
 // ------------------------------
 
 function getWeekNumber(date) {
@@ -88,13 +88,7 @@ const archiveData = {
     timestamp: now.toISOString()
 };
 
- await set(ref(db, `weather/history/week/${year}-W${week}`), archiveData);
-  await set(ref(db, `weather/history/month/${year}-${month}`), archiveData);
-  await set(ref(db, `weather/history/year/${year}`), archiveData);
-
-} // <-- JETZT endet die Funktion richtig
-  
-  // Woche speichern
+// Woche speichern
 await set(ref(db, `weather/history/week/${year}-W${week}`), archiveData);
 
 // Monat speichern
@@ -103,7 +97,9 @@ await set(ref(db, `weather/history/month/${year}-${month}`), archiveData);
 // Jahr speichern
 await set(ref(db, `weather/history/year/${year}`), archiveData);
 
-  updateWeather().then(() => {
-  console.log("Wetterdaten erfolgreich aktualisiert!");
+} // <-- HIER endet die Funktion WIRKLICH
+
+// Funktion starten
+updateWeather().then(() => {
+    console.log("Wetterdaten erfolgreich aktualisiert!");
 });
-updateWeather();
