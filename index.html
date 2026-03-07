@@ -1,514 +1,69 @@
 <!DOCTYPE html>
-<html lang="de">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Wetterstation Dashboard</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Wetterstation">
-<link rel="apple-touch-icon" href="icon.png">
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<style>
-:root {
-  --bg: #0d0d0d;
-  --fg: #f5f5f5;
-  --card: #1a1a1a;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, Arial;
-  background: var(--bg);
-  color: var(--fg);
-  padding: 20px;
-}
-
-#container {
-  max-width: 480px;
-  margin: 0 auto;
-}
-
-/* Topbar */
-#topbar {
-  width: 100%;
-  background: #111;
-  padding: 12px;
-  border-radius: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-#top-left {
-  font-size: 16px;
-  line-height: 1.2;
-}
-
-#top-right {
-  text-align: right;
-}
-
-/* Live Werte */
-.live-row {
-  background: var(--card);
-  padding: 12px;
-  border-radius: 12px;
-  margin-bottom: 10px;
-  font-size: 20px;
-  display: flex;
-  justify-content: space-between;
-}
-
-/* Charts */
-canvas {
-  max-width: 100%;
-  width: 100%;
-  min-height: 260px !important;
-  background: var(--card);
-  padding: 10px;
-  border-radius: 12px;
-}
-
-button {
-  padding: 8px 14px;
-  margin-right: 6px;
-  cursor: pointer;
-  background: #222;
-  color: var(--fg);
-  border: 1px solid #444;
-  border-radius: 6px;
-}
-
-.hidden { display: none; }
-
-/* Forecast Box */
-#forecast-box {
-  background: var(--card);
-  padding: 10px;
-  border-radius: 12px;
-  margin-top: 20px;
-}
-
-/* Forecast Cards */
-.forecast-card {
-  background: var(--card);
-  padding: 12px;
-  border-radius: 12px;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 18px;
-}
-
-.forecast-left {
-  display: flex;
-  flex-direction: column;
-}
-
-.forecast-date {
-  font-weight: bold;
-  font-size: 18px;
-}
-
-.forecast-icon {
-  font-size: 32px;
-}
-
-.forecast-values {
-  text-align: right;
-  font-size: 16px;
-  opacity: 0.9;
-}
-</style>
+  <meta charset="utf-8">
+  <title>Meine Wetterstation</title>
 </head>
-
 <body>
-<div id="container">
+  <h1>Live</h1>
+  <div id="live-temp"></div>
+  <div id="live-hum"></div>
+  <div id="live-pres"></div>
 
-<h1 style="text-align:center;">🌤 Wetterstation</h1>
-<div style="text-align:center; font-size:20px; opacity: 1.0; margin-top:-8px;">
-  von Martin Huber
-</div>
+  <h2>Vorhersage (nächste Stunden)</h2>
+  <div id="forecast-hours"></div>
 
-<div id="topbar">
-  <div id="top-left">
-    <div id="sunrise">🌅 --:--</div>
-    <div id="sunset">🌇 --:--</div>
-  </div>
+  <h2>5-Tage-Vorhersage</h2>
+  <div id="forecast-days"></div>
 
-  <div id="top-right">
-    <div id="top-weather-icon" style="font-size:40px;">☀️</div>
-    <div id="top-ow-temp" style="font-size:22px; font-weight:bold; color:#00eaff;">-- °C</div>
-    <div id="top-live-temp" style="font-size:18px; font-weight:bold; color:#ccc;">Live: -- °C ➝</div>
-  </div>
-</div>
+  <script type="module">
+    // Firebase SDKs per <script> oder bundler einbinden
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-<h2>Aktuelle Messwerte</h2>
+    const firebaseConfig = {
+      apiKey: "DEIN_API_KEY",
+      authDomain: "DEIN_PROJEKT.firebaseapp.com",
+      databaseURL: "https://DEIN_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "DEIN_PROJEKT",
+    };
 
-<div class="live-row">
-  <span>🌡 Temperatur</span>
-  <span id="live-temp">-- °C</span>
-</div>
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-<div class="live-row">
-  <span>💧 Luftfeuchtigkeit</span>
-  <span id="live-hum">-- %</span>
-</div>
+    // Live
+    onValue(ref(db, "weather/live"), snap => {
+      const d = snap.val();
+      document.getElementById("live-temp").textContent = `Temp: ${d.temperatur} °C`;
+      document.getElementById("live-hum").textContent  = `Feuchte: ${d.feuchtigkeit} %`;
+      document.getElementById("live-pres").textContent = `Druck: ${d.druck} hPa`;
+    });
 
-<div class="live-row">
-  <span>🌍 Luftdruck</span>
-  <span id="live-press">-- hPa</span>
-</div>
-
-<div class="live-row">
-  <span>⏱ Aktualisiert</span>
-  <span id="live-time">--:--</span>
-</div>
-
-<div class="live-row">
-  <span>Trend</span>
-  <span id="live-trend">--</span>
-</div>
-
-<div class="tab">
-  <button onclick="showTab('24h')">24h</button>
-  <button onclick="showTab('week')">Woche</button>
-  <button onclick="showTab('month')">Monat</button>
-  <button onclick="showTab('year')">Jahr</button>
-</div>
-
-<div id="24h"><canvas id="chart24h"></canvas></div>
-<div id="week" class="hidden"><canvas id="chartWeek"></canvas></div>
-<div id="month" class="hidden"><canvas id="chartMonth"></canvas></div>
-<div id="year" class="hidden"><canvas id="chartYear"></canvas></div>
-
-<div id="forecast-box">
-  <h2>OpenWeather Vorhersage (5 Tage)</h2>
-  <div id="forecast"></div>
-</div>
-
-<!-- ========================================================= -->
-<!-- JAVASCRIPT -->
-<!-- ========================================================= -->
-
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-const firebaseConfig = {
-  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app/"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-// -----------------------------------------------------
-// LIVE-DATEN
-// -----------------------------------------------------
-const refLive = ref(db, "weather/live");
-
-onValue(refLive, (snap) => {
-  const d = snap.val();
-  if (!d) return;
-
-  // 🌤 ICON
-  let icon = "❓";
-  if (d.openweather_raw?.weather?.[0]) {
-    const w = d.openweather_raw.weather[0].main.toLowerCase();
-    if (w.includes("clear")) icon = "☀️";
-    else if (w.includes("cloud")) icon = "☁️";
-    else if (w.includes("rain")) icon = "🌧️";
-    else if (w.includes("snow")) icon = "❄️";
-    else if (w.includes("thunder")) icon = "⛈️";
-    else if (w.includes("mist") || w.includes("fog") || w.includes("haze")) icon = "🌫️";
-    else icon = "🌡️";
-  }
-  document.getElementById("top-weather-icon").textContent = icon;
-
-  // 🌡 OpenWeather Temperatur
-  if (d.openweather_raw?.main?.temp !== undefined) {
-    document.getElementById("top-ow-temp").textContent =
-      d.openweather_raw.main.temp.toFixed(1) + " °C";
-  }
-
-  // 🌅 Sonnenaufgang / 🌇 Sonnenuntergang
-  if (d.openweather_raw?.sys) {
-    document.getElementById("sunrise").textContent =
-      "🌅 " + formatLocalSunTime(d.openweather_raw.sys.sunrise);
-
-    document.getElementById("sunset").textContent =
-      "🌇 " + formatLocalSunTime(d.openweather_raw.sys.sunset);
-  }
-
-  // 🌡 Live Temperatur
-  if (d.temperature !== undefined)
-    document.getElementById("live-temp").textContent = d.temperature.toFixed(1) + " °C";
-
-  if (d.temperature !== undefined)
-    document.getElementById("top-live-temp").textContent =
-      "Live: " + d.temperature.toFixed(1) + " °C ➝";
-
-  // 💧 Feuchte
-  if (d.humidity !== undefined)
-    document.getElementById("live-hum").textContent = d.humidity.toFixed(1) + " %";
-
-  // 🌍 Druck
-  if (d.pressure !== undefined)
-    document.getElementById("live-press").textContent = d.pressure.toFixed(1) + " hPa";
-
-  // ⏱ Zeit
-  if (d.timestamp)
-    document.getElementById("live-time").textContent =
-      new Date(d.timestamp * 1000).toLocaleTimeString("de-DE", {
-        hour: "2-digit",
-        minute: "2-digit"
+    // Stunden-forecast
+    onValue(ref(db, "weather/forecast/stunden"), snap => {
+      const data = snap.val();
+      const container = document.getElementById("forecast-hours");
+      container.innerHTML = "";
+      Object.keys(data).forEach(k => {
+        const e = data[k];
+        const div = document.createElement("div");
+        div.textContent = `${e.timestamp}: ${e.temperatur} °C, ${e.icon}`;
+        container.appendChild(div);
       });
-});
+    });
 
-// -----------------------------------------------------
-// TABS
-// -----------------------------------------------------
-window.showTab = function(id) {
-  document.getElementById("24h").classList.add("hidden");
-  document.getElementById("week").classList.add("hidden");
-  document.getElementById("month").classList.add("hidden");
-  document.getElementById("year").classList.add("hidden");
-
-  document.getElementById(id).classList.remove("hidden");
-
-  if (id === "24h")   lade24h();
-  if (id === "week")  ladeWeek();
-  if (id === "month") ladeMonth();
-  if (id === "year")  ladeYear();
-};
-
-// -----------------------------------------------------
-// HISTORY LADEN
-// -----------------------------------------------------
-async function loadHistory(path) {
-  const snap = await get(ref(db, path));
-  return snap.val();
-}
-
-// -----------------------------------------------------
-// CHARTS ZEICHNEN
-// -----------------------------------------------------
-async function drawCharts() {
-  const h24 = await loadHistory("weather/history/24h");
-  const week = await loadHistory("weather/history/week");
-  const month = await loadHistory("weather/history/month");
-  const year = await loadHistory("weather/history/year");
-
-  drawChart24h(h24);
-  drawChartWeek(week);
-  drawChartMonth(month);
-  drawChartYear(year);
-}
-
-// -----------------------------------------------------
-// 24h CHART
-// -----------------------------------------------------
-function drawChart24h(data) {
-  if (!data) return;
-
-  const labels = [];
-  const t = [];
-  const h = [];
-  const p = [];
-
-  Object.keys(data).sort().forEach(ts => {
-    const d = data[ts];
-    const date = new Date(Number(ts) * 1000);
-    labels.push(date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
-
-    t.push(d.t);
-    h.push(d.h);
-    p.push(d.p);
-  });
-
-  new Chart(document.getElementById("chart24h"), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        { label: "Temperatur (°C)", data: t, borderColor: "red", pointRadius: 0 },
-        { label: "Feuchte (%)", data: h, borderColor: "cyan", pointRadius: 0 },
-        { label: "Druck (hPa)", data: p, borderColor: "yellow", pointRadius: 0 }
-      ]
-    }
-  });
-}
-
-  function lade24h() {
-  const ref24 = ref(db, "weather/history/24h");
-  onValue(ref24, snap => drawChart24h(snap.val()));
-}
-
-function ladeWeek() {
-  const refW = ref(db, "weather/history/week");
-  onValue(refW, snap => drawChartWeek(snap.val()));
-}
-
-function ladeMonth() {
-  const refM = ref(db, "weather/history/month");
-  onValue(refM, snap => drawChartMonth(snap.val()));
-}
-
-function ladeYear() {
-  const refY = ref(db, "weather/history/year");
-  onValue(refY, snap => drawChartYear(snap.val()));
-}
-
-window.showTab = function(id) {
-  document.getElementById("24h").classList.add("hidden");
-  document.getElementById("week").classList.add("hidden");
-  document.getElementById("month").classList.add("hidden");
-  document.getElementById("year").classList.add("hidden");
-
-  document.getElementById(id).classList.remove("hidden");
-
-  if (id === "24h")   lade24h();
-  if (id === "week")  ladeWeek();
-  if (id === "month") ladeMonth();
-  if (id === "year")  ladeYear();
-};
-// -----------------------------------------------------
-// GENERISCHE CHART-FUNKTION (Woche, Monat, Jahr)
-// -----------------------------------------------------
-function drawGenericChart(data, canvasId) {
-  if (!data) return;
-
-  const labels = [];
-  const t = [];
-  const h = [];
-  const p = [];
-
-  Object.keys(data).sort().forEach(key => {
-    const d = data[key];
-    let label;
-
-    // 24h: UNIX timestamp
-    if (/^\d+$/.test(key)) {
-      const ts = Number(key) * 1000;
-      label = new Date(ts).toLocaleTimeString("de-DE", {
-        hour: "2-digit",
-        minute: "2-digit"
+    // Daily-forecast
+    onValue(ref(db, "weather/forecast_daily"), snap => {
+      const data = snap.val();
+      const container = document.getElementById("forecast-days");
+      container.innerHTML = "";
+      Object.keys(data).forEach(k => {
+        const e = data[k];
+        const div = document.createElement("div");
+        div.textContent = `${e.datum}: ${e.t_min}–${e.t_max} °C, ${e.icon}`;
+        container.appendChild(div);
       });
-    }
-
-    // Woche/Monat: YYYY-MM-DD
-    else if (/^\d{4}-\d{2}-\d{2}$/.test(key)) {
-      const ts = new Date(key).getTime();
-      label = new Date(ts).toLocaleDateString("de-DE", {
-        day: "2-digit",
-        month: "short"
-      });
-    }
-
-    // Jahr: YYYY-MM
-    else if (/^\d{4}-\d{2}$/.test(key)) {
-      const ts = new Date(key + "-01").getTime();
-      label = new Date(ts).toLocaleDateString("de-DE", {
-        month: "short",
-        year: "numeric"
-      });
-    }
-
-    else {
-      label = key;
-    }
-
-    labels.push(label);
-
-    t.push(d.t_min ?? d.t ?? null);
-    h.push(d.h_min ?? d.h ?? null);
-    p.push(d.p_min ?? d.p ?? null);
-  });
-
-  new Chart(document.getElementById(canvasId), {
-    type: "line",
-    data: {
-      labels,
-      datasets: [
-        { label: "Temperatur (°C)", data: t, borderColor: "red", pointRadius: 0 },
-        { label: "Feuchte (%)", data: h, borderColor: "cyan", pointRadius: 0 },
-        { label: "Druck (hPa)", data: p, borderColor: "yellow", pointRadius: 0 }
-      ]
-    }
-  });
-}
-// -----------------------------------------------------
-// FORECAST
-// -----------------------------------------------------
-const refForecast = ref(db, "weather/forecast");
-
-onValue(refForecast, (snap) => {
-  const data = snap.val();
-  if (!data) return;
-
-  const container = document.getElementById("forecast");
-  container.innerHTML = "";
-
-  const keys = Object.keys(data).sort();
-
-  keys.forEach(day => {
-    const entry = data[day];
-
-    let main = "";
-    let desc = "";
-
-    if (entry.weather?.[0]) {
-      main = entry.weather[0].main.toLowerCase();
-      desc = entry.weather[0].description || "";
-    }
-
-    let icon = "🌡️";
-    if (main.includes("clear")) icon = "☀️";
-    else if (main.includes("cloud")) icon = "☁️";
-    else if (main.includes("rain")) icon = "🌧️";
-    else if (main.includes("drizzle")) icon = "🌦️";
-    else if (main.includes("thunder")) icon = "⛈️";
-    else if (main.includes("snow")) icon = "❄️";
-    else if (main.includes("mist") || main.includes("fog") || main.includes("haze")) icon = "🌫️";
-
-    const card = `
-      <div class="forecast-card">
-        <div class="forecast-left">
-          <div class="forecast-date">${day}</div>
-          <div class="forecast-icon">${icon}</div>
-        </div>
-
-        <div class="forecast-values" style="display:flex; flex-direction:column; gap:4px;">
-          <div>🌡 ${entry.temperature.toFixed(1)} °C</div>
-          <div>💧 ${entry.humidity.toFixed(0)} %</div>
-          <div>🌍 ${entry.pressure.toFixed(0)} hPa</div>
-          <div style="font-size:14px; opacity:0.8;">${desc}</div>
-        </div>
-      </div>
-    `;
-
-    container.innerHTML += card;
-  });
-});
-
-drawCharts();
-
-// -----------------------------------------------------
-// HELFER
-// -----------------------------------------------------
-function formatLocalSunTime(ts) {
-  return new Date(ts * 1000).toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-}
-</script>
-
+    });
+  </script>
 </body>
 </html>
-
