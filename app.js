@@ -224,3 +224,74 @@ onValue(ref(db, "weather/forecast_daily"), snap => {
 // OFFLINE FALLBACK TAGE
 const offlineDays = loadLocal("days");
 if (offlineDays) renderDays(offlineDays);
+
+// ------------------------------
+// Diagramme laden
+// ------------------------------
+
+function loadHistory(path, callback) {
+  const r = ref(db, path);
+  onValue(r, snap => {
+    const data = snap.val();
+    if (!data) return;
+
+    const labels = [];
+    const temps = [];
+    const winds = [];
+    const rains = [];
+
+    Object.keys(data).forEach(key => {
+      const entry = data[key];
+      labels.push(key);
+      temps.push(entry.temperatur);
+      winds.push(entry.wind);
+      rains.push(entry.regen);
+    });
+
+    callback(labels, temps, winds, rains);
+  });
+}
+
+// ------------------------------
+// Diagramme erstellen
+// ------------------------------
+
+function createChart(canvasId, labels, data, label, color) {
+  const ctx = document.getElementById(canvasId).getContext("2d");
+
+  return new Chart(ctx, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [{
+        label,
+        data,
+        borderColor: color,
+        backgroundColor: color + "33",
+        borderWidth: 2,
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: "#fff" } },
+        y: { ticks: { color: "#fff" } }
+      },
+      plugins: {
+        legend: { labels: { color: "#fff" } }
+      }
+    }
+  });
+}
+
+// ------------------------------
+// Diagramme für Woche
+// ------------------------------
+
+loadHistory("weather/history/week", (labels, temps, winds, rains) => {
+  createChart("chart-temp", labels, temps, "Temperatur (°C)", "#ffcc00");
+  createChart("chart-wind", labels, winds, "Wind (m/s)", "#00e5ff");
+  createChart("chart-rain", labels, rains, "Regen (mm)", "#4a90e2");
+});
