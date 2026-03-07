@@ -60,6 +60,44 @@ async function updateWeather() {
 
   await set(ref(db, "weather/forecast_daily"), days);
 
+  // ------------------------------
+// W / M / J – Archivierung
+// ------------------------------
+
+function getWeekNumber(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+}
+
+const now = new Date();
+const year = now.getFullYear();
+const month = now.getMonth() + 1;
+const week = getWeekNumber(now);
+
+// Daten für Archiv
+const archiveData = {
+    temperatur: current.main.temp,
+    feuchtigkeit: current.main.humidity,
+    druck: current.main.pressure,
+    wind: current.wind.speed,
+    regen: current.rain?.["1h"] ?? 0,
+    icon: current.weather[0].main.toLowerCase(),
+    timestamp: now.toISOString(),
+    serverKey: SERVER_KEY
+};
+
+// Woche speichern
+await set(ref(db, `weather/history/week/${year}-W${week}`), archiveData);
+
+// Monat speichern
+await set(ref(db, `weather/history/month/${year}-${month}`), archiveData);
+
+// Jahr speichern
+await set(ref(db, `weather/history/year/${year}`), archiveData);
+
   console.log("Wetterdaten erfolgreich aktualisiert");
 }
 
