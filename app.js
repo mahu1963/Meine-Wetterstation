@@ -5,10 +5,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "DEIN_API_KEY",
-  authDomain: "DEIN_PROJEKT.firebaseapp.com",
-  databaseURL: "https://DEIN_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "DEIN_PROJEKT",
+  apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
+  authDomain: "meine-wetterstation.firebaseapp.com",
+  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "meine-wetterstation",
+  storageBucket: "meine-wetterstation.firebasestorage.app",
+  messagingSenderId: "593494014586",
+  appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
+  measurementId: "G-ST9RCRW888"
 };
 
 const app = initializeApp(firebaseConfig);
