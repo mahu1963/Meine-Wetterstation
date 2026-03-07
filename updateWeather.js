@@ -88,7 +88,13 @@ const archiveData = {
     timestamp: now.toISOString()
 };
 
-// Woche speichern
+ await set(ref(db, `weather/history/week/${year}-W${week}`), archiveData);
+  await set(ref(db, `weather/history/month/${year}-${month}`), archiveData);
+  await set(ref(db, `weather/history/year/${year}`), archiveData);
+
+} // <-- JETZT endet die Funktion richtig
+  
+  // Woche speichern
 await set(ref(db, `weather/history/week/${year}-W${week}`), archiveData);
 
 // Monat speichern
