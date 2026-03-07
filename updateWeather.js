@@ -18,7 +18,7 @@ const db = getDatabase(app);
 // --------------------------------------------
 // OpenWeather API
 // --------------------------------------------
-const API_KEY = "DEIN_OPENWEATHER_API_KEY";
+const API_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
 const LAT = 47.43602311386345;
 const LON = 16.25550536923543;
 
