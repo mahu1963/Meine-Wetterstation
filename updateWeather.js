@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set } from "firebase/database";
+import { getDatabase, ref, update } from "firebase/database";
 
 const firebaseConfig = {
   apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
@@ -29,7 +29,7 @@ async function updateWeather() {
   const data = await res.json();
 
   // LIVE
-  await set(ref(db, "weather/live"), {
+  await update(ref(db, "weather/live"), {
     temperatur: data.current.temp,
     feuchtigkeit: data.current.humidity,
     druck: data.current.pressure,
@@ -46,7 +46,9 @@ async function updateWeather() {
     icon: h.weather[0].main.toLowerCase()
   }));
 
-  await set(ref(db, "weather/forecast/stunden"), hours);
+  await update(ref(db, "weather/forecast"), {
+    stunden: hours
+  });
 
   // TAGE (5 Tage)
   const days = data.daily.slice(0, 5).map(d => ({
@@ -58,27 +60,28 @@ async function updateWeather() {
     icon: d.weather[0].main.toLowerCase()
   }));
 
-  await set(ref(db, "weather/forecast_daily"), days);
+  await update(ref(db, "weather"), {
+    forecast_daily: days
+  });
 
-// ------------------------------
-// ARCHIVIERUNG
-// ------------------------------
+  // ------------------------------
+  // ARCHIVIERUNG
+  // ------------------------------
 
-function getWeekNumber(date) {
+  function getWeekNumber(date) {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
     const dayNum = d.getUTCDay() || 7;
     d.setUTCDate(d.getUTCDate() + 4 - dayNum);
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-}
+  }
 
-const now = new Date();
-const year = now.getFullYear();
-const month = now.getMonth() + 1;
-const week = getWeekNumber(now);
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const week = getWeekNumber(now);
 
-// Daten für Archiv
-const archiveData = {
+  const archiveData = {
     temperatur: data.current.temp,
     feuchtigkeit: data.current.humidity,
     druck: data.current.pressure,
@@ -86,20 +89,22 @@ const archiveData = {
     regen: data.current.rain?.["1h"] ?? 0,
     icon: data.current.weather[0].main.toLowerCase(),
     timestamp: now.toISOString()
-};
+  };
 
-// Woche speichern
-await set(ref(db, `weather/history/week/${year}-W${week}`), archiveData);
+  await update(ref(db, `weather/history/week`), {
+    [`${year}-W${week}`]: archiveData
+  });
 
-// Monat speichern
-await set(ref(db, `weather/history/month/${year}-${month}`), archiveData);
+  await update(ref(db, `weather/history/month`), {
+    [`${year}-${month}`]: archiveData
+  });
 
-// Jahr speichern
-await set(ref(db, `weather/history/year/${year}`), archiveData);
-
-} // <-- HIER endet die Funktion WIRKLICH
+  await update(ref(db, `weather/history/year`), {
+    [year]: archiveData
+  });
+}
 
 // Funktion starten
 updateWeather().then(() => {
-    console.log("Wetterdaten erfolgreich aktualisiert!");
+  console.log("Wetterdaten erfolgreich aktualisiert!");
 });
