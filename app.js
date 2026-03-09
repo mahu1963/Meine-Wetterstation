@@ -11,8 +11,7 @@ const firebaseConfig = {
   projectId: "meine-wetterstation",
   storageBucket: "meine-wetterstation.firebasestorage.app",
   messagingSenderId: "593494014586",
-  appId: "1:593494014586:web:a05ed68495b1b16d6059c3",
-  measurementId: "G-ST9RCRW888"
+  appId: "1:593494014586:web:cad0037363543e946059c3",
 };
 
 const app = initializeApp(firebaseConfig);
