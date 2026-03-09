@@ -4,51 +4,59 @@
   <meta charset="UTF-8">
   <title>Meine Wetterstation</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Firebase v9 -->
-  <script type="module" src="script.js"></script>
+  <script type="module" src="app.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>Meine Wetterstation</h1>
 
+    <!-- Live Box -->
     <div class="current-box">
       <div class="current-value">
-        <span id="temp">--.-</span>
+        <span id="live-temp">--.-</span>
         <span class="unit">°C</span>
       </div>
       <div class="current-sub">
-        <span>Feuchte: <span id="hum">--</span>%</span>
-        <span>Druck: <span id="pres">----</span> hPa</span>
+        <span>Feuchte: <span id="live-hum">--</span>%</span>
+        <span>Druck: <span id="live-pres">----</span> hPa</span>
+        <span id="timestamp">Stand: --</span>
       </div>
+      <div id="live-icon" class="icon-box"></div>
     </div>
 
-    <div class="minmax-row">
-      <div class="minmax-card">
-        <h2>Heute</h2>
-        <p>Min: <span id="minToday">-</span></p>
-        <p>Max: <span id="maxToday">-</span></p>
+    <!-- ⭐ Neue optisch perfekte Statistik-Karten -->
+    <div class="stats-grid">
+
+      <div class="stats-card">
+        <h3>Heute</h3>
+        <p>Min: <span id="min-today">-</span></p>
+        <p>Max: <span id="max-today">-</span></p>
       </div>
-      <div class="minmax-card">
-        <h2>Monat</h2>
-        <p>Min: <span id="minMonth">-</span></p>
-        <p>Max: <span id="maxMonth">-</span></p>
-        <p>Ø: <span id="avgMonth">-</span></p>
+
+      <div class="stats-card">
+        <h3>Monat</h3>
+        <p>Min: <span id="min-month">-</span></p>
+        <p>Max: <span id="max-month">-</span></p>
+        <p>Ø: <span id="avg-month">-</span></p>
       </div>
-      <div class="minmax-card">
-        <h2>Jahr</h2>
-        <p>Min: <span id="minYear">-</span></p>
-        <p>Max: <span id="maxYear">-</span></p>
-        <p>Ø: <span id="avgYear">-</span></p>
+
+      <div class="stats-card">
+        <h3>Jahr</h3>
+        <p>Min: <span id="min-year">-</span></p>
+        <p>Max: <span id="max-year">-</span></p>
+        <p>Ø: <span id="avg-year">-</span></p>
       </div>
+
     </div>
 
+    <!-- Diagramme -->
     <h2>Verlauf heute</h2>
     <canvas id="dayChart"></canvas>
 
     <h2>Monats-Min/Max</h2>
     <canvas id="monthChart"></canvas>
+
   </div>
 </body>
 </html>
