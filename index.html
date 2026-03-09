@@ -2,82 +2,53 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Meine Wetterstation</title>
-
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#4a90e2">
-
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-
   <link rel="stylesheet" href="style.css">
-
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.2/lottie.min.js"></script>
+  <!-- Firebase v9 -->
+  <script type="module" src="script.js"></script>
 </head>
-
 <body>
+  <div class="container">
+    <h1>Meine Wetterstation</h1>
 
-<header>
-    <h1>🌦️ Wetterstation Stuben‑Bernstein</h1>
-
-    <!-- Größerer, zentrierter Name -->
-    <p style="
-        margin-top:-5px;
-        font-size:1.6rem;
-        font-weight:600;
-        opacity:0.95;
-    ">
-        Martin Huber
-    </p>
-
-    <p id="timestamp"></p>
-    <button id="dark-toggle">🌙 / ☀️</button>
-</header>  
-
-  <section id="live" class="card">
-    <h2>Aktuelles Wetter</h2>
-
-    <div id="live-icon" style="width:120px;height:120px;margin:auto;"></div>
-
-    <div class="live-grid">
-      <div class="value"><span id="live-temp"></span>°C</div>
-      <div class="value"><span id="live-hum"></span>%</div>
-      <div class="value"><span id="live-pres"></span> hPa</div>
+    <div class="current-box">
+      <div class="current-value">
+        <span id="temp">--.-</span>
+        <span class="unit">°C</span>
+      </div>
+      <div class="current-sub">
+        <span>Feuchte: <span id="hum">--</span>%</span>
+        <span>Druck: <span id="pres">----</span> hPa</span>
+      </div>
     </div>
-  </section>
 
-  <section id="forecast-hours" class="card">
-    <h2>Vorhersage (nächste Stunden)</h2>
-    <div id="hours-container" class="scroll-row"></div>
-  </section>
+    <div class="minmax-row">
+      <div class="minmax-card">
+        <h2>Heute</h2>
+        <p>Min: <span id="minToday">-</span></p>
+        <p>Max: <span id="maxToday">-</span></p>
+      </div>
+      <div class="minmax-card">
+        <h2>Monat</h2>
+        <p>Min: <span id="minMonth">-</span></p>
+        <p>Max: <span id="maxMonth">-</span></p>
+        <p>Ø: <span id="avgMonth">-</span></p>
+      </div>
+      <div class="minmax-card">
+        <h2>Jahr</h2>
+        <p>Min: <span id="minYear">-</span></p>
+        <p>Max: <span id="maxYear">-</span></p>
+        <p>Ø: <span id="avgYear">-</span></p>
+      </div>
+    </div>
 
-  <section id="forecast-days" class="card">
-    <h2>5‑Tage‑Vorhersage</h2>
-    <div id="days-container" class="grid-days"></div>
-  </section>
+    <h2>Verlauf heute</h2>
+    <canvas id="dayChart"></canvas>
 
-  <section class="card">
-    <h2>Diagramme</h2>
-    <canvas id="chart-temp"></canvas>
-    <canvas id="chart-wind"></canvas>
-    <canvas id="chart-rain"></canvas>
-  </section>
-
-  <script type="module" src="app.js"></script>
-
-  <script>
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js")
-        .then(() => console.log("Service Worker registriert"))
-        .catch(err => console.log("SW Fehler:", err));
-    }
-  </script>
-
+    <h2>Monats-Min/Max</h2>
+    <canvas id="monthChart"></canvas>
+  </div>
 </body>
 </html>
-
-
