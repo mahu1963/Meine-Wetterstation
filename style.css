@@ -1,13 +1,10 @@
-body {
-  background-color: #ffffff;
+:root {
+    --bg: #ffffff;
+    --text: #222;
+    --card: #fff;
+    --accent: #4a90e2;
 }
 
-:root {
-  --bg: #eef2f3;
-  --text: #222;
-  --card: #fff;
-  --accent: #4a90e2;
-}
 
 .dark {
   --bg: #1e1e1e;
