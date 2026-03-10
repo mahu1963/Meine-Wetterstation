@@ -91,6 +91,32 @@ const offlineLive = loadLocal("live");
 if (offlineLive) renderLive(offlineLive);
 
 // ---------------------------------------------------------
+// OpenWeather aus Firebase laden
+// ---------------------------------------------------------
+function loadOpenWeather() {
+  const owRef = ref(db, "weather/openweather");
+
+  onValue(owRef, snap => {
+    if (!snap.exists()) return;
+
+    const raw = snap.val().raw;
+    const data = JSON.parse(raw);
+
+    document.getElementById("ow-temp").textContent = data.main.temp.toFixed(1);
+    document.getElementById("ow-humidity").textContent = data.main.humidity;
+    document.getElementById("ow-pressure").textContent = data.main.pressure;
+    document.getElementById("ow-wind").textContent = data.wind.speed;
+    document.getElementById("ow-clouds").textContent = data.clouds.all;
+
+    const time = new Date(data.dt * 1000);
+    document.getElementById("ow-time").textContent = time.toLocaleString();
+  });
+}
+
+loadOpenWeather();
+
+
+// ---------------------------------------------------------
 // Tages-Min/Max
 // ---------------------------------------------------------
 function loadTodayMinMax() {
