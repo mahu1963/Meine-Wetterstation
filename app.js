@@ -150,3 +150,62 @@ async function loadMonthYearStats() {
 }
 
 loadMonthYearStats();
+
+// ---------------------------------------------------------
+// History (Woche) laden und Diagramm anzeigen
+// ---------------------------------------------------------
+async function loadWeekHistory() {
+  const weekRef = ref(db, "weather/history/week");
+
+  onValue(weekRef, snap => {
+    if (!snap.exists()) return;
+
+    const data = snap.val();
+    const labels = [];
+    const temps = [];
+
+    // Einträge sortieren (Firebase push keys sind unsortiert)
+    const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+
+    entries.forEach(entry => {
+      const date = new Date(entry.timestamp * 1000);
+      labels.push(date.toLocaleString());
+      temps.push(entry.temp);
+    });
+
+    drawWeekChart(labels, temps);
+  });
+}
+
+let weekChart = null;
+
+function drawWeekChart(labels, temps) {
+  const ctx = document.getElementById("chartWeek").getContext("2d");
+
+  if (weekChart) weekChart.destroy();
+
+  weekChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Temperatur (°C)",
+        data: temps,
+        borderColor: "#ff6600",
+        backgroundColor: "rgba(255, 102, 0, 0.2)",
+        borderWidth: 2,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { display: true },
+        y: { display: true }
+      }
+    }
+  });
+}
+
+// Starten
+loadWeekHistory();
