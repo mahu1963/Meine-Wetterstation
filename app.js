@@ -111,10 +111,14 @@ function loadOpenWeather() {
     const time = new Date(data.dt * 1000);
     document.getElementById("ow-time").textContent = time.toLocaleString();
 
-    // ⭐ ICON LADEN
+    // ⭐ ICON
     const icon = data.weather[0].icon;
     document.getElementById("ow-icon").src =
       "https://openweathermap.org/img/wn/" + icon + "@2x.png";
+
+    // ⭐ BESCHREIBUNG
+    document.getElementById("ow-desc").textContent =
+      data.weather[0].description;
   });
 }
 
