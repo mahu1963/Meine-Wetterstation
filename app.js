@@ -72,10 +72,11 @@ async function loadOpenWeatherIcon() {
     const data = await res.json();
 
     const iconCode = data.weather[0].icon; // z.B. "10d"
-    const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+   const modern = getModernIcon(iconCode);
 
-    document.getElementById("live-icon").innerHTML =
-      `<img src="${iconUrl}" style="width:90px;height:90px;">`;
+document.getElementById("live-icon").innerHTML =
+  `<img src="https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/${modern}.svg"
+        style="width:90px;height:90px;">`;
 
   } catch (err) {
     console.error("Fehler beim Laden des OpenWeather-Icons:", err);
