@@ -139,6 +139,16 @@ function loadOpenWeather() {
     document.getElementById("ow-clouds").textContent = data.clouds.all;
 
     const time = new Date(data.dt * 1000);
+    // Sonnenaufgang & Sonnenuntergang
+    const sunrise = new Date(data.sys.sunrise * 1000);
+    const sunset = new Date(data.sys.sunset * 1000);
+
+    document.getElementById("sunrise").textContent =
+     sunrise.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+    document.getElementById("sunset").textContent =
+     sunset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
     document.getElementById("ow-time").textContent = time.toLocaleString();
 
     const icon = data.weather[0].icon;
