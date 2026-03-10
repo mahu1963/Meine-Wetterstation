@@ -29,43 +29,53 @@ function loadLocal(key) {
 }
 
 // ---------------------------------------------------------
+// OpenWeather Icon Loader
+// ---------------------------------------------------------
+async function loadOpenWeatherIcon() {
+  const apiKey = "DEIN_API_KEY"; // HIER deinen OpenWeather API-Key eintragen
+  const lat = 47.4;  // Deine Koordinaten
+  const lon = 16.2;
+
+  const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    const iconCode = data.weather[0].icon; // z.B. "10d"
+    const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+
+    document.getElementById("live-icon").innerHTML =
+      `<img src="${iconUrl}" style="width:90px;height:90px;">`;
+
+  } catch (err) {
+    console.error("Fehler beim Laden des OpenWeather-Icons:", err);
+  }
+}
+
+// ---------------------------------------------------------
 // Live Rendering
 // ---------------------------------------------------------
 function renderLive(d) {
   if (!d) return;
 
-  // Temperatur
   document.getElementById("live-temp").textContent =
     d.temp ? d.temp.toFixed(1) : "--.-";
 
-  // Feuchte
   document.getElementById("live-hum").textContent =
     d.humidity ? d.humidity.toFixed(0) : "--";
 
-  // Druck
   document.getElementById("live-pres").textContent =
     d.pressure ? d.pressure.toFixed(1) : "----";
 
-  // Zeitstempel
   document.getElementById("timestamp").textContent =
     d.timestamp
       ? "Stand: " + new Date(d.timestamp * 1000).toLocaleString()
       : "Stand: --";
 
-  // -----------------------------------------
-  // ICON AUTOMATISCH SETZEN
-  // -----------------------------------------
-  let icon = "unknown";
-
-  if (d.temp >= 25 && d.humidity < 60) icon = "sunny";
-  else if (d.humidity > 90) icon = "fog";
-  else if (d.pressure < 990) icon = "rain";
-  else if (d.pressure < 1005) icon = "cloudy";
-  else icon = "partly_cloudy";
-
-  setLiveIcon(icon);
+  // ⭐ OpenWeather Icon laden
+  loadOpenWeatherIcon();
 }
-
 
 // ---------------------------------------------------------
 // Firebase Listener – LIVE
