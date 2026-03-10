@@ -345,19 +345,35 @@ function drawYearChart(labels, temps) {
 }
 
 // Lottie Animationen für Sonnenaufgang & Sonnenuntergang
+function initLottie() {
+  const sunrise = document.getElementById("sunrise-anim");
+  const sunset = document.getElementById("sunset-anim");
 
-lottie.loadAnimation({
-  container: document.getElementById("sunrise-anim"),
-  renderer: "svg",
-  loop: true,
-  autoplay: true,
-  path: "https://assets9.lottiefiles.com/packages/lf20_8y3v2v.json"
-});
+  if (!sunrise || !sunset) {
+    console.warn("Lottie-Container noch nicht da – versuche erneut…");
+    setTimeout(initLottie, 300);
+    return;
+  }
 
-lottie.loadAnimation({
-  container: document.getElementById("sunset-anim"),
-  renderer: "svg",
-  loop: true,
-  autoplay: true,
-  path: "https://assets9.lottiefiles.com/packages/lf20_tutvdkg0.json"
-});
+  lottie.loadAnimation({
+    container: sunrise,
+    renderer: "svg",
+    loop: true,
+    autoplay: true,
+    path: "https://assets9.lottiefiles.com/packages/lf20_8y3v2v.json"
+  });
+
+  lottie.loadAnimation({
+    container: sunset,
+    renderer: "svg",
+    loop: true,
+    autoplay: true,
+    path: "https://assets9.lottiefiles.com/packages/lf20_tutvdkg0.json"
+  });
+
+  console.log("Lottie erfolgreich geladen!");
+}
+
+// Startet automatisch, egal wann das Modul lädt
+initLottie();
+
