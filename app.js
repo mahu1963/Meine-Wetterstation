@@ -29,7 +29,7 @@ function loadLocal(key) {
 }
 
 // ---------------------------------------------------------
-// OpenWeather Icon Loader
+// OpenWeather Icon Loader  ⭐ HIER EINGEFÜGT
 // ---------------------------------------------------------
 async function loadOpenWeatherIcon() {
   const apiKey = "DEIN_API_KEY"; // HIER deinen OpenWeather API-Key eintragen
