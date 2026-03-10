@@ -343,23 +343,24 @@ function drawYearChart(labels, temps) {
     }
   });
 }
-// Animierte Icons laden
-lottie.loadAnimation({
-  container: document.getElementById("sunrise-anim"),
-  renderer: "svg",
-  loop: true,
-  autoplay: true,
-  path: "https://assets9.lottiefiles.com/packages/lf20_8y3v2v.json"
+
+// Lottie Animationen für Sonnenaufgang & Sonnenuntergang
+window.addEventListener("DOMContentLoaded", () => {
+
+  lottie.loadAnimation({
+    container: document.getElementById("sunrise-anim"),
+    renderer: "svg",
+    loop: true,
+    autoplay: true,
+    path: "https://assets9.lottiefiles.com/packages/lf20_8y3v2v.json"
+  });
+
+  lottie.loadAnimation({
+    container: document.getElementById("sunset-anim"),
+    renderer: "svg",
+    loop: true,
+    autoplay: true,
+    path: "https://assets9.lottiefiles.com/packages/lf20_tutvdkg0.json"
+  });
+
 });
-
-lottie.loadAnimation({
-  container: document.getElementById("sunset-anim"),
-  renderer: "svg",
-  loop: true,
-  autoplay: true,
-  path: "https://assets9.lottiefiles.com/packages/lf20_tutvdkg0.json"
-});
-
-
-loadYearHistory();
-// Starten
