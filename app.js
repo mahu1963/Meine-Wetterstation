@@ -139,12 +139,11 @@ function loadOpenWeather() {
     const time = new Date(data.dt * 1000);
     document.getElementById("ow-time").textContent = time.toLocaleString();
 
-    // ⭐ ICON
-    const icon = data.weather[0].icon;
-    const modern = getModernIcon(icon);
+   const icon = data.weather[0].icon;
+   const modern = getModernIcon(icon);
 
-    document.getElementById("ow-icon").src =
-   "https://cdn.jsdelivr.net/npm/weather-icons-lite/icons/" + modern + ".svg";
+   document.getElementById("ow-icon").src =
+    "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/" + modern + ".svg";
 
 
     // ⭐ BESCHREIBUNG
