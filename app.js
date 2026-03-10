@@ -81,19 +81,24 @@ function setLiveIcon(iconName) {
 function renderLive(d) {
   if (!d) return;
 
-  document.getElementById("temp").textContent =
-    d.temp ? d.temp.toFixed(1) + " °C" : "--.- °C";
+  // Temperatur
+  document.getElementById("live-temp").textContent =
+    d.temp ? d.temp.toFixed(1) : "--.-";
 
-  document.getElementById("humidity").textContent =
-    d.humidity ? d.humidity.toFixed(0) + "%" : "--%";
+  // Feuchte
+  document.getElementById("live-hum").textContent =
+    d.humidity ? d.humidity.toFixed(0) : "--";
 
-  document.getElementById("pressure").textContent =
-    d.pressure ? d.pressure.toFixed(1) + " hPa" : "---- hPa";
+  // Druck
+  document.getElementById("live-pres").textContent =
+    d.pressure ? d.pressure.toFixed(1) : "----";
 
+  // Zeitstempel
   document.getElementById("timestamp").textContent =
-    d.timestamp ? new Date(d.timestamp * 1000).toLocaleString() : "--";
+    d.timestamp
+      ? "Stand: " + new Date(d.timestamp * 1000).toLocaleString()
+      : "Stand: --";
 }
-
 
 // ---------------------------------------------------------
 // Stunden Forecast Rendering
