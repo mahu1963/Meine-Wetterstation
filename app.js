@@ -56,6 +56,7 @@ function getModernIcon(iconCode) {
 }
 
 
+
 // ---------------------------------------------------------
 // OpenWeather Icon Loader  ⭐ HIER EINGEFÜGT
 // ---------------------------------------------------------
@@ -141,6 +142,9 @@ function loadOpenWeather() {
 
    const icon = data.weather[0].icon;
    const modern = getModernIcon(icon);
+
+   document.getElementById("ow-icon").src =
+    "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/" + modern + ".svg";
 
    document.getElementById("ow-icon").src =
     "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/" + modern + ".svg";
