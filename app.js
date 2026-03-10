@@ -28,6 +28,34 @@ function loadLocal(key) {
   return JSON.parse(localStorage.getItem(key) || "null");
 }
 
+// Firebase imports usw.
+
+function getModernIcon(iconCode) {
+  const map = {
+    "01d": "clear-day",
+    "01n": "clear-night",
+    "02d": "partly-cloudy-day",
+    "02n": "partly-cloudy-night",
+    "03d": "cloudy",
+    "03n": "cloudy",
+    "04d": "overcast",
+    "04n": "overcast",
+    "09d": "rain",
+    "09n": "rain",
+    "10d": "rain",
+    "10n": "rain",
+    "11d": "thunderstorm",
+    "11n": "thunderstorm",
+    "13d": "snow",
+    "13n": "snow",
+    "50d": "mist",
+    "50n": "mist"
+  };
+
+  return map[iconCode] || "cloudy";
+}
+
+
 // ---------------------------------------------------------
 // OpenWeather Icon Loader  ⭐ HIER EINGEFÜGT
 // ---------------------------------------------------------
@@ -113,8 +141,11 @@ function loadOpenWeather() {
 
     // ⭐ ICON
     const icon = data.weather[0].icon;
+    const modern = getModernIcon(icon);
+
     document.getElementById("ow-icon").src =
-      "https://openweathermap.org/img/wn/" + icon + "@2x.png";
+   "https://cdn.jsdelivr.net/npm/weather-icons-lite/icons/" + modern + ".svg";
+
 
     // ⭐ BESCHREIBUNG
     document.getElementById("ow-desc").textContent =
