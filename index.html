@@ -125,9 +125,27 @@
   <div>Beschreibung: <span id="ow-desc">--</span></div>
 
 </div>
+// Animierte Icons laden
+lottie.loadAnimation({
+  container: document.getElementById("sunrise-anim"),
+  renderer: "svg",
+  loop: true,
+  autoplay: true,
+  path: "https://assets9.lottiefiles.com/packages/lf20_8y3v2v.json" // Sonnenaufgang
+});
 
+lottie.loadAnimation({
+  container: document.getElementById("sunset-anim"),
+  renderer: "svg",
+  loop: true,
+  autoplay: true,
+  path: "https://assets9.lottiefiles.com/packages/lf20_tutvdkg0.json" // Sonnenuntergang
+});
+
+  
 </body>
 </html>
+
 
 
 
