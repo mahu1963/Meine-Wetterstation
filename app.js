@@ -51,7 +51,21 @@ function renderLive(d) {
     d.timestamp
       ? "Stand: " + new Date(d.timestamp * 1000).toLocaleString()
       : "Stand: --";
+
+  // -----------------------------------------
+  // ICON AUTOMATISCH SETZEN
+  // -----------------------------------------
+  let icon = "unknown";
+
+  if (d.temp >= 25 && d.humidity < 60) icon = "sunny";
+  else if (d.humidity > 90) icon = "fog";
+  else if (d.pressure < 990) icon = "rain";
+  else if (d.pressure < 1005) icon = "cloudy";
+  else icon = "partly_cloudy";
+
+  setLiveIcon(icon);
 }
+
 
 // ---------------------------------------------------------
 // Firebase Listener – LIVE
