@@ -44,9 +44,20 @@
   font-weight:600;
   color:#000;
 ">
-  <div>Sonnenaufgang: <span id="sunrise">--:--</span></div>
-  <div>Sonnenuntergang: <span id="sunset">--:--</span></div>
+ <div style="text-align:right;">
+
+  <div style="display:flex; align-items:center; gap:8px;">
+    <div id="sunrise-anim" style="width:40px; height:40px;"></div>
+    <span id="ow-sunrise" style="font-size:1.4rem;">--:--</span>
+  </div>
+
+  <div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
+    <div id="sunset-anim" style="width:40px; height:40px;"></div>
+    <span id="ow-sunset" style="font-size:1.4rem;">--:--</span>
+  </div>
+
 </div>
+
 
 
     <!-- Live Box -->
@@ -117,6 +128,7 @@
 
 </body>
 </html>
+
 
 
 
