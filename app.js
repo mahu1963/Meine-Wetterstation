@@ -207,5 +207,58 @@ function drawWeekChart(labels, temps) {
   });
 }
 
-// Starten
 loadWeekHistory();
+
+// ---------------------------------------------------------
+// History (Jahr) laden und Diagramm anzeigen
+// ---------------------------------------------------------
+async function loadYearHistory() {
+  const yearRef = ref(db, "weather/history/year");
+
+  onValue(yearRef, snap => {
+    if (!snap.exists()) return;
+
+    const data = snap.val();
+    const labels = [];
+    const temps = [];
+
+    const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+
+    entries.forEach(entry => {
+      const date = new Date(entry.timestamp * 1000);
+      labels.push(date.toLocaleDateString());
+      temps.push(entry.temp);
+    });
+
+    drawYearChart(labels, temps);
+  });
+}
+
+let yearChart = null;
+
+function drawYearChart(labels, temps) {
+  const ctx = document.getElementById("chartYear").getContext("2d");
+
+  if (yearChart) yearChart.destroy();
+
+  yearChart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "Temperatur (°C)",
+        data: temps,
+        borderColor: "#33cc33",
+        backgroundColor: "rgba(51, 204, 51, 0.2)",
+        borderWidth: 2,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true
+    }
+  });
+}
+
+loadYearHistory();
+// Starten
