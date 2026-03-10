@@ -28,8 +28,9 @@ function loadLocal(key) {
   return JSON.parse(localStorage.getItem(key) || "null");
 }
 
-// Firebase imports usw.
-
+// ---------------------------------------------------------
+// OpenWeather Icon Mapping
+// ---------------------------------------------------------
 function getModernIcon(iconCode) {
   const map = {
     "01d": "clear-day",
@@ -55,14 +56,12 @@ function getModernIcon(iconCode) {
   return map[iconCode] || "cloudy";
 }
 
-
-
 // ---------------------------------------------------------
-// OpenWeather Icon Loader  ⭐ HIER EINGEFÜGT
+// OpenWeather Icon Loader
 // ---------------------------------------------------------
 async function loadOpenWeatherIcon() {
-  const apiKey = "27602f1bbb8e3dd3587a1da6e3de24b6"; // HIER deinen OpenWeather API-Key eintragen
-  const lat = 47.4;  // Deine Koordinaten
+  const apiKey = "27602f1bbb8e3dd3587a1da6e3de24b6";
+  const lat = 47.4;
   const lon = 16.2;
 
   const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
@@ -71,12 +70,12 @@ async function loadOpenWeatherIcon() {
     const res = await fetch(url);
     const data = await res.json();
 
-    const iconCode = data.weather[0].icon; // z.B. "10d"
-   const modern = getModernIcon(iconCode);
+    const iconCode = data.weather[0].icon;
+    const modern = getModernIcon(iconCode);
 
-document.getElementById("live-icon").innerHTML =
-  `<img src="https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/${modern}.svg"
-        style="width:90px;height:90px;">`;
+    document.getElementById("live-icon").innerHTML =
+      `<img src="https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/${modern}.svg"
+            style="width:90px;height:90px;">`;
 
   } catch (err) {
     console.error("Fehler beim Laden des OpenWeather-Icons:", err);
@@ -103,7 +102,6 @@ function renderLive(d) {
       ? "Stand: " + new Date(d.timestamp * 1000).toLocaleString()
       : "Stand: --";
 
-  // ⭐ OpenWeather Icon laden
   loadOpenWeatherIcon();
 }
 
@@ -139,34 +137,23 @@ function loadOpenWeather() {
     document.getElementById("ow-clouds").textContent = data.clouds.all;
 
     const time = new Date(data.dt * 1000);
-   // Sonnenaufgang & Sonnenuntergang
     const sunrise = new Date(data.sys.sunrise * 1000);
     const sunset = new Date(data.sys.sunset * 1000);
 
     document.getElementById("ow-sunrise").textContent =
-     sunrise.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      sunrise.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
     document.getElementById("ow-sunset").textContent =
-     sunset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-
-    document.getElementById("sunrise").textContent =
-     sunrise.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-    document.getElementById("sunset").textContent =
-     sunset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      sunset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
     document.getElementById("ow-time").textContent = time.toLocaleString();
 
     const icon = data.weather[0].icon;
     const modern = getModernIcon(icon);
 
-     document.getElementById("ow-icon").src =
+    document.getElementById("ow-icon").src =
       "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/" + modern + ".svg";
 
-  
-  
-    // ⭐ BESCHREIBUNG
     document.getElementById("ow-desc").textContent =
       data.weather[0].description;
   });
@@ -236,7 +223,7 @@ async function loadMonthYearStats() {
 loadMonthYearStats();
 
 // ---------------------------------------------------------
-// History (Woche) laden und Diagramm anzeigen
+// History (Woche)
 // ---------------------------------------------------------
 async function loadWeekHistory() {
   const weekRef = ref(db, "weather/history/week");
@@ -248,7 +235,6 @@ async function loadWeekHistory() {
     const labels = [];
     const temps = [];
 
-    // Einträge sortieren (Firebase push keys sind unsortiert)
     const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
 
     entries.forEach(entry => {
@@ -294,7 +280,7 @@ function drawWeekChart(labels, temps) {
 loadWeekHistory();
 
 // ---------------------------------------------------------
-// History (Jahr) laden und Diagramm anzeigen
+// History (Jahr)
 // ---------------------------------------------------------
 async function loadYearHistory() {
   const yearRef = ref(db, "weather/history/year");
@@ -344,13 +330,14 @@ function drawYearChart(labels, temps) {
   });
 }
 
-// Lottie Animationen für Sonnenaufgang & Sonnenuntergang
+// ---------------------------------------------------------
+// Lottie Animationen
+// ---------------------------------------------------------
 function initLottie() {
   const sunrise = document.getElementById("sunrise-anim");
   const sunset = document.getElementById("sunset-anim");
 
   if (!sunrise || !sunset) {
-    console.warn("Lottie-Container noch nicht da – versuche erneut…");
     setTimeout(initLottie, 300);
     return;
   }
@@ -370,10 +357,6 @@ function initLottie() {
     autoplay: true,
     path: "https://assets9.lottiefiles.com/packages/lf20_tutvdkg0.json"
   });
-
-  console.log("Lottie erfolgreich geladen!");
 }
 
-// Startet automatisch, egal wann das Modul lädt
 initLottie();
-
