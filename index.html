@@ -16,7 +16,15 @@
   <script type="module" src="app.js?v=999"></script>
 </head>
 
-<body>
+<script>
+  // Cache-Killer: lädt immer die neueste app.js
+  const version = Date.now(); // erzeugt eine neue Version bei jedem Laden
+  const script = document.createElement("script");
+  script.type = "module";
+  script.src = "app.js?v=" + version;
+  document.body.appendChild(script);
+</script>
+  <body>
 
   <div class="container">
 
@@ -125,6 +133,7 @@
 
 </body>
 </html>
+
 
 
 
