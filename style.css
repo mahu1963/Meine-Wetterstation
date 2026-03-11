@@ -1,136 +1,173 @@
 :root {
-    --bg: #ffffff;   /* jetzt wirklich weiß */
+    --bg: #ffffff;
     --text: #222;
     --card: #ffffff;
     --accent: #4a90e2;
 }
 
-
-
 .dark {
-  --bg: #1e1e1e;
-  --text: #e0e0e0;
-  --card: #2a2a2a;
-  --accent: #4a90e2;
-}
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #ffffff;
-  color: #222;
+    --bg: #1e1e1e;
+    --text: #e0e0e0;
+    --card: #2a2a2a;
+    --accent: #4a90e2;
 }
 
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
 
 .container {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 20px;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 20px;
 }
 
 h1 {
-  text-align: center;
-  margin-bottom: 20px;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
+/* -----------------------------------------
+   LIVE-BEREICH
+----------------------------------------- */
+
 .current-box {
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 16px;
-  padding: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  backdrop-filter: blur(8px);
-  margin-bottom: 20px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: blur(8px);
+    margin-bottom: 20px;
 }
 
 .current-value {
-  font-size: 3rem;
-  font-weight: 600;
+    font-size: 3rem;
+    font-weight: 600;
 }
 
 .current-value .unit {
-  font-size: 1.5rem;
-  opacity: 0.8;
+    font-size: 1.5rem;
+    opacity: 0.8;
 }
 
 .current-sub {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.95rem;
-  opacity: 0.9;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.95rem;
+    opacity: 0.9;
 }
 
+/* -----------------------------------------
+   PULS-EFFEKT FÜR LIVE-ICON
+----------------------------------------- */
+
+#icon-top {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 6px;
+    box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.6);
+    animation: pulse 2.2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.6);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 12px 12px rgba(255, 165, 0, 0);
+        transform: scale(1.06);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.6);
+        transform: scale(1);
+    }
+}
+
+/* -----------------------------------------
+   MIN/MAX-KARTEN
+----------------------------------------- */
+
 .minmax-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 12px;
-  margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
 }
 
 .minmax-card {
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 12px;
-  padding: 12px 16px;
-  backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    padding: 12px 16px;
+    backdrop-filter: blur(8px);
 }
 
 .minmax-card h2 {
-  margin: 0 0 8px;
-  font-size: 1.1rem;
+    margin: 0 0 8px;
+    font-size: 1.1rem;
 }
 
 .minmax-card p {
-  margin: 2px 0;
+    margin: 2px 0;
 }
 
-canvas {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 12px;
-  padding: 10px;
-  margin-bottom: 24px;
-}
 /* -----------------------------------------
-   Statistik-Karten (Heute / Monat / Jahr)
-   Optisch passend zur current-box
+   CHARTS
+----------------------------------------- */
+
+canvas {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 24px;
+}
+
+/* -----------------------------------------
+   STATISTIK-KARTEN
 ----------------------------------------- */
 
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
-  margin: 20px 0 30px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 20px 0 30px;
 }
 
 .stats-card {
-  background: rgba(0, 0, 0, 0.25);
-  border-radius: 16px;
-  padding: 16px;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255,255,255,0.15);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 16px;
+    padding: 16px;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 body.dark .stats-card {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255,255,255,0.1);
 }
 
 .stats-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
 }
 
 .stats-card h3 {
-  margin: 0 0 10px;
-  font-size: 1.2rem;
-  font-weight: 600;
-  opacity: 0.9;
+    margin: 0 0 10px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    opacity: 0.9;
 }
 
 .stats-card p {
-  margin: 4px 0;
-  font-size: 1rem;
-  opacity: 0.85;
+    margin: 4px 0;
+    font-size: 1rem;
+    opacity: 0.85;
 }
