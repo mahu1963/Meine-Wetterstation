@@ -18,6 +18,20 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // ---------------------------------------------------------
+// Smooth Number Animation
+// ---------------------------------------------------------
+function animateNumber(el, from, to, duration = 500, suffix = "", decimals = 1) {
+  const start = performance.now();
+  function frame(now) {
+    const progress = Math.min(1, (now - start) / duration);
+    const value = from + (to - from) * progress;
+    el.textContent = value.toFixed(decimals) + suffix;
+    if (progress < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// ---------------------------------------------------------
 // ESP32 LIVE-DATEN – richtiger Pfad: /weather/live
 // ---------------------------------------------------------
 onValue(ref(db, "weather/live"), snap => {
@@ -26,14 +40,21 @@ onValue(ref(db, "weather/live"), snap => {
 
   const temp = d.temp ?? null;
 
-  document.getElementById("live-temp").textContent =
-    temp !== null ? Number(temp).toFixed(1) : "--.-";
+ onValue(ref(db, "weather/live"), snap => {
+  const d = snap.val();
+  if (!d) return;
 
-  document.getElementById("live-hum").textContent =
-    d.humidity !== undefined ? d.humidity.toFixed(0) : "--";
+  const tempEl = document.getElementById("live-temp");
+  const humEl  = document.getElementById("live-hum");
+  const presEl = document.getElementById("live-pres");
 
-  document.getElementById("live-pres").textContent =
-    d.pressure !== undefined ? d.pressure.toFixed(1) : "----";
+  const newTemp = Number(d.temp);
+  const newHum  = Number(d.humidity);
+  const newPres = Number(d.pressure);
+
+  animateNumber(tempEl, Number(tempEl.textContent || 0), newTemp, 500, "", 1);
+  animateNumber(humEl,  Number(humEl.textContent  || 0), newHum,  500, "", 0);
+  animateNumber(presEl, Number(presEl.textContent || 0), newPres, 500, "", 1);
 
   document.getElementById("timestamp").textContent =
     d.timestamp
