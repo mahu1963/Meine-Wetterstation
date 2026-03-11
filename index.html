@@ -37,11 +37,11 @@
     <!-- LIVE ICON + Sonnenaufgang/Sonnenuntergang -->
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
 
-      <!-- LINKS: LIVE ICON -->
-      <div id="live-icon" class="icon-box"></div>
-      <img id="icon-top" src="" alt="Wettericon oben" width="80">
-      <img id="icon-bottom" src="" alt="Wettericon unten" width="80">
-     
+      <!-- LINKS: FARBIGES LIVE ICON -->
+      <div style="display:flex; align-items:center; gap:10px;">
+        <img id="icon-top" src="" alt="Live Wettericon" width="80">
+      </div>
+
       <!-- RECHTS: Sonnenzeiten + Animation -->
       <div style="text-align:right;">
 
@@ -118,10 +118,14 @@
     <div>Wind: <span id="ow-wind">--</span> m/s</div>
     <div>Wolken: <span id="ow-clouds">--</span> %</div>
     <div>Stand: <span id="ow-time">--</span></div>
-    <div>Icon: <img id="ow-icon" src="" alt="Wettericon" width="60"></div>
+
+    <!-- UNTERES ICON (OpenWeather) -->
+    <div style="margin-top:10px;">
+      <img id="icon-bottom" src="" alt="Wettericon unten" width="80">
+    </div>
+
     <div>Beschreibung: <span id="ow-desc">--</span></div>
   </div>
 
 </body>
 </html>
-
