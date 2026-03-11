@@ -1,4 +1,5 @@
 console.log("app.js wurde geladen!");
+
 // ---------------------------------------------------------
 // Firebase Setup
 // ---------------------------------------------------------
@@ -121,17 +122,22 @@ function loadOpenWeather() {
 
     document.getElementById("ow-time").textContent = time.toLocaleString();
 
-    // Wetter-Icons (oben & unten identisch)
-    const iconCode = data.weather[0].icon;
+    // Wetter-Icons
+    let iconCode = data.weather[0].icon;
 
-    // PNG Icons oben & unten
+    // ---------------------------------------------
+    // FARBE ERZWINGEN (n → d)
+    // ---------------------------------------------
+    iconCode = iconCode.replace("n", "d");
+
+    // PNG Icons oben & unten (farbig)
     document.getElementById("icon-top").src =
       `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 
     document.getElementById("icon-bottom").src =
       `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 
-    // Modernes SVG Icon
+    // Modernes SVG Icon (unten)
     const modern = getModernIcon(iconCode);
     document.getElementById("ow-icon").src =
       "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/" +
