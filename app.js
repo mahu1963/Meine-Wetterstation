@@ -1,14 +1,18 @@
+// ---------------------------------------------------------
+// Firebase Setup (v10 Browser SDK)
+// ---------------------------------------------------------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
-  authDomain: "DEIN_PROJEKT.firebaseapp.com",
-  databaseURL: "https://DEIN_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "DEIN_PROJEKT",
-  storageBucket: "DEIN_PROJEKT.appspot.com",
-  messagingSenderId: "…",
-  appId: "…"
+  authDomain: "meine-wetterstation.firebaseapp.com",
+  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "meine-wetterstation",
+  storageBucket: "meine-wetterstation.firebasestorage.app",
+  messagingSenderId: "593494014586",
+  appId: "1:593494014586:web:cad0037363543e946059c3",
+  measurementId: "G-139QB1TEMD"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -121,3 +125,80 @@ onValue(ref(db, "weather/openweather/raw"), snap => {
   setSvgIcon(document.getElementById("ow-icon"), icon);
   setSvgIcon(document.getElementById("icon-top"), icon);
 });
+
+// ---------------------------------------------------------
+// Charts (Woche & Jahr)
+// ---------------------------------------------------------
+onValue(ref(db, "weather/history/week"), snap => {
+  const data = snap.val();
+  if (!data) return;
+
+  const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+
+  chartWeek.data.labels = entries.map(e =>
+    new Date(e.timestamp * 1000).toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "2-digit"
+    })
+  );
+
+  chartWeek.data.datasets[0].data = entries.map(e => e.temp);
+
+  chartWeek.update();
+});
+
+onValue(ref(db, "weather/history/year"), snap => {
+  const data = snap.val();
+  if (!data) return;
+
+  const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+
+  chartYear.data.labels = entries.map(e =>
+    new Date(e.timestamp * 1000).toLocaleDateString("de-DE", {
+      month: "2-digit"
+    })
+  );
+
+  chartYear.data.datasets[0].data = entries.map(e => e.temp);
+
+  chartYear.update();
+});
+
+// ---------------------------------------------------------
+// Monats- und Jahresstatistik
+// ---------------------------------------------------------
+async function loadMonthYearStats() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const key = `${year}-${month}`;
+
+  const getVal = async p => (await get(ref(db, p))).val();
+
+  const [
+    minM, maxM, sumM, countM,
+    minY, maxY, sumY, countY
+  ] = await Promise.all([
+    getVal(`weather/openweather/history/month/${key}/min`),
+    getVal(`weather/openweather/history/month/${key}/max`),
+    getVal(`weather/openweather/history/month/${key}/sum`),
+    getVal(`weather/openweather/history/month/${key}/count`),
+
+    getVal(`weather/openweather/history/year/min`),
+    getVal(`weather/openweather/history/year/max`),
+    getVal(`weather/openweather/history/year/sum`),
+    getVal(`weather/openweather/history/year/count`)
+  ]);
+
+  document.getElementById("minMonth").textContent = minM ? minM.toFixed(1) + "°C" : "-";
+  document.getElementById("maxMonth").textContent = maxM ? maxM.toFixed(1) + "°C" : "-";
+  document.getElementById("avgMonth").textContent =
+    sumM && countM ? (sumM / countM).toFixed(1) + "°C" : "-";
+
+  document.getElementById("minYear").textContent = minY ? minY.toFixed(1) + "°C" : "-";
+  document.getElementById("maxYear").textContent = maxY ? maxY.toFixed(1) + "°C" : "-";
+  document.getElementById("avgYear").textContent =
+    sumY && countY ? (sumY / countY).toFixed(1) + "°C" : "-";
+}
+
+loadMonthYearStats();
