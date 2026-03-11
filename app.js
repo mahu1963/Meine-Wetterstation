@@ -73,7 +73,7 @@ const chartYear = new Chart(ctxYear, {
 // ---------------------------------------------------------
 function animateNumber(el, from, to, duration = 600, suffix = "", decimals = 1) {
   const start = performance.now();
-  const ease = x => 1 - Math.pow(1 - x, 3); // iOS‑Style EaseOutCubic
+  const ease = x => 1 - Math.pow(1 - x, 3);
 
   function frame(now) {
     const progress = Math.min(1, (now - start) / duration);
@@ -99,13 +99,9 @@ onValue(ref(db, "weather/live"), snap => {
   const humEl  = document.getElementById("live-hum");
   const presEl = document.getElementById("live-pres");
 
-  const newTemp = Number(d.temp);
-  const newHum  = Number(d.humidity);
-  const newPres = Number(d.pressure);
-
-  animateNumber(tempEl, Number(tempEl.textContent || 0), newTemp, 600, "", 1);
-  animateNumber(humEl,  Number(humEl.textContent  || 0), newHum,  600, "", 0);
-  animateNumber(presEl, Number(presEl.textContent || 0), newPres, 600, "", 1);
+  animateNumber(tempEl, Number(tempEl.textContent || 0), Number(d.temp), 600, "", 1);
+  animateNumber(humEl,  Number(humEl.textContent  || 0), Number(d.humidity), 600, "", 0);
+  animateNumber(presEl, Number(presEl.textContent || 0), Number(d.pressure), 600, "", 1);
 
   document.getElementById("timestamp").textContent =
     d.timestamp
@@ -115,15 +111,6 @@ onValue(ref(db, "weather/live"), snap => {
         })
       : "Stand: --";
 });
-
-// ---------------------------------------------------------
-// Live-Icon oben (aus OpenWeather abgeleitet)
-// ---------------------------------------------------------
-function setLiveIcon(iconCode) {
-  const code = iconCode.replace("n", "d");
-  document.getElementById("icon-top").src =
-    `https://openweathermap.org/img/wn/${code}@2x.png`;
-}
 
 // ---------------------------------------------------------
 // OpenWeather – Icon-Mapping (modernes SVG)
@@ -157,12 +144,10 @@ function getModernIcon(iconCode) {
 // ---------------------------------------------------------
 function setSvgIcon(imgEl, iconCode) {
   const modern = getModernIcon(iconCode);
- function setSvgIcon(imgEl, iconCode) {
-  const modern = getModernIcon(iconCode); // z.B. "clear-day"
   imgEl.src = `/icons/${modern}.svg`;
-} 
+}
 
-  // ---------------------------------------------------------
+// ---------------------------------------------------------
 // OpenWeather – SVG Icons + Werte
 // ---------------------------------------------------------
 onValue(ref(db, "weather/openweather/raw"), snap => {
@@ -171,7 +156,6 @@ onValue(ref(db, "weather/openweather/raw"), snap => {
 
   const data = JSON.parse(raw);
 
-  // Werte setzen
   document.getElementById("ow-temp").innerText = data.main.temp.toFixed(1);
   document.getElementById("ow-humidity").innerText = data.main.humidity;
   document.getElementById("ow-pressure").innerText = data.main.pressure;
@@ -183,7 +167,6 @@ onValue(ref(db, "weather/openweather/raw"), snap => {
   document.getElementById("ow-time").innerText =
     dt.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-  // Sonnenaufgang / Sonnenuntergang
   const sr = new Date(data.sys.sunrise * 1000);
   const ss = new Date(data.sys.sunset * 1000);
 
@@ -193,20 +176,13 @@ onValue(ref(db, "weather/openweather/raw"), snap => {
   document.getElementById("ow-sunset").innerText =
     ss.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-  // ICONS (SVG)
   const icon = data.weather[0].icon;
-
   setSvgIcon(document.getElementById("ow-icon"), icon);
   setSvgIcon(document.getElementById("icon-top"), icon);
 });
 
-loadOpenWeather();
-
 // ---------------------------------------------------------
-// OpenWeather – WEEK HISTORY (Chart)
-// ---------------------------------------------------------
-// ---------------------------------------------------------
-// Verlauf Woche – /weather/history/week
+// Verlauf Woche – Live-Chart
 // ---------------------------------------------------------
 onValue(ref(db, "weather/history/week"), snap => {
   const data = snap.val();
@@ -225,36 +201,9 @@ onValue(ref(db, "weather/history/week"), snap => {
 
   chartWeek.update();
 });
-}
-
-function drawWeekChart(labels, temps) {
-  const ctx = document.getElementById("chartWeek").getContext("2d");
-
-  if (weekChart) weekChart.destroy();
-
-  weekChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "Temperatur (°C)",
-        data: temps,
-        borderColor: "#ff6600",
-        backgroundColor: "rgba(255, 102, 0, 0.2)",
-        borderWidth: 2,
-        tension: 0.3
-      }]
-    },
-    options: {
-      responsive: true
-    }
-  });
-}
-
-loadWeekHistory();
 
 // ---------------------------------------------------------
-// Verlauf Jahr – /weather/history/year
+// Verlauf Jahr – Live-Chart
 // ---------------------------------------------------------
 onValue(ref(db, "weather/history/year"), snap => {
   const data = snap.val();
@@ -272,36 +221,6 @@ onValue(ref(db, "weather/history/year"), snap => {
 
   chartYear.update();
 });
-
-    drawYearChart(labels, temps);
-  });
-}
-
-function drawYearChart(labels, temps) {
-  const ctx = document.getElementById("chartYear").getContext("2d");
-
-  if (yearChart) yearChart.destroy();
-
-  yearChart = new Chart(ctx, {
-    type: "line",
-    data: {
-      labels: labels,
-      datasets: [{
-        label: "Temperatur (°C)",
-        data: temps,
-        borderColor: "#33cc33",
-        backgroundColor: "rgba(51, 204, 51, 0.2)",
-        borderWidth: 2,
-        tension: 0.3
-      }]
-    },
-    options: {
-      responsive: true
-    }
-  });
-}
-
-loadYearHistory();
 
 // ---------------------------------------------------------
 // OpenWeather – Monats- und Jahresstatistik
