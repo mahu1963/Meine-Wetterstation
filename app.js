@@ -99,9 +99,14 @@ onValue(ref(db, "weather/live"), snap => {
   const humEl  = document.getElementById("live-hum");
   const presEl = document.getElementById("live-pres");
 
-  animateNumber(tempEl, Number(tempEl.textContent || 0), Number(d.temp), 600, "", 1);
-  animateNumber(humEl,  Number(humEl.textContent  || 0), Number(d.humidity), 600, "", 0);
-  animateNumber(presEl, Number(presEl.textContent || 0), Number(d.pressure), 600, "", 1);
+  function safeNumber(value) {
+  const n = Number(value);
+  return isNaN(n) ? 0 : n;
+}
+
+animateNumber(tempEl, safeNumber(tempEl.textContent), newTemp, 600, "", 1);
+animateNumber(humEl,  safeNumber(humEl.textContent), newHum,  600, "", 0);
+animateNumber(presEl, safeNumber(presEl.textContent), newPres, 600, "", 1);
 
   document.getElementById("timestamp").textContent =
     d.timestamp
