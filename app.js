@@ -45,7 +45,7 @@ function renderLive(d) {
       : "Stand: --";
 }
 
-onValue(ref(db, "weather/history/live"), snap => {
+onValue(ref(db, "weather/live"), snap => {
   const d = snap.val();
   renderLive(d);
 });
