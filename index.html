@@ -3,41 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <title>Wetterstation</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body { font-family: system-ui, sans-serif; background:#0b1020; color:#f5f5f5; margin:0; }
+    .container { max-width:900px; margin:20px auto; padding:20px; }
+    h1 { margin-bottom:10px; }
+    .current-box {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:16px 20px; border-radius:16px;
+      background:linear-gradient(135deg,#1f2a3d,#283854);
+      margin-bottom:20px;
+    }
+    .current-value { font-size:3rem; font-weight:600; }
+    .current-value .unit { font-size:1.4rem; margin-left:4px; opacity:.8; }
+    .current-sub { display:flex; flex-direction:column; gap:4px; font-size:.95rem; opacity:.9; }
+    .minmax-row { display:flex; gap:16px; margin:20px 0; flex-wrap:wrap; }
+    .minmax-card, .stats-card {
+      flex:1 1 220px; padding:14px 16px; border-radius:14px;
+      background:#151b2b; box-shadow:0 8px 20px rgba(0,0,0,.35);
+      font-size:.95rem;
+    }
+    .stats-grid { display:flex; gap:16px; flex-wrap:wrap; margin:20px 0; }
+    canvas { background:#111624; border-radius:12px; padding:8px; }
+  </style>
 </head>
 
 <body>
-
 <div class="container">
 
   <h1>Wetterstation</h1>
 
-  <!-- LIVE BOX -->
+  <!-- LIVE (ESP32) -->
   <div class="current-box">
     <div>
       <div class="current-value">
         <span id="live-temp">--.-</span><span class="unit">°C</span>
       </div>
-
       <div class="current-sub">
         <span>Luftfeuchte: <b id="live-hum">--</b>%</span>
         <span>Luftdruck: <b id="live-pres">----</b> hPa</span>
         <span id="timestamp">Stand: --</span>
       </div>
     </div>
-
-    <img id="icon-top" src="" width="80">
+    <img id="icon-top" src="" width="80" alt="Wetter-Icon">
   </div>
 
   <!-- SUNRISE / SUNSET -->
   <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
     <div style="display:flex; align-items:center; gap:8px;">
-      <img id="sunrise-icon" width="40">
+      <img id="sunrise-icon" width="40" alt="Sunrise">
       <span id="ow-sunrise">--:--</span>
     </div>
-
     <div style="display:flex; align-items:center; gap:8px;">
-      <img id="sunset-icon" width="40">
+      <img id="sunset-icon" width="40" alt="Sunset">
       <span id="ow-sunset">--:--</span>
     </div>
   </div>
@@ -53,7 +70,7 @@
       <p>Wolken: <b id="ow-clouds">--</b>%</p>
       <p>Zeit: <b id="ow-time">--</b></p>
       <p>Beschreibung: <b id="ow-desc">--</b></p>
-      <img id="ow-icon" width="60">
+      <img id="ow-icon" width="60" alt="Wetter-Symbol">
     </div>
   </div>
 
@@ -64,7 +81,7 @@
   <h2>Verlauf (Jahr)</h2>
   <canvas id="chartYear" height="120"></canvas>
 
-  <!-- MONTH/YEAR STATS -->
+  <!-- MONAT / JAHR STATS -->
   <div class="stats-grid">
     <div class="stats-card">
       <h3>Monat</h3>
@@ -72,11 +89,10 @@
       <p>Max: <b id="maxMonth">-</b></p>
       <p>Ø: <b id="avgMonth">-</b></p>
     </div>
-
     <div class="stats-card">
       <h3>Jahr</h3>
       <p>Min: <b id="minYear">-</b></p>
-      <p>Max: <b id="maxYear">-</b></p>
+      <p>Max: <b id="maxYear">-</b></p></p>
       <p>Ø: <b id="avgYear">-</b></p>
     </div>
   </div>
@@ -85,6 +101,5 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="app.js"></script>
-
 </body>
 </html>
