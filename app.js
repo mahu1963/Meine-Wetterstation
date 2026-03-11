@@ -343,12 +343,13 @@ function initLottie() {
     return;
   }
 
+  // Neue funktionierende Animationen
   lottie.loadAnimation({
     container: sunrise,
     renderer: "svg",
     loop: true,
     autoplay: true,
-    path: "https://assets9.lottiefiles.com/packages/lf20_8y3v2v.json"
+    path: "https://lottie.host/0e6c2f2c-0c3d-4f5a-9f8a-8b5b6f1c6e8f/8xJt8Q2gqP.json"
   });
 
   lottie.loadAnimation({
@@ -356,8 +357,6 @@ function initLottie() {
     renderer: "svg",
     loop: true,
     autoplay: true,
-    path: "https://assets9.lottiefiles.com/packages/lf20_tutvdkg0.json"
+    path: "https://lottie.host/7b8b1c6d-4e3f-4e2a-9c3f-1b2a3d4e5f6a/3Qp9sYt7uL.json"
   });
 }
-
-initLottie();
