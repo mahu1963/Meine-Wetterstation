@@ -110,8 +110,8 @@ function renderLive(d) {
 // Firebase Listener – LIVE
 // ---------------------------------------------------------
 onValue(ref(db, "weather/live"), snap => {
+  console.log("Firebase Live-Daten empfangen:", snap.val());
   const d = snap.val();
-  saveLocal("live", d);
   renderLive(d);
 });
 
