@@ -122,6 +122,11 @@ function loadOpenWeather() {
 
     document.getElementById("ow-time").textContent = time.toLocaleString();
 
+    document.getElementById("sunrise-icon").src =
+  "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/sunrise.svg";
+
+document.getElementById("sunset-icon").src =
+  "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/sunset.svg";
     // Wetter-Icons
     let iconCode = data.weather[0].icon;
 
