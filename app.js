@@ -20,14 +20,22 @@ const db = getDatabase(app);
 // ---------------------------------------------------------
 // Smooth Number Animation
 // ---------------------------------------------------------
-function animateNumber(el, from, to, duration = 500, suffix = "", decimals = 1) {
+function animateNumber(el, from, to, duration = 600, suffix = "", decimals = 1) {
   const start = performance.now();
+
+  // iOS‑ähnliche EaseOutCubic
+  const ease = x => 1 - Math.pow(1 - x, 3);
+
   function frame(now) {
     const progress = Math.min(1, (now - start) / duration);
-    const value = from + (to - from) * progress;
+    const eased = ease(progress);
+    const value = from + (to - from) * eased;
+
     el.textContent = value.toFixed(decimals) + suffix;
+
     if (progress < 1) requestAnimationFrame(frame);
   }
+
   requestAnimationFrame(frame);
 }
 
@@ -167,25 +175,25 @@ loadOpenWeather();
 let weekChart = null;
 
 function loadWeekHistory() {
-  const weekRef = ref(db, "weather/openweather/history/week");
+ const weekRef = ref(db, "weather/history/week");
 
-  onValue(weekRef, snap => {
-    if (!snap.exists()) return;
+onValue(weekRef, snap => {
+  const data = snap.val();
+  if (!data) return;
 
-    const data = snap.val();
-    const labels = [];
-    const temps = [];
+  const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
 
-    const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
+  chartWeek.data.labels = entries.map(e =>
+    new Date(e.timestamp * 1000).toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  );
 
-    entries.forEach(entry => {
-      const date = new Date(entry.timestamp * 1000);
-      labels.push(date.toLocaleString());
-      temps.push(entry.temp);
-    });
+  chartWeek.data.datasets[0].data = entries.map(e => e.temp);
 
-    drawWeekChart(labels, temps);
-  });
+  chartWeek.update();
+});
 }
 
 function drawWeekChart(labels, temps) {
