@@ -1,21 +1,41 @@
 // ---------------------------------------------------------
 // Firebase Setup
 // ---------------------------------------------------------
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+const fetch = require("node-fetch");
 
-const firebaseConfig = {
-  apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
-  authDomain: "meine-wetterstation.firebaseapp.com",
-  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "meine-wetterstation",
-  storageBucket: "meine-wetterstation.appspot.com",
-  messagingSenderId: "593494014586",
-  appId: "1:593494014586:web:cad0037363543e946059c3",
-};
+admin.initializeApp();
+const db = admin.database();
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+exports.updateOpenWeather = functions.pubsub
+  .schedule("every 10 minutes")
+  .timeZone("Europe/Vienna")
+  .onRun(async () => {
+
+    const API_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
+    const lat = 47.4263;   // Bernstein
+    const lon = 16.2598;
+
+    const url =
+      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}` +
+      `&units=metric&lang=de&appid=${API_KEY}`;
+
+    try {
+      const response = await fetch(url);
+      const json = await response.json();
+
+      // WICHTIG: als OBJEKT speichern, NICHT als String!
+      await db.ref("weather/openweather/raw").set(json);
+
+      console.log("OpenWeather aktualisiert:", json.main.temp);
+
+    } catch (err) {
+      console.error("Fehler beim Abrufen von OpenWeather:", err);
+    }
+
+    return null;
+  });
 
 // ---------------------------------------------------------
 // Chart.js Setup
