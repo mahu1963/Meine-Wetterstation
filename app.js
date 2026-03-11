@@ -88,6 +88,12 @@ function animateNumber(el, from, to, duration = 600, suffix = "", decimals = 1) 
   requestAnimationFrame(frame);
 }
 
+// Hilfsfunktion gegen NaN
+function safeNumber(value) {
+  const n = Number(value);
+  return isNaN(n) ? 0 : n;
+}
+
 // ---------------------------------------------------------
 // ESP32 LIVE-DATEN
 // ---------------------------------------------------------
@@ -99,14 +105,13 @@ onValue(ref(db, "weather/live"), snap => {
   const humEl  = document.getElementById("live-hum");
   const presEl = document.getElementById("live-pres");
 
-  function safeNumber(value) {
-  const n = Number(value);
-  return isNaN(n) ? 0 : n;
-}
+  const newTemp = Number(d.temp);
+  const newHum  = Number(d.humidity);
+  const newPres = Number(d.pressure);
 
-animateNumber(tempEl, safeNumber(tempEl.textContent), newTemp, 600, "", 1);
-animateNumber(humEl,  safeNumber(humEl.textContent), newHum,  600, "", 0);
-animateNumber(presEl, safeNumber(presEl.textContent), newPres, 600, "", 1);
+  animateNumber(tempEl, safeNumber(tempEl.textContent), newTemp, 600, "", 1);
+  animateNumber(humEl,  safeNumber(humEl.textContent), newHum,  600, "", 0);
+  animateNumber(presEl, safeNumber(presEl.textContent), newPres, 600, "", 1);
 
   document.getElementById("timestamp").textContent =
     d.timestamp
@@ -153,11 +158,13 @@ function setSvgIcon(imgEl, iconCode) {
 }
 
 // ---------------------------------------------------------
-// OpenWeather – SVG Icons + Werte
+// OpenWeather – Werte + Icons
 // ---------------------------------------------------------
 onValue(ref(db, "weather/openweather/raw"), snap => {
   const data = snap.val();
   if (!data) return;
+
+  // KEIN JSON.parse mehr – raw ist jetzt ein echtes Objekt!
 
   document.getElementById("ow-temp").innerText = data.main.temp.toFixed(1);
   document.getElementById("ow-humidity").innerText = data.main.humidity;
@@ -183,6 +190,7 @@ onValue(ref(db, "weather/openweather/raw"), snap => {
   setSvgIcon(document.getElementById("ow-icon"), icon);
   setSvgIcon(document.getElementById("icon-top"), icon);
 });
+
 // ---------------------------------------------------------
 // Verlauf Woche – Live-Chart
 // ---------------------------------------------------------
@@ -225,7 +233,7 @@ onValue(ref(db, "weather/history/year"), snap => {
 });
 
 // ---------------------------------------------------------
-// OpenWeather – Monats- und Jahresstatistik
+// Monats- und Jahresstatistik
 // ---------------------------------------------------------
 async function loadMonthYearStats() {
   const now = new Date();
