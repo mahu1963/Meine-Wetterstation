@@ -1,95 +1,21 @@
-// ---------------------------------------------------------
-// Firebase Setup
-// ---------------------------------------------------------
-const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-const fetch = require("node-fetch");
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-admin.initializeApp();
-const db = admin.database();
+const firebaseConfig = {
+  apiKey: "DEIN_KEY",
+  authDomain: "DEIN_PROJEKT.firebaseapp.com",
+  databaseURL: "https://DEIN_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "DEIN_PROJEKT",
+  storageBucket: "DEIN_PROJEKT.appspot.com",
+  messagingSenderId: "…",
+  appId: "…"
+};
 
-exports.updateOpenWeather = functions.pubsub
-  .schedule("every 10 minutes")
-  .timeZone("Europe/Vienna")
-  .onRun(async () => {
-
-    const API_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
-    const lat = 47.4263;   // Bernstein
-    const lon = 16.2598;
-
-    const url =
-      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}` +
-      `&units=metric&lang=de&appid=${API_KEY}`;
-
-    try {
-      const response = await fetch(url);
-      const json = await response.json();
-
-      // WICHTIG: als OBJEKT speichern, NICHT als String!
-      await db.ref("weather/openweather/raw").set(json);
-
-      console.log("OpenWeather aktualisiert:", json.main.temp);
-
-    } catch (err) {
-      console.error("Fehler beim Abrufen von OpenWeather:", err);
-    }
-
-    return null;
-  });
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 // ---------------------------------------------------------
-// Chart.js Setup
-// ---------------------------------------------------------
-const ctxWeek = document.getElementById("chartWeek").getContext("2d");
-const chartWeek = new Chart(ctxWeek, {
-  type: "line",
-  data: {
-    labels: [],
-    datasets: [{
-      label: "Temperatur (Woche)",
-      data: [],
-      borderColor: "#ffcc33",
-      backgroundColor: "rgba(255, 204, 51, 0.15)",
-      tension: 0.3,
-      pointRadius: 0
-    }]
-  },
-  options: {
-    animation: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { display: false },
-      y: { beginAtZero: false, ticks: { color: "#ccc" } }
-    }
-  }
-});
-
-const ctxYear = document.getElementById("chartYear").getContext("2d");
-const chartYear = new Chart(ctxYear, {
-  type: "line",
-  data: {
-    labels: [],
-    datasets: [{
-      label: "Temperatur (Jahr)",
-      data: [],
-      borderColor: "#66aaff",
-      backgroundColor: "rgba(102,170,255,0.15)",
-      tension: 0.25,
-      pointRadius: 0
-    }]
-  },
-  options: {
-    animation: false,
-    plugins: { legend: { display: false } },
-    scales: {
-      x: { display: false },
-      y: { beginAtZero: false, ticks: { color: "#ccc" } }
-    }
-  }
-});
-
-// ---------------------------------------------------------
-// Smooth Number Animation (Easing)
+// Smooth Number Animation
 // ---------------------------------------------------------
 function animateNumber(el, from, to, duration = 600, suffix = "", decimals = 1) {
   const start = performance.now();
@@ -108,7 +34,6 @@ function animateNumber(el, from, to, duration = 600, suffix = "", decimals = 1) 
   requestAnimationFrame(frame);
 }
 
-// Hilfsfunktion gegen NaN
 function safeNumber(value) {
   const n = Number(value);
   return isNaN(n) ? 0 : n;
@@ -125,13 +50,9 @@ onValue(ref(db, "weather/live"), snap => {
   const humEl  = document.getElementById("live-hum");
   const presEl = document.getElementById("live-pres");
 
-  const newTemp = Number(d.temp);
-  const newHum  = Number(d.humidity);
-  const newPres = Number(d.pressure);
-
-  animateNumber(tempEl, safeNumber(tempEl.textContent), newTemp, 600, "", 1);
-  animateNumber(humEl,  safeNumber(humEl.textContent), newHum,  600, "", 0);
-  animateNumber(presEl, safeNumber(presEl.textContent), newPres, 600, "", 1);
+  animateNumber(tempEl, safeNumber(tempEl.textContent), Number(d.temp), 600, "", 1);
+  animateNumber(humEl,  safeNumber(humEl.textContent), Number(d.humidity), 600, "", 0);
+  animateNumber(presEl, safeNumber(presEl.textContent), Number(d.pressure), 600, "", 1);
 
   document.getElementById("timestamp").textContent =
     d.timestamp
@@ -143,7 +64,7 @@ onValue(ref(db, "weather/live"), snap => {
 });
 
 // ---------------------------------------------------------
-// OpenWeather – Icon-Mapping (modernes SVG)
+// OpenWeather – Icons
 // ---------------------------------------------------------
 function getModernIcon(iconCode) {
   const map = {
@@ -169,22 +90,16 @@ function getModernIcon(iconCode) {
   return map[iconCode] || "cloudy";
 }
 
-// ---------------------------------------------------------
-// SVG-Icon Setter
-// ---------------------------------------------------------
 function setSvgIcon(imgEl, iconCode) {
-  const modern = getModernIcon(iconCode);
-  imgEl.src = `/icons/${modern}.svg`;
+  imgEl.src = `/icons/${getModernIcon(iconCode)}.svg`;
 }
 
 // ---------------------------------------------------------
-// OpenWeather – Werte + Icons
+// OpenWeather – Werte
 // ---------------------------------------------------------
 onValue(ref(db, "weather/openweather/raw"), snap => {
   const data = snap.val();
   if (!data) return;
-
-  // KEIN JSON.parse mehr – raw ist jetzt ein echtes Objekt!
 
   document.getElementById("ow-temp").innerText = data.main.temp.toFixed(1);
   document.getElementById("ow-humidity").innerText = data.main.humidity;
@@ -193,100 +108,16 @@ onValue(ref(db, "weather/openweather/raw"), snap => {
   document.getElementById("ow-clouds").innerText = data.clouds.all;
   document.getElementById("ow-desc").innerText = data.weather[0].description;
 
-  const dt = new Date(data.dt * 1000);
   document.getElementById("ow-time").innerText =
-    dt.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-
-  const sr = new Date(data.sys.sunrise * 1000);
-  const ss = new Date(data.sys.sunset * 1000);
+    new Date(data.dt * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
   document.getElementById("ow-sunrise").innerText =
-    sr.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    new Date(data.sys.sunrise * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
   document.getElementById("ow-sunset").innerText =
-    ss.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    new Date(data.sys.sunset * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
   const icon = data.weather[0].icon;
   setSvgIcon(document.getElementById("ow-icon"), icon);
   setSvgIcon(document.getElementById("icon-top"), icon);
 });
-
-// ---------------------------------------------------------
-// Verlauf Woche – Live-Chart
-// ---------------------------------------------------------
-onValue(ref(db, "weather/history/week"), snap => {
-  const data = snap.val();
-  if (!data) return;
-
-  const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
-
-  chartWeek.data.labels = entries.map(e =>
-    new Date(e.timestamp * 1000).toLocaleDateString("de-DE", {
-      day: "2-digit",
-      month: "2-digit"
-    })
-  );
-
-  chartWeek.data.datasets[0].data = entries.map(e => e.temp);
-
-  chartWeek.update();
-});
-
-// ---------------------------------------------------------
-// Verlauf Jahr – Live-Chart
-// ---------------------------------------------------------
-onValue(ref(db, "weather/history/year"), snap => {
-  const data = snap.val();
-  if (!data) return;
-
-  const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
-
-  chartYear.data.labels = entries.map(e =>
-    new Date(e.timestamp * 1000).toLocaleDateString("de-DE", {
-      month: "2-digit"
-    })
-  );
-
-  chartYear.data.datasets[0].data = entries.map(e => e.temp);
-
-  chartYear.update();
-});
-
-// ---------------------------------------------------------
-// Monats- und Jahresstatistik
-// ---------------------------------------------------------
-async function loadMonthYearStats() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const key = `${year}-${month}`;
-
-  const getVal = async p => (await get(ref(db, p))).val();
-
-  const [
-    minM, maxM, sumM, countM,
-    minY, maxY, sumY, countY
-  ] = await Promise.all([
-    getVal(`weather/openweather/history/month/${key}/min`),
-    getVal(`weather/openweather/history/month/${key}/max`),
-    getVal(`weather/openweather/history/month/${key}/sum`),
-    getVal(`weather/openweather/history/month/${key}/count`),
-
-    getVal(`weather/openweather/history/year/min`),
-    getVal(`weather/openweather/history/year/max`),
-    getVal(`weather/openweather/history/year/sum`),
-    getVal(`weather/openweather/history/year/count`)
-  ]);
-
-  document.getElementById("minMonth").textContent = minM ? minM.toFixed(1) + "°C" : "-";
-  document.getElementById("maxMonth").textContent = maxM ? maxM.toFixed(1) + "°C" : "-";
-  document.getElementById("avgMonth").textContent =
-    sumM && countM ? (sumM / countM).toFixed(1) + "°C" : "-";
-
-  document.getElementById("minYear").textContent = minY ? minY.toFixed(1) + "°C" : "-";
-  document.getElementById("maxYear").textContent = maxY ? maxY.toFixed(1) + "°C" : "-";
-  document.getElementById("avgYear").textContent =
-    sumY && countY ? (sumY / countY).toFixed(1) + "°C" : "-";
-}
-
-loadMonthYearStats();
