@@ -122,14 +122,21 @@ function loadOpenWeather() {
     document.getElementById("ow-time").textContent = time.toLocaleString();
 
     // Wetter-Icons (oben & unten identisch)
-    const iconCode = data.weather[0].icon;
+   const iconCode = data.weather[0].icon;
 
-    document.getElementById("icon-top").src =
-      `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+// PNG Icons oben & unten
+document.getElementById("icon-top").src =
+  `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 
-    document.getElementById("icon-bottom").src =
-      `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+document.getElementById("icon-bottom").src =
+  `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 
+// Modernes SVG Icon
+const modern = getModernIcon(iconCode);
+document.getElementById("ow-icon").src =
+  "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/" +
+  modern +
+  ".svg";
     // Modernes SVG-Icon
     const modern = getModernIcon(iconCode);
     document.getElementById("ow-icon").src =
