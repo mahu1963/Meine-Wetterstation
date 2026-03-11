@@ -2,131 +2,89 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Meine Wetterstation</title>
-
+  <title>Wetterstation</title>
   <link rel="stylesheet" href="style.css">
-
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Lottie für animierte Icons -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
-
-  <!-- App Script -->
-  <script type="module" src="app.js"></script>
 </head>
 
 <body>
 
-  <div class="container">
+<div class="container">
 
-    <!-- Titel -->
-    <h1 style="margin-bottom:0; text-align:center;">Wetter Suben‑Bernstein</h1>
+  <h1>Wetterstation</h1>
 
-    <div style="
-      text-align:center;
-      font-size:1.8rem;
-      font-weight:700;
-      margin-top:5px;
-      margin-bottom:25px;
-      color:#000;
-    ">
-      Martin Huber
-    </div>
-
-    <!-- LIVE ICON + Sonnenaufgang/Sonnenuntergang -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-
-      <!-- LINKS: FARBIGES LIVE ICON -->
-      <div style="display:flex; align-items:center; gap:10px;">
-        <img id="icon-top" src="" alt="Live Wettericon" width="80">
-      </div>
-
-      <!-- RECHTS: Sonnenzeiten + Animation -->
-      <div style="text-align:right;">
-
-     <div style="display:flex; align-items:center; gap:8px;">
-  <img id="sunrise-icon" src="" width="40" alt="Sunrise">
-  <span id="ow-sunrise" style="font-size:1.4rem;">--:--</span>
-</div>
-
-<div style="display:flex; align-items:center; gap:8px; margin-top:5px;">
-  <img id="sunset-icon" src="" width="40" alt="Sunset">
-  <span id="ow-sunset" style="font-size:1.4rem;">--:--</span>
-</div> 
-
-      </div>
-
-    </div>
-
-    <!-- Live Box -->
-    <div class="current-box">
+  <!-- LIVE BOX -->
+  <div class="current-box">
+    <div>
       <div class="current-value">
-        <span id="live-temp">--</span>
-        <span class="unit">°C</span>
+        <span id="live-temp">--.-</span><span class="unit">°C</span>
+      </div>
+
+      <div class="current-sub">
+        <span>Luftfeuchte: <b id="live-hum">--</b>%</span>
+        <span>Luftdruck: <b id="live-pres">----</b> hPa</span>
+        <span id="timestamp">Stand: --</span>
       </div>
     </div>
 
-    <h2>Verlauf (Woche)</h2>
-    <canvas id="chartWeek" width="400" height="200"></canvas>
-
-    <h2>Verlauf (Monat)</h2>
-    <canvas id="chartMonth" width="400" height="200"></canvas>
-
-    <h2>Verlauf (Jahr)</h2>
-    <canvas id="chartYear" width="400" height="200"></canvas>
-
-    <div class="current-sub">
-      <span>Feuchte: <span id="live-hum">--</span>%</span>
-      <span>Druck: <span id="live-pres">----</span> hPa</span>
-      <span id="timestamp">Stand: --</span>
-    </div>
-
+    <img id="icon-top" src="" width="80">
   </div>
 
-  <!-- Statistik-Karten -->
-  <div class="stats-grid">
-
-    <div class="stats-card">
-      <h3>Heute</h3>
-      <p>Min: <span id="minToday">-</span></p>
-      <p>Max: <span id="maxToday">-</span></p>
+  <!-- SUNRISE / SUNSET -->
+  <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
+    <div style="display:flex; align-items:center; gap:8px;">
+      <img id="sunrise-icon" width="40">
+      <span id="ow-sunrise">--:--</span>
     </div>
 
+    <div style="display:flex; align-items:center; gap:8px;">
+      <img id="sunset-icon" width="40">
+      <span id="ow-sunset">--:--</span>
+    </div>
+  </div>
+
+  <!-- OPENWEATHER BOX -->
+  <div class="minmax-row">
+    <div class="minmax-card">
+      <h2>OpenWeather</h2>
+      <p>Temp: <b id="ow-temp">--.-</b> °C</p>
+      <p>Feuchte: <b id="ow-humidity">--</b>%</p>
+      <p>Druck: <b id="ow-pressure">--</b> hPa</p>
+      <p>Wind: <b id="ow-wind">--</b> m/s</p>
+      <p>Wolken: <b id="ow-clouds">--</b>%</p>
+      <p>Zeit: <b id="ow-time">--</b></p>
+      <p>Beschreibung: <b id="ow-desc">--</b></p>
+      <img id="ow-icon" width="60">
+    </div>
+  </div>
+
+  <!-- CHARTS -->
+  <h2>Verlauf (Woche)</h2>
+  <canvas id="chartWeek" height="120"></canvas>
+
+  <h2>Verlauf (Jahr)</h2>
+  <canvas id="chartYear" height="120"></canvas>
+
+  <!-- MONTH/YEAR STATS -->
+  <div class="stats-grid">
     <div class="stats-card">
       <h3>Monat</h3>
-      <p>Min: <span id="minMonth">-</span></p>
-      <p>Max: <span id="maxMonth">-</span></p>
-      <p>Ø: <span id="avgMonth">-</span></p>
+      <p>Min: <b id="minMonth">-</b></p>
+      <p>Max: <b id="maxMonth">-</b></p>
+      <p>Ø: <b id="avgMonth">-</b></p>
     </div>
 
     <div class="stats-card">
       <h3>Jahr</h3>
-      <p>Min: <span id="minYear">-</span></p>
-      <p>Max: <span id="maxYear">-</span></p>
-      <p>Ø: <span id="avgYear">-</span></p>
+      <p>Min: <b id="minYear">-</b></p>
+      <p>Max: <b id="maxYear">-</b></p>
+      <p>Ø: <b id="avgYear">-</b></p>
     </div>
-
   </div>
 
-  <h2>OpenWeather</h2>
+</div>
 
-  <div class="ow-box">
-    <div>Temperatur: <span id="ow-temp">--</span> °C</div>
-    <div>Feuchte: <span id="ow-humidity">--</span> %</div>
-    <div>Druck: <span id="ow-pressure">--</span> hPa</div>
-    <div>Wind: <span id="ow-wind">--</span> m/s</div>
-    <div>Wolken: <span id="ow-clouds">--</span> %</div>
-    <div>Stand: <span id="ow-time">--</span></div>
-
-    <!-- UNTERES ICON (OpenWeather) -->
-    <div style="margin-top:10px;">
-      <img id="icon-bottom" src="" alt="Wettericon unten" width="80">
-    </div>
-
-    <div>Beschreibung: <span id="ow-desc">--</span></div>
-  </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script type="module" src="app.js"></script>
 
 </body>
 </html>
-
