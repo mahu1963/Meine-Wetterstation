@@ -72,11 +72,11 @@ async function loadOpenWeatherIcon() {
     const data = await res.json();
 
     const iconCode = data.weather[0].icon;
-    const modern = getModernIcon(iconCode);
+    document.getElementById("icon-top").src =
+  `  https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 
-    document.getElementById("live-icon").innerHTML =
-      `<img src="https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/${modern}.svg"
-            style="width:90px;height:90px;">`;
+    document.getElementById("icon-bottom").src =
+    `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 
   } catch (err) {
     console.error("Fehler beim Laden des OpenWeather-Icons:", err);
@@ -149,8 +149,12 @@ function loadOpenWeather() {
 
     document.getElementById("ow-time").textContent = time.toLocaleString();
 
-    const icon = data.weather[0].icon;
-    const modern = getModernIcon(icon);
+    const iconCode = data.weather[0].icon;
+    document.getElementById("icon-top").src =
+    `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+
+    document.getElementById("icon-bottom").src =
+    `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 
     document.getElementById("ow-icon").src =
       "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/" + modern + ".svg";
