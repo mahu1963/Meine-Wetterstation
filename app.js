@@ -57,31 +57,7 @@ function getModernIcon(iconCode) {
   return map[iconCode] || "cloudy";
 }
 
-// ---------------------------------------------------------
-// OpenWeather Icon Loader
-// ---------------------------------------------------------
-async function loadOpenWeatherIcon() {
-  const apiKey = "27602f1bbb8e3dd3587a1da6e3de24b6";
-  const lat = 47.4;
-  const lon = 16.2;
 
-  const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
-
-  try {
-    const res = await fetch(url);
-    const data = await res.json();
-
-    const iconCode = data.weather[0].icon;
-    document.getElementById("icon-top").src =
-  `  https://openweathermap.org/img/wn/${iconCode}@2x.png`;
-
-    document.getElementById("icon-bottom").src =
-    `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
-
-  } catch (err) {
-    console.error("Fehler beim Laden des OpenWeather-Icons:", err);
-  }
-}
 
 // ---------------------------------------------------------
 // Live Rendering
@@ -101,9 +77,8 @@ function renderLive(d) {
   document.getElementById("timestamp").textContent =
     d.timestamp
       ? "Stand: " + new Date(d.timestamp * 1000).toLocaleString()
-      : "Stand: --";
-
-  loadOpenWeatherIcon();
+      : "Stand: --"
+  
 }
 
 // ---------------------------------------------------------
