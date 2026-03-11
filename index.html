@@ -13,20 +13,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
 
   <!-- App Script -->
-<script src="app.js"></script>
-  
+  <script type="module" src="app.js"></script>
 </head>
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const version = Date.now();
-    const script = document.createElement("script");
-    script.type = "module";
-    script.src = "app.js?v=" + version;
-    document.body.appendChild(script);
-  });
-</script>
-  <body>
+<body>
 
   <div class="container">
 
@@ -130,17 +120,5 @@
     <div>Beschreibung: <span id="ow-desc">--</span></div>
   </div>
 
- <script>
- 
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
