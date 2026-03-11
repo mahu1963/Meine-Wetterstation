@@ -1,11 +1,11 @@
-// ---------------------------------------------------------
-// ESP32 LIVE-DATEN
-// ---------------------------------------------------------
+console.log("app.js geladen");
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
+// ---------------------------------------------------------
 // Firebase Setup
+// ---------------------------------------------------------
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
   authDomain: "meine-wetterstation.firebaseapp.com",
@@ -20,12 +20,11 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // ---------------------------------------------------------
-// LIVE-DATEN RENDERN
+// ESP32 LIVE-DATEN
 // ---------------------------------------------------------
 function renderLive(d) {
   if (!d) return;
 
-  // Temperatur (ESP32)
   const temp =
     d.temp ??
     d.temperature ??
@@ -36,42 +35,33 @@ function renderLive(d) {
   document.getElementById("live-temp").textContent =
     temp !== null ? Number(temp).toFixed(1) : "--.-";
 
-  // Feuchte
   document.getElementById("live-hum").textContent =
     d.humidity ? d.humidity.toFixed(0) : "--";
 
-  // Druck
   document.getElementById("live-pres").textContent =
     d.pressure ? d.pressure.toFixed(1) : "----";
 
-  // Timestamp
   document.getElementById("timestamp").textContent =
     d.timestamp
       ? "Stand: " + new Date(d.timestamp * 1000).toLocaleString()
       : "Stand: --";
 }
 
-// ---------------------------------------------------------
-// ESP32 LIVE-LISTENER
-// ---------------------------------------------------------
 onValue(ref(db, "weather/history/live"), snap => {
   const d = snap.val();
   console.log("ESP32 Live:", d);
   renderLive(d);
 });
 
-// ---------------------------------------------------------
-// LIVE ICON (oben) — farbig erzwingen
-// ---------------------------------------------------------
-export function setLiveIcon(iconCode) {
-  // Nacht → Tag (farbig)
+// Live-Icon oben (von OpenWeather-Icon abgeleitet)
+function setLiveIcon(iconCode) {
   const code = iconCode.replace("n", "d");
-
   document.getElementById("icon-top").src =
     `https://openweathermap.org/img/wn/${code}@2x.png`;
 }
+
 // ---------------------------------------------------------
-// OPENWEATHER – ICON-MAPPING (für modernes SVG-Icon)
+// OpenWeather – Icon-Mapping
 // ---------------------------------------------------------
 function getModernIcon(iconCode) {
   const map = {
@@ -94,15 +84,12 @@ function getModernIcon(iconCode) {
     "50d": "mist",
     "50n": "mist"
   };
-
   return map[iconCode] || "cloudy";
 }
 
 // ---------------------------------------------------------
-// OPENWEATHER – AKTUELLE DATEN LADEN
+// OpenWeather – aktuelle Daten aus Firebase
 // ---------------------------------------------------------
-import { ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
 function loadOpenWeather() {
   const owRef = ref(db, "weather/openweather");
 
@@ -112,7 +99,6 @@ function loadOpenWeather() {
     const raw = snap.val().raw;
     const data = JSON.parse(raw);
 
-    // Basiswerte
     document.getElementById("ow-temp").textContent = data.main.temp.toFixed(1);
     document.getElementById("ow-humidity").textContent = data.main.humidity;
     document.getElementById("ow-pressure").textContent = data.main.pressure;
@@ -131,7 +117,6 @@ function loadOpenWeather() {
 
     document.getElementById("ow-time").textContent = time.toLocaleString();
 
-    // Beschreibung robust
     const desc =
       data.weather?.[0]?.description ||
       data.weather?.[0]?.main ||
@@ -140,16 +125,10 @@ function loadOpenWeather() {
 
     document.getElementById("ow-desc").textContent = desc;
 
-    // Icon-Code
     let iconCode = data.weather[0].icon;
 
-    // Live-Icon oben farbig erzwingen (n → d)
+    // Live-Icon oben
     setLiveIcon(iconCode);
-
-    // PNG-Icon unten (OpenWeather-Original, aber auch n→d möglich)
-    const colorCode = iconCode.replace("n", "d");
-    document.getElementById("icon-bottom").src =
-      `https://openweathermap.org/img/wn/${colorCode}@2x.png`;
 
     // Modernes SVG-Icon
     const modern = getModernIcon(iconCode);
@@ -158,18 +137,18 @@ function loadOpenWeather() {
       modern +
       ".svg";
 
-    // Sunrise/Sunset Icons (fixe SVGs)
+    // Sunrise/Sunset Icons
     document.getElementById("sunrise-icon").src =
       "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/sunrise.svg";
-
     document.getElementById("sunset-icon").src =
       "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/sunset.svg";
   });
 }
 
 loadOpenWeather();
+
 // ---------------------------------------------------------
-// OPENWEATHER – WEEK HISTORY (für Wochen-Chart)
+// OpenWeather – WEEK HISTORY (Chart)
 // ---------------------------------------------------------
 let weekChart = null;
 
@@ -224,8 +203,9 @@ function drawWeekChart(labels, temps) {
 }
 
 loadWeekHistory();
+
 // ---------------------------------------------------------
-// OPENWEATHER – YEAR HISTORY (für Jahres-Chart)
+// OpenWeather – YEAR HISTORY (Chart)
 // ---------------------------------------------------------
 let yearChart = null;
 
@@ -276,8 +256,9 @@ function drawYearChart(labels, temps) {
 }
 
 loadYearHistory();
+
 // ---------------------------------------------------------
-// OPENWEATHER – MONATS- UND JAHRESSTATISTIK
+// OpenWeather – Monats- und Jahresstatistik
 // ---------------------------------------------------------
 async function loadMonthYearStats() {
   const now = new Date();
@@ -296,10 +277,10 @@ async function loadMonthYearStats() {
     getVal(`weather/openweather/history/month/${key}/sum`),
     getVal(`weather/openweather/history/month/${key}/count`),
 
-    getVal(`weather/openweather/history/year/${year}/min`),
-    getVal(`weather/openweather/history/year/${year}/max`),
-    getVal(`weather/openweather/history/year/${year}/sum`),
-    getVal(`weather/openweather/history/year/${year}/count`)
+    getVal(`weather/openweather/history/year/min`),
+    getVal(`weather/openweather/history/year/max`),
+    getVal(`weather/openweather/history/year/sum`),
+    getVal(`weather/openweather/history/year/count`)
   ]);
 
   document.getElementById("minMonth").textContent = minM ? minM.toFixed(1) + "°C" : "-";
