@@ -1,5 +1,3 @@
-console.log("app.js geladen");
-
 // ---------------------------------------------------------
 // Firebase Setup
 // ---------------------------------------------------------
@@ -49,11 +47,12 @@ function renderLive(d) {
 
 onValue(ref(db, "weather/history/live"), snap => {
   const d = snap.val();
-  console.log("ESP32 Live:", d);
   renderLive(d);
 });
 
-// Live-Icon oben (von OpenWeather-Icon abgeleitet)
+// ---------------------------------------------------------
+// Live-Icon oben (aus OpenWeather abgeleitet)
+// ---------------------------------------------------------
 function setLiveIcon(iconCode) {
   const code = iconCode.replace("n", "d");
   document.getElementById("icon-top").src =
@@ -61,7 +60,7 @@ function setLiveIcon(iconCode) {
 }
 
 // ---------------------------------------------------------
-// OpenWeather – Icon-Mapping
+// OpenWeather – Icon-Mapping (modernes SVG)
 // ---------------------------------------------------------
 function getModernIcon(iconCode) {
   const map = {
@@ -193,11 +192,7 @@ function drawWeekChart(labels, temps) {
       }]
     },
     options: {
-      responsive: true,
-      scales: {
-        x: { display: true },
-        y: { display: true }
-      }
+      responsive: true
     }
   });
 }
