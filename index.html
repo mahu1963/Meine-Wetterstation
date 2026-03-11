@@ -17,12 +17,13 @@
 </head>
 
 <script>
-  // Cache-Killer: lädt immer die neueste app.js
-  const version = Date.now(); // erzeugt eine neue Version bei jedem Laden
-  const script = document.createElement("script");
-  script.type = "module";
-  script.src = "app.js?v=" + version;
-  document.body.appendChild(script);
+  document.addEventListener("DOMContentLoaded", () => {
+    const version = Date.now();
+    const script = document.createElement("script");
+    script.type = "module";
+    script.src = "app.js?v=" + version;
+    document.body.appendChild(script);
+  });
 </script>
   <body>
 
@@ -133,6 +134,7 @@
 
 </body>
 </html>
+
 
 
 
