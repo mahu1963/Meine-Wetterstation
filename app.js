@@ -151,10 +151,8 @@ function setSvgIcon(imgEl, iconCode) {
 // OpenWeather – SVG Icons + Werte
 // ---------------------------------------------------------
 onValue(ref(db, "weather/openweather/raw"), snap => {
-  const raw = snap.val();
-  if (!raw) return;
-
-  const data = JSON.parse(raw);
+  const data = snap.val();
+  if (!data) return;
 
   document.getElementById("ow-temp").innerText = data.main.temp.toFixed(1);
   document.getElementById("ow-humidity").innerText = data.main.humidity;
@@ -180,7 +178,6 @@ onValue(ref(db, "weather/openweather/raw"), snap => {
   setSvgIcon(document.getElementById("ow-icon"), icon);
   setSvgIcon(document.getElementById("icon-top"), icon);
 });
-
 // ---------------------------------------------------------
 // Verlauf Woche – Live-Chart
 // ---------------------------------------------------------
