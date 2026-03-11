@@ -18,13 +18,62 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // ---------------------------------------------------------
-// Smooth Number Animation
+// Chart.js Setup
+// ---------------------------------------------------------
+const ctxWeek = document.getElementById("chartWeek").getContext("2d");
+const chartWeek = new Chart(ctxWeek, {
+  type: "line",
+  data: {
+    labels: [],
+    datasets: [{
+      label: "Temperatur (Woche)",
+      data: [],
+      borderColor: "#ffcc33",
+      backgroundColor: "rgba(255, 204, 51, 0.15)",
+      tension: 0.3,
+      pointRadius: 0
+    }]
+  },
+  options: {
+    animation: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { display: false },
+      y: { beginAtZero: false, ticks: { color: "#ccc" } }
+    }
+  }
+});
+
+const ctxYear = document.getElementById("chartYear").getContext("2d");
+const chartYear = new Chart(ctxYear, {
+  type: "line",
+  data: {
+    labels: [],
+    datasets: [{
+      label: "Temperatur (Jahr)",
+      data: [],
+      borderColor: "#66aaff",
+      backgroundColor: "rgba(102,170,255,0.15)",
+      tension: 0.25,
+      pointRadius: 0
+    }]
+  },
+  options: {
+    animation: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { display: false },
+      y: { beginAtZero: false, ticks: { color: "#ccc" } }
+    }
+  }
+});
+
+// ---------------------------------------------------------
+// Smooth Number Animation (Easing)
 // ---------------------------------------------------------
 function animateNumber(el, from, to, duration = 600, suffix = "", decimals = 1) {
   const start = performance.now();
-
-  // iOS‑ähnliche EaseOutCubic
-  const ease = x => 1 - Math.pow(1 - x, 3);
+  const ease = x => 1 - Math.pow(1 - x, 3); // iOS‑Style EaseOutCubic
 
   function frame(now) {
     const progress = Math.min(1, (now - start) / duration);
@@ -40,15 +89,9 @@ function animateNumber(el, from, to, duration = 600, suffix = "", decimals = 1) 
 }
 
 // ---------------------------------------------------------
-// ESP32 LIVE-DATEN – richtiger Pfad: /weather/live
+// ESP32 LIVE-DATEN
 // ---------------------------------------------------------
 onValue(ref(db, "weather/live"), snap => {
-  const d = snap.val();
-  if (!d) return;
-
-  const temp = d.temp ?? null;
-
- onValue(ref(db, "weather/live"), snap => {
   const d = snap.val();
   if (!d) return;
 
@@ -60,9 +103,9 @@ onValue(ref(db, "weather/live"), snap => {
   const newHum  = Number(d.humidity);
   const newPres = Number(d.pressure);
 
-  animateNumber(tempEl, Number(tempEl.textContent || 0), newTemp, 500, "", 1);
-  animateNumber(humEl,  Number(humEl.textContent  || 0), newHum,  500, "", 0);
-  animateNumber(presEl, Number(presEl.textContent || 0), newPres, 500, "", 1);
+  animateNumber(tempEl, Number(tempEl.textContent || 0), newTemp, 600, "", 1);
+  animateNumber(humEl,  Number(humEl.textContent  || 0), newHum,  600, "", 0);
+  animateNumber(presEl, Number(presEl.textContent || 0), newPres, 600, "", 1);
 
   document.getElementById("timestamp").textContent =
     d.timestamp
@@ -110,83 +153,71 @@ function getModernIcon(iconCode) {
 }
 
 // ---------------------------------------------------------
-// OpenWeather – aktuelle Daten aus Firebase
+// SVG-Icon Setter
 // ---------------------------------------------------------
-function loadOpenWeather() {
-  const owRef = ref(db, "weather/openweather");
+function setSvgIcon(imgEl, iconCode) {
+  const modern = getModernIcon(iconCode);
+ function setSvgIcon(imgEl, iconCode) {
+  const modern = getModernIcon(iconCode); // z.B. "clear-day"
+  imgEl.src = `/icons/${modern}.svg`;
+} 
 
-  onValue(owRef, snap => {
-    if (!snap.exists()) return;
+  // ---------------------------------------------------------
+// OpenWeather – SVG Icons + Werte
+// ---------------------------------------------------------
+onValue(ref(db, "weather/openweather/raw"), snap => {
+  const raw = snap.val();
+  if (!raw) return;
 
-    const raw = snap.val().raw;
-    const data = JSON.parse(raw);
+  const data = JSON.parse(raw);
 
-    document.getElementById("ow-temp").textContent = data.main.temp.toFixed(1);
-    document.getElementById("ow-humidity").textContent = data.main.humidity;
-    document.getElementById("ow-pressure").textContent = data.main.pressure;
-    document.getElementById("ow-wind").textContent = data.wind.speed;
-    document.getElementById("ow-clouds").textContent = data.clouds.all;
+  // Werte setzen
+  document.getElementById("ow-temp").innerText = data.main.temp.toFixed(1);
+  document.getElementById("ow-humidity").innerText = data.main.humidity;
+  document.getElementById("ow-pressure").innerText = data.main.pressure;
+  document.getElementById("ow-wind").innerText = data.wind.speed;
+  document.getElementById("ow-clouds").innerText = data.clouds.all;
+  document.getElementById("ow-desc").innerText = data.weather[0].description;
 
-    const time = new Date(data.dt * 1000);
-    const sunrise = new Date(data.sys.sunrise * 1000);
-    const sunset = new Date(data.sys.sunset * 1000);
+  const dt = new Date(data.dt * 1000);
+  document.getElementById("ow-time").innerText =
+    dt.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-    document.getElementById("ow-sunrise").textContent =
-      sunrise.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  // Sonnenaufgang / Sonnenuntergang
+  const sr = new Date(data.sys.sunrise * 1000);
+  const ss = new Date(data.sys.sunset * 1000);
 
-    document.getElementById("ow-sunset").textContent =
-      sunset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  document.getElementById("ow-sunrise").innerText =
+    sr.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-    document.getElementById("ow-time").textContent = time.toLocaleString();
+  document.getElementById("ow-sunset").innerText =
+    ss.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-    const desc =
-      data.weather?.[0]?.description ||
-      data.weather?.[0]?.main ||
-      data.description ||
-      "--";
+  // ICONS (SVG)
+  const icon = data.weather[0].icon;
 
-    document.getElementById("ow-desc").textContent = desc;
-
-    let iconCode = data.weather[0].icon;
-
-    // Live-Icon oben
-    setLiveIcon(iconCode);
-
-    // Modernes SVG-Icon
-    const modern = getModernIcon(iconCode);
-    document.getElementById("ow-icon").src =
-      "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/" +
-      modern +
-      ".svg";
-
-    // Sunrise/Sunset Icons
-    document.getElementById("sunrise-icon").src =
-      "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/sunrise.svg";
-    document.getElementById("sunset-icon").src =
-      "https://cdn.jsdelivr.net/npm/@bybas/weather-icons/production/fill/all/sunset.svg";
-  });
-}
+  setSvgIcon(document.getElementById("ow-icon"), icon);
+  setSvgIcon(document.getElementById("icon-top"), icon);
+});
 
 loadOpenWeather();
 
 // ---------------------------------------------------------
 // OpenWeather – WEEK HISTORY (Chart)
 // ---------------------------------------------------------
-let weekChart = null;
-
-function loadWeekHistory() {
- const weekRef = ref(db, "weather/history/week");
-
-onValue(weekRef, snap => {
+// ---------------------------------------------------------
+// Verlauf Woche – /weather/history/week
+// ---------------------------------------------------------
+onValue(ref(db, "weather/history/week"), snap => {
   const data = snap.val();
   if (!data) return;
 
   const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
 
   chartWeek.data.labels = entries.map(e =>
-    new Date(e.timestamp * 1000).toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit"
+    new Date(e.timestamp * 1000).toLocaleDateString("de-DE", {
+      day: "2-digit",
+      month: "2-digit"
     })
   );
 
@@ -223,27 +254,24 @@ function drawWeekChart(labels, temps) {
 loadWeekHistory();
 
 // ---------------------------------------------------------
-// OpenWeather – YEAR HISTORY (Chart)
+// Verlauf Jahr – /weather/history/year
 // ---------------------------------------------------------
-let yearChart = null;
+onValue(ref(db, "weather/history/year"), snap => {
+  const data = snap.val();
+  if (!data) return;
 
-function loadYearHistory() {
-  const yearRef = ref(db, "weather/openweather/history/year");
+  const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
 
-  onValue(yearRef, snap => {
-    if (!snap.exists()) return;
+  chartYear.data.labels = entries.map(e =>
+    new Date(e.timestamp * 1000).toLocaleDateString("de-DE", {
+      month: "2-digit"
+    })
+  );
 
-    const data = snap.val();
-    const labels = [];
-    const temps = [];
+  chartYear.data.datasets[0].data = entries.map(e => e.temp);
 
-    const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
-
-    entries.forEach(entry => {
-      const date = new Date(entry.timestamp * 1000);
-      labels.push(date.toLocaleDateString());
-      temps.push(entry.temp);
-    });
+  chartYear.update();
+});
 
     drawYearChart(labels, temps);
   });
