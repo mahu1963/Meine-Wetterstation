@@ -18,36 +18,30 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // ---------------------------------------------------------
-// ESP32 LIVE-DATEN
+// ESP32 LIVE-DATEN – richtiger Pfad: /weather/live
 // ---------------------------------------------------------
-function renderLive(d) {
+onValue(ref(db, "weather/live"), snap => {
+  const d = snap.val();
   if (!d) return;
 
-  const temp =
-    d.temp ??
-    d.temperature ??
-    d.temp_c ??
-    d.t ??
-    null;
+  const temp = d.temp ?? null;
 
   document.getElementById("live-temp").textContent =
     temp !== null ? Number(temp).toFixed(1) : "--.-";
 
   document.getElementById("live-hum").textContent =
-    d.humidity ? d.humidity.toFixed(0) : "--";
+    d.humidity !== undefined ? d.humidity.toFixed(0) : "--";
 
   document.getElementById("live-pres").textContent =
-    d.pressure ? d.pressure.toFixed(1) : "----";
+    d.pressure !== undefined ? d.pressure.toFixed(1) : "----";
 
   document.getElementById("timestamp").textContent =
     d.timestamp
-      ? "Stand: " + new Date(d.timestamp * 1000).toLocaleString()
+      ? "Stand: " + new Date(d.timestamp * 1000).toLocaleTimeString("de-DE", {
+          hour: "2-digit",
+          minute: "2-digit"
+        })
       : "Stand: --";
-}
-
-onValue(ref(db, "weather/live"), snap => {
-  const d = snap.val();
-  renderLive(d);
 });
 
 // ---------------------------------------------------------
