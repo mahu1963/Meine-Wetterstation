@@ -91,12 +91,12 @@ onValue(ref(db, "weather/openweather/raw"), snap => {
   document.getElementById("ow-time").innerText =
     new Date(data.dt * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-  document.getElementById("ow-sunrise").innerText =
-    new Date(data.sys.sunrise * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+ // Sunrise & Sunset Icons setzen
+document.getElementById("sunrise-icon").src =
+  "https://openweathermap.org/img/wn/01d.png";
 
-  document.getElementById("ow-sunset").innerText =
-    new Date(data.sys.sunset * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-
+document.getElementById("sunset-icon").src =
+  "https://openweathermap.org/img/wn/01n.png";
   const icon = data.weather[0].icon;
   setSvgIcon(document.getElementById("ow-icon"), icon);
   setSvgIcon(document.getElementById("icon-top"), icon);
