@@ -28,15 +28,19 @@ async function updateWeather() {
   const res = await fetch(url);
   const data = await res.json();
 
-  // LIVE
-  await update(ref(db, "weather/live"), {
-    temperatur: data.current.temp,
-    feuchtigkeit: data.current.humidity,
-    druck: data.current.pressure,
-    timestamp: data.current.dt,
-    icon: data.current.weather[0].main.toLowerCase()
-  });
+ // LIVE
+await update(ref(db, "weather/live"), {
+  temperatur: data.current.temp,
+  feuchtigkeit: data.current.humidity,
+  druck: data.current.pressure,
+  timestamp: data.current.dt,
+  icon: data.current.weather[0].main.toLowerCase()
+});
 
+// HIER ICON FÜR DEIN FRONTEND SPEICHERN
+await update(ref(db, "weather/openweather"), {
+  icon: data.current.weather[0].icon
+});
   // STUNDEN (12 Stunden)
   const hours = data.hourly.slice(0, 12).map(h => ({
     timestamp: new Date(h.dt * 1000).toISOString(),
