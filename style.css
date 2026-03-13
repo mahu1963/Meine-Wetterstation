@@ -270,6 +270,10 @@ body.dark .stats-card {
   filter: brightness(1000%) saturate(0%) drop-shadow(0 0 6px #ffd54f);
 }
 
+.sunrise-icon,
+.sunset-icon {
+  color: #ffd54f;
+}
 /* Zeit unter den Icons */
 .sunrise-time,
 .sunset-time {
