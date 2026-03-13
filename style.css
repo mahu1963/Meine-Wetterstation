@@ -289,3 +289,7 @@ body.dark .stats-card {
   color: #ffd54f;
   text-shadow: 0 0 6px #ffd54f;
 }
+.sunrise-icon svg,
+.sunset-icon svg {
+  stroke: #ffd54f !important;
+}
