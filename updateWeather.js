@@ -21,12 +21,13 @@ const db = getDatabase(app);
 const API_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
 const LAT = 47.43602311386345;
 const LON = 16.25550536923543;
-
 async function updateWeather() {
+  console.log("TEST START");
+
   await update(ref(db, "weather/openweather/raw"), {
     test: "OK",
     weather: [{ icon: "01d" }]
   });
 
-  console.log("RAW TEST geschrieben!");
+  console.log("TEST ENDE");
 }
