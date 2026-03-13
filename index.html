@@ -52,7 +52,7 @@
     <img id="icon-top" src="" width="80" alt="Wetter-Icon">
   </div>
 
-<!-- SUNRISE / SUNSET – SCHÖNE VERSION MIT PASSENDER FARBE -->
+<!-- SUNRISE / SUNSET – APPLE WEATHER STYLE -->
 <div style="
   display:flex;
   justify-content:center;
@@ -63,14 +63,30 @@
 
   <!-- Sunrise -->
   <div>
-    <img id="sunrise-icon" width="48" style="opacity:0.9;">
-    <div id="ow-sunrise" style="margin-top:6px; font-size:1.25rem; color:#ffd54f;">--:--</div>
+    <img id="sunrise-icon" width="48" style="
+      opacity:0.95;
+      filter: brightness(1000%) saturate(0%) drop-shadow(0 0 6px #ffd54f);
+    ">
+    <div id="ow-sunrise" style="
+      margin-top:6px;
+      font-size:1.25rem;
+      color:#ffd54f;
+      text-shadow:0 0 6px #ffd54f;
+    ">--:--</div>
   </div>
 
   <!-- Sunset -->
   <div>
-    <img id="sunset-icon" width="48" style="opacity:0.9;">
-    <div id="ow-sunset" style="margin-top:6px; font-size:1.25rem; color:#ffd54f;">--:--</div>
+    <img id="sunset-icon" width="48" style="
+      opacity:0.95;
+      filter: brightness(1000%) saturate(0%) drop-shadow(0 0 6px #ffd54f);
+    ">
+    <div id="ow-sunset" style="
+      margin-top:6px;
+      font-size:1.25rem;
+      color:#ffd54f;
+      text-shadow:0 0 6px #ffd54f;
+    ">--:--</div>
   </div>
 
 </div>
@@ -119,6 +135,7 @@
 <script type="module" src="app.js"></script>
 </body>
 </html>
+
 
 
 
