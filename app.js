@@ -110,6 +110,10 @@ document.getElementById("sunset-icon").src =
   setSvgIcon(document.getElementById("ow-icon"), icon);
   setSvgIcon(document.getElementById("icon-top"), icon);
 });
+ 
+// Sunrise & Sunset Icons setzen (schöne Version)
+document.getElementById("sunrise-icon").src = "/icons/sunrise.svg";
+document.getElementById("sunset-icon").src = "/icons/sunset.svg";
 // ---------------------------------------------------------
 // Charts (Woche & Jahr)
 // ---------------------------------------------------------
