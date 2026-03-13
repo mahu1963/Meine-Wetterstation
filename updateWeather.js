@@ -37,7 +37,24 @@ await update(ref(db, "weather/live"), {
   icon: data.current.weather[0].main.toLowerCase()
 });
 
-// HIER ICON FÜR DEIN FRONTEND SPEICHERN
+// ICONCODE aus OneCall holen
+const iconCode = data.current.weather[0].icon || "01d";
+
+// Altes System (Frontend) weiter bedienen
+await update(ref(db, "weather/openweather"), {
+  icon: iconCode,
+  description: data.current.weather[0].description
+});
+
+// Neues System (OneCall) weiterhin speichern
+await update(ref(db, "weather/live"), {
+  temperatur: data.current.temp,
+  feuchtigkeit: data.current.humidity,
+  druck: data.current.pressure,
+  timestamp: data.current.dt,
+  icon: data.current.weather[0].main.toLowerCase()
+});
+  // HIER ICON FÜR DEIN FRONTEND SPEICHERN
 await update(ref(db, "weather/openweather"), {
   icon: data.current.weather[0].icon
 });
