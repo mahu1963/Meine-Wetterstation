@@ -234,7 +234,6 @@ body.dark .stats-card {
   color: #ffd54f;
   text-shadow: 0 0 6px #ffd54f;
 }
-
 /* Layout für Sunrise + Sunset */
 .sun-container {
   display: flex;
@@ -311,3 +310,4 @@ body.dark .stats-card {
   color: #ffd54f;
   text-shadow: 0 0 6px #ffd54f;
 }
+
