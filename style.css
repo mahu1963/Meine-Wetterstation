@@ -274,6 +274,13 @@ body.dark .stats-card {
 .sunset-icon {
   color: #ffd54f;
 }
+.sunrise-icon,
+.sunset-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #ffd54f !important;
+}
 /* Zeit unter den Icons */
 .sunrise-time,
 .sunset-time {
