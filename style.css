@@ -250,6 +250,11 @@ body.dark .stats-card {
 }
 
 @keyframes rise {
+  from { transform: translateY(10px); }
+  to   { transform: translateY(-4px); }
+}
+
+@keyframes rise {
   from { transform: translateY(6px); }
   to   { transform: translateY(0px); }
 }
@@ -259,6 +264,10 @@ body.dark .stats-card {
   animation: set 2s ease-in-out infinite alternate;
 }
 
+@keyframes set {
+  from { transform: translateY(-4px); }
+  to   { transform: translateY(10px); }
+}
 @keyframes set {
   from { transform: translateY(0px); }
   to   { transform: translateY(6px); }
