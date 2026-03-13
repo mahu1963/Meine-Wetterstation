@@ -244,42 +244,51 @@ body.dark .stats-card {
   text-align: center;
 }
 
-/* Sunrise Animation */
+/* --- REALISTISCHE SUNRISE BEWEGUNG --- */
 .sun {
-  animation: rise 2s ease-in-out infinite alternate;
-}
-
-@keyframes rise {
-  from { transform: translateY(12px); }
-  to   { transform: translateY(-6px); }
-}
-
-
-/* Sunset Animation */
-.sunset-sun {
-  animation: set 2s ease-in-out infinite alternate;
-}
-
-@keyframes set {
-  from { transform: translateY(-6px); }
-  to   { transform: translateY(12px); }
-}
-
-.sun,
-.sunset-sun {
+  animation: sunriseMotion 3.4s cubic-bezier(0.55, 0.03, 0.29, 0.99) infinite alternate;
   transform-origin: center;
   transform-box: fill-box;
 }
-/* Glow */
-.sunrise-icon svg,
-.sunset-icon svg {
-  filter: brightness(1000%) saturate(0%) drop-shadow(0 0 6px #ffd54f);
+
+@keyframes sunriseMotion {
+  0%   { transform: translateY(16px) scale(0.94); }
+  35%  { transform: translateY(4px)  scale(1.03); }
+  55%  { transform: translateY(-2px) scale(1.00); }
+  100% { transform: translateY(-8px) scale(1.00); }
 }
 
-.sunrise-icon,
-.sunset-icon {
-  color: #ffd54f;
+/* --- REALISTISCHE SUNSET BEWEGUNG --- */
+.sunset-sun {
+  animation: sunsetMotion 3.4s cubic-bezier(0.55, 0.03, 0.29, 0.99) infinite alternate;
+  transform-origin: center;
+  transform-box: fill-box;
 }
+
+@keyframes sunsetMotion {
+  0%   { transform: translateY(-8px) scale(1.00); }
+  35%  { transform: translateY(-2px) scale(1.03); }
+  55%  { transform: translateY(4px)  scale(1.00); }
+  100% { transform: translateY(16px) scale(0.94); }
+}
+
+/* --- GLOW‑PULS (synchron zur Bewegung) --- */
+@keyframes glowPulse {
+  0%   { filter: drop-shadow(0 0 2px #ffd54f) brightness(1); }
+  40%  { filter: drop-shadow(0 0 7px #ffd54f) brightness(1.25); }
+  60%  { filter: drop-shadow(0 0 10px #ffd54f) brightness(1.35); }
+  100% { filter: drop-shadow(0 0 4px #ffd54f) brightness(1.1); }
+}
+
+.sunrise-icon svg {
+  animation: glowPulse 3.4s ease-in-out infinite alternate;
+}
+
+.sunset-icon svg {
+  animation: glowPulse 3.4s ease-in-out infinite alternate;
+}
+
+/* --- Farbe der Icons --- */
 .sunrise-icon,
 .sunset-icon {
   display: flex;
@@ -287,15 +296,18 @@ body.dark .stats-card {
   align-items: center;
   color: #ffd54f !important;
 }
-/* Zeit unter den Icons */
+
+/* --- Stroke direkt setzen (100% sicher gelb) --- */
+.sunrise-icon svg,
+.sunset-icon svg {
+  stroke: #ffd54f !important;
+}
+
+/* --- Zeit unter den Icons --- */
 .sunrise-time,
 .sunset-time {
   margin-top: 6px;
   font-size: 1.25rem;
   color: #ffd54f;
   text-shadow: 0 0 6px #ffd54f;
-}
-.sunrise-icon svg,
-.sunset-icon svg {
-  stroke: #ffd54f !important;
 }
