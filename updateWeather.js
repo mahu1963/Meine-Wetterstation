@@ -29,14 +29,13 @@ async function updateWeather() {
   const data = await res.json();
 
   // -----------------------------------------
-  // Basiswerte aus OneCall
+  // ICONCODE aus OneCall holen
   // -----------------------------------------
   const iconCode = data.current.weather[0].icon || "01d";
   const iconDesc = data.current.weather[0].description || "";
 
   // -----------------------------------------
   // RAW-Format für dein bestehendes Frontend
-  // (weather/openweather/raw)
   // -----------------------------------------
   await update(ref(db, "weather/openweather/raw"), {
     main: {
@@ -64,7 +63,7 @@ async function updateWeather() {
   });
 
   // -----------------------------------------
-  // LIVE-Daten (neues System)
+  // LIVE-Daten
   // -----------------------------------------
   await update(ref(db, "weather/live"), {
     temperatur: data.current.temp,
@@ -107,7 +106,7 @@ async function updateWeather() {
   });
 
   // -----------------------------------------
-  // Archivierung (Woche / Monat / Jahr)
+  // Archivierung
   // -----------------------------------------
   function getWeekNumber(date) {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -132,17 +131,14 @@ async function updateWeather() {
     timestamp: now.toISOString()
   };
 
-  // Woche speichern
   await update(ref(db, "weather/history/week"), {
     [`${year}-W${week}`]: archiveData
   });
 
-  // Monat speichern
   await update(ref(db, "weather/history/month"), {
     [`${year}-${month}`]: archiveData
   });
 
-  // Jahr speichern
   await update(ref(db, "weather/history/year"), {
     [year]: archiveData
   });
