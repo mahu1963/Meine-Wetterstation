@@ -58,6 +58,7 @@ onValue(ref(db, "weather/live"), snap => {
   animateNumber(humEl,  safeNumber(humEl.textContent), Number(d.humidity), 600, "", 0);
   animateNumber(presEl, safeNumber(presEl.textContent), Number(d.pressure), 600, "", 1);
 
+  // Timestamp
   document.getElementById("timestamp").textContent =
     d.timestamp
       ? "Stand: " + new Date(d.timestamp * 1000).toLocaleTimeString("de-DE", {
@@ -65,6 +66,12 @@ onValue(ref(db, "weather/live"), snap => {
           minute: "2-digit"
         })
       : "Stand: --";
+
+  // ⭐ Live-Icon setzen
+  if (d.icon) {
+    document.getElementById("icon-top").src =
+      `https://openweathermap.org/img/wn/${d.icon}@2x.png`;
+  }
 });
 
 // ---------------------------------------------------------
@@ -75,37 +82,49 @@ function setSvgIcon(imgEl, iconCode) {
 }
 
 // ---------------------------------------------------------
-// OpenWeather – Werte
+// OpenWeather – Werte (OneCall RAW)
 // ---------------------------------------------------------
 onValue(ref(db, "weather/openweather/raw"), snap => {
   const data = snap.val();
-  if (!data) return;
+  if (!data || !data.current) return;
 
-  document.getElementById("ow-temp").innerText = data.main.temp.toFixed(1);
-  document.getElementById("ow-humidity").innerText = data.main.humidity;
-  document.getElementById("ow-pressure").innerText = data.main.pressure;
-  document.getElementById("ow-wind").innerText = data.wind.speed;
-  document.getElementById("ow-clouds").innerText = data.clouds.all;
-  document.getElementById("ow-desc").innerText = data.weather[0].description;
+  // Temperatur / Feuchte / Druck
+  document.getElementById("ow-temp").innerText     = data.current.temp.toFixed(1);
+  document.getElementById("ow-humidity").innerText = data.current.humidity;
+  document.getElementById("ow-pressure").innerText = data.current.pressure;
 
+  // Wind & Wolken
+  document.getElementById("ow-wind").innerText   = data.current.wind_speed;
+  document.getElementById("ow-clouds").innerText = data.current.clouds;
+
+  // Beschreibung
+  document.getElementById("ow-desc").innerText = data.current.weather[0].description;
+
+  // Zeit
   document.getElementById("ow-time").innerText =
-    new Date(data.dt * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    new Date(data.current.dt * 1000).toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
 
-document.getElementById("ow-sunrise").innerText =
-  new Date(data.sys.sunrise * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  // Sunrise / Sunset
+  document.getElementById("ow-sunrise").innerText =
+    new Date(data.current.sunrise * 1000).toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
 
-document.getElementById("ow-sunset").innerText =
-  new Date(data.sys.sunset * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  document.getElementById("ow-sunset").innerText =
+    new Date(data.current.sunset * 1000).toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
 
-// Sunrise & Sunset Icons setzen
-
-  document.getElementById("sunset-icon").src =
-  "https://openweathermap.org/img/wn/01n.png";
-  const icon = data.weather[0].icon;
+  // ⭐ ICON
+  const icon = data.current.weather[0].icon;
   setSvgIcon(document.getElementById("ow-icon"), icon);
   setSvgIcon(document.getElementById("icon-top"), icon);
 });
- 
 
 // ---------------------------------------------------------
 // Charts (Woche & Jahr)
