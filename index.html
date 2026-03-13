@@ -52,17 +52,28 @@
     <img id="icon-top" src="" width="80" alt="Wetter-Icon">
   </div>
 
-  <!-- SUNRISE / SUNSET -->
-  <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
-    <div style="display:flex; align-items:center; gap:8px;">
-      <img id="sunrise-icon" width="40" alt="Sunrise">
-      <span id="ow-sunrise">--:--</span>
-    </div>
-    <div style="display:flex; align-items:center; gap:8px;">
-      <img id="sunset-icon" width="40" alt="Sunset">
-      <span id="ow-sunset">--:--</span>
-    </div>
+ <!-- SUNRISE / SUNSET – SCHÖNE VERSION -->
+<div style="
+  display:flex;
+  justify-content:center;
+  gap:40px;
+  margin:20px 0;
+  text-align:center;
+">
+
+  <!-- Sunrise -->
+  <div>
+    <img id="sunrise-icon" width="48" style="opacity:0.9;">
+    <div id="ow-sunrise" style="margin-top:6px; font-size:1.25rem;">--:--</div>
   </div>
+
+  <!-- Sunset -->
+  <div>
+    <img id="sunset-icon" width="48" style="opacity:0.9;">
+    <div id="ow-sunset" style="margin-top:6px; font-size:1.25rem;">--:--</div>
+  </div>
+
+</div>
 
   <!-- OPENWEATHER BOX -->
   <div class="minmax-row">
@@ -108,6 +119,7 @@
 <script type="module" src="app.js"></script>
 </body>
 </html>
+
 
 
 
