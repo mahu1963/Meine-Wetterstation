@@ -98,12 +98,7 @@ document.getElementById("ow-sunset").innerText =
   new Date(data.sys.sunset * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
 // Sunrise & Sunset Icons setzen
-document.getElementById("sunrise-icon").src =
-  "https://openweathermap.org/img/wn/01d.png";
 
-document.getElementById("sunset-icon").src =
-  "https://openweathermap.org/img/wn/01n.png";
-  
   document.getElementById("sunset-icon").src =
   "https://openweathermap.org/img/wn/01n.png";
   const icon = data.weather[0].icon;
@@ -111,9 +106,7 @@ document.getElementById("sunset-icon").src =
   setSvgIcon(document.getElementById("icon-top"), icon);
 });
  
-// Sunrise & Sunset Icons setzen (schöne Version)
-document.getElementById("sunrise-icon").src = "/icons/sunrise.svg";
-document.getElementById("sunset-icon").src = "/icons/sunset.svg";
+
 // ---------------------------------------------------------
 // Charts (Woche & Jahr)
 // ---------------------------------------------------------
