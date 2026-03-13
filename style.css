@@ -250,14 +250,10 @@ body.dark .stats-card {
 }
 
 @keyframes rise {
-  from { transform: translateY(10px); }
-  to   { transform: translateY(-4px); }
+  from { transform: translateY(12px); }
+  to   { transform: translateY(-6px); }
 }
 
-@keyframes rise {
-  from { transform: translateY(6px); }
-  to   { transform: translateY(0px); }
-}
 
 /* Sunset Animation */
 .sunset-sun {
@@ -265,14 +261,15 @@ body.dark .stats-card {
 }
 
 @keyframes set {
-  from { transform: translateY(-4px); }
-  to   { transform: translateY(10px); }
-}
-@keyframes set {
-  from { transform: translateY(0px); }
-  to   { transform: translateY(6px); }
+  from { transform: translateY(-6px); }
+  to   { transform: translateY(12px); }
 }
 
+.sun,
+.sunset-sun {
+  transform-origin: center;
+  transform-box: fill-box;
+}
 /* Glow */
 .sunrise-icon svg,
 .sunset-icon svg {
