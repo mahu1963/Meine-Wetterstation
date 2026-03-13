@@ -28,101 +28,101 @@ async function updateWeather() {
   const res = await fetch(url);
   const data = await res.json();
 
- // LIVE
-await update(ref(db, "weather/live"), {
-  temperatur: data.current.temp,
-  feuchtigkeit: data.current.humidity,
-  druck: data.current.pressure,
-  timestamp: data.current.dt,
-  icon: data.current.weather[0].main.toLowerCase()
-});
+  // -----------------------------------------
+  // ICONCODE aus OneCall holen (01d, 02n, ...)
+  // -----------------------------------------
+  const iconCode = data.current.weather[0].icon || "01d";
+  const iconDesc = data.current.weather[0].description || "";
 
-// ICONCODE aus OneCall holen
-const iconCode = data.current.weather[0].icon || "01d";
+  // -----------------------------------------
+  // LIVE-DATEN
+  // -----------------------------------------
+  await update(ref(db, "weather/live"), {
+    temperatur: data.current.temp,
+    feuchtigkeit: data.current.humidity,
+    druck: data.current.pressure,
+    timestamp: data.current.dt,
+    icon: iconCode,                     // <-- ICONCODE statt "main"
+    description: iconDesc
+  });
 
-// Altes System (Frontend) weiter bedienen
-await update(ref(db, "weather/openweather"), {
-  icon: iconCode,
-  description: data.current.weather[0].description
-});
+  // -----------------------------------------
+  // ALTES SYSTEM (Frontend erwartet das!)
+  // -----------------------------------------
+  await update(ref(db, "weather/openweather"), {
+    icon: iconCode,                     // <-- wichtig!
+    description: iconDesc
+  });
 
-// Neues System (OneCall) weiterhin speichern
-await update(ref(db, "weather/live"), {
-  temperatur: data.current.temp,
-  feuchtigkeit: data.current.humidity,
-  druck: data.current.pressure,
-  timestamp: data.current.dt,
-  icon: data.current.weather[0].main.toLowerCase()
-});
-  // HIER ICON FÜR DEIN FRONTEND SPEICHERN
-await update(ref(db, "weather/openweather"), {
-  icon: data.current.weather[0].icon
-});
+  // -----------------------------------------
   // STUNDEN (12 Stunden)
+  // -----------------------------------------
   const hours = data.hourly.slice(0, 12).map(h => ({
     timestamp: new Date(h.dt * 1000).toISOString(),
     temperatur: h.temp,
     wind: h.wind_speed,
     regen: h.rain?.["1h"] ?? 0,
-    icon: h.weather[0].main.toLowerCase()
+    icon: h.weather[0].icon            // <-- ICONCODE!
   }));
 
   await update(ref(db, "weather/forecast"), {
     stunden: hours
   });
 
+  // -----------------------------------------
   // TAGE (5 Tage)
+  // -----------------------------------------
   const days = data.daily.slice(0, 5).map(d => ({
     datum: new Date(d.dt * 1000).toLocaleDateString("de-DE", { weekday: "short" }),
     t_min: d.temp.min,
     t_max: d.temp.max,
     wind: d.wind_speed,
     regen: d.rain ?? 0,
-    icon: d.weather[0].main.toLowerCase()
+    icon: d.weather[0].icon            // <-- ICONCODE!
   }));
 
   await update(ref(db, "weather"), {
     forecast_daily: days
   });
 
-  // ------------------------------
-// ARCHIVIERUNG
-// ------------------------------
+  // -----------------------------------------
+  // ARCHIVIERUNG
+  // -----------------------------------------
+  function getWeekNumber(date) {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  }
 
-function getWeekNumber(date) {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1;
+  const week = getWeekNumber(now);
+
+  const archiveData = {
+    temperatur: data.current.temp,
+    feuchtigkeit: data.current.humidity,
+    druck: data.current.pressure,
+    wind: data.current.wind_speed,
+    regen: data.current.rain?.["1h"] ?? 0,
+    icon: iconCode,                    // <-- ICONCODE!
+    timestamp: now.toISOString()
+  };
+
+  // Woche speichern
+  await update(ref(db, `weather/history/week`), {
+    [`${year}-W${week}`]: archiveData
+  });
+
+  // Monat speichern
+  await update(ref(db, `weather/history/month`), {
+    [`${year}-${month}`]: archiveData
+  });
+
+  // Jahr speichern
+  await update(ref(db, `weather/history/year`), {
+    [year]: archiveData
+  });
 }
-
-const now = new Date();
-const year = now.getFullYear();
-const month = now.getMonth() + 1;
-const week = getWeekNumber(now);
-
-const archiveData = {
-  temperatur: data.current.temp,
-  feuchtigkeit: data.current.humidity,
-  druck: data.current.pressure,
-  wind: data.current.wind_speed,
-  regen: data.current.rain?.["1h"] ?? 0,
-  icon: data.current.weather[0].main.toLowerCase(),
-  timestamp: now.toISOString()
-};
-
-// Woche speichern
-await update(ref(db, `weather/history/week`), {
-  [`${year}-W${week}`]: archiveData
-});
-
-// Monat speichern
-await update(ref(db, `weather/history/month`), {
-  [`${year}-${month}`]: archiveData
-});
-
-// Jahr speichern
-await update(ref(db, `weather/history/year`), {
-  [year]: archiveData
-});
