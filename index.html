@@ -24,18 +24,24 @@
     }
     .stats-grid { display:flex; gap:16px; flex-wrap:wrap; margin:20px 0; }
     canvas { background:#111624; border-radius:12px; padding:8px; }
+    .sun-container { display:flex; gap:24px; margin:20px 0; }
+    .sunrise-icon, .sunset-icon { display:flex; flex-direction:column; align-items:center; gap:6px; }
+    .sunrise-time, .sunset-time { font-size:1rem; opacity:.9; }
+    .forecast-row { display:flex; gap:16px; margin:20px 0; flex-wrap:wrap; }
+    .forecast-item { text-align:center; font-size:.9rem; }
+    .forecast-item img { width:40px; height:40px; display:block; margin:0 auto 4px; }
   </style>
 </head>
 
 <body>
 <div class="container">
 
- <div style="text-align:center; margin-bottom:20px;">
-  <h1 style="margin:0; font-size:2.6rem;">Wetterstation-Stuben</h1>
-  <div style="font-size:2.3rem; margin-top:10px; opacity:0.9;">
-    Martin Huber
+  <div style="text-align:center; margin-bottom:20px;">
+    <h1 style="margin:0; font-size:2.6rem;">Wetterstation-Stuben</h1>
+    <div style="font-size:2.3rem; margin-top:10px; opacity:0.9;">
+      Martin Huber
+    </div>
   </div>
-</div>
   
   <!-- LIVE (ESP32) -->
   <div class="current-box">
@@ -52,57 +58,64 @@
     <img id="icon-top" src="" width="80" alt="Wetter-Icon">
   </div>
 
-<!-- SUNRISE + SUNSET -->
-<div class="sun-container">
-
-  <!-- Sunrise -->
-  <div class="sunrise-icon">
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" 
-       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <g class="sun">
-      <path d="M12 12a4 4 0 0 1 4 4H8a4 4 0 0 1 4-4z" />
-    </g>
-    <path d="M12 2v6" />
-    <path d="M5.2 9.2l2.8 2.8" />
-    <path d="M18.8 9.2l-2.8 2.8" />
-    <path d="M4 16h16" />
-    <path d="M7 20h10" />
-  </svg>
-  <div id="ow-sunrise" class="sunrise-time">--:--</div>
-</div>
-  <!-- Sunset -->
-  <div class="sunset-icon">
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" 
-       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <g class="sunset-sun">
-      <path d="M12 12a4 4 0 0 0-4 4h8a4 4 0 0 0-4-4z" />
-    </g>
-    <path d="M12 22v-6" />
-    <path d="M5.2 14.8l2.8-2.8" />
-    <path d="M18.8 14.8l-2.8-2.8" />
-    <path d="M4 16h16" />
-    <path d="M7 20h10" />
-  </svg>
-  <div id="ow-sunset" class="sunset-time">--:--</div>
-</div>
-
-</div>
-<!-- OPENWEATHER BOX -->
-<div class="minmax-row">
-  <div class="minmax-card">
-    <h2>OpenWeather</h2>
-    <p>Temp: <b id="ow-temp">--.-</b> °C</p>
-    <p>Feuchte: <b id="ow-humidity">--</b>%</p>
-    <p>Druck: <b id="ow-pressure">--</b> hPa</p>
-    <p>Wind: <b id="ow-wind">--</b> m/s</p>
-    <p>Wolken: <b id="ow-clouds">--</b>%</p>
-    <p>Zeit: <b id="ow-time">--</b></p>
-    <p>Beschreibung: <b id="ow-desc">--</b></p>
-    <img id="ow-icon" width="60" alt="Wetter-Symbol">
+  <!-- SUNRISE + SUNSET (kannst du später mit Open-Meteo erweitern) -->
+  <div class="sun-container">
+    <!-- Sunrise -->
+    <div class="sunrise-icon">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <g class="sun">
+          <path d="M12 12a4 4 0 0 1 4 4H8a4 4 0 0 1 4-4z" />
+        </g>
+        <path d="M12 2v6" />
+        <path d="M5.2 9.2l2.8 2.8" />
+        <path d="M18.8 9.2l-2.8 2.8" />
+        <path d="M4 16h16" />
+        <path d="M7 20h10" />
+      </svg>
+      <div id="ow-sunrise" class="sunrise-time">--:--</div>
+    </div>
+    <!-- Sunset -->
+    <div class="sunset-icon">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <g class="sunset-sun">
+          <path d="M12 12a4 4 0 0 0-4 4h8a4 4 0 0 0-4-4z" />
+        </g>
+        <path d="M12 22v-6" />
+        <path d="M5.2 14.8l2.8-2.8" />
+        <path d="M18.8 14.8l-2.8-2.8" />
+        <path d="M4 16h16" />
+        <path d="M7 20h10" />
+      </svg>
+      <div id="ow-sunset" class="sunset-time">--:--</div>
+    </div>
   </div>
-</div>
-  
 
+  <!-- FORECAST 5h -->
+  <h2>Vorhersage (nächste 5 Stunden)</h2>
+  <div class="forecast-row">
+    <div class="forecast-item">
+      <img id="f0" src="" alt="">
+      <div id="ft0">--°C</div>
+    </div>
+    <div class="forecast-item">
+      <img id="f1" src="" alt="">
+      <div id="ft1">--°C</div>
+    </div>
+    <div class="forecast-item">
+      <img id="f2" src="" alt="">
+      <div id="ft2">--°C</div>
+    </div>
+    <div class="forecast-item">
+      <img id="f3" src="" alt="">
+      <div id="ft3">--°C</div>
+    </div>
+    <div class="forecast-item">
+      <img id="f4" src="" alt="">
+      <div id="ft4">--°C</div>
+    </div>
+  </div>
 
   <!-- CHARTS -->
   <h2>Verlauf (Woche)</h2>
@@ -133,21 +146,3 @@
 <script type="module" src="app.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
