@@ -1,204 +1,122 @@
-// ---------------------------------------------------------
-// Firebase Setup (v10 Browser SDK)
-// ---------------------------------------------------------
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+// app.js (ESM)
 
+// ---------------- Firebase v9 ----------------
+import {
+  initializeApp
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import {
+  getDatabase,
+  ref,
+  onValue,
+  get
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+// Deine Firebase-Konfiguration
 const firebaseConfig = {
   apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
-  authDomain: "meine-wetterstation.firebaseapp.com",
-  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "meine-wetterstation",
-  storageBucket: "meine-wetterstation.firebasestorage.app",
-  messagingSenderId: "593494014586",
-  appId: "1:593494014586:web:cad0037363543e946059c3",
-  measurementId: "G-139QB1TEMD"
+  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// ---------------------------------------------------------
-// Smooth Number Animation
-// ---------------------------------------------------------
-function animateNumber(el, from, to, duration = 600, suffix = "", decimals = 1) {
-  const start = performance.now();
-  const ease = x => 1 - Math.pow(1 - x, 3);
-
-  function frame(now) {
-    const progress = Math.min(1, (now - start) / duration);
-    const eased = ease(progress);
-    const value = from + (to - from) * eased;
-
-    el.textContent = value.toFixed(decimals) + suffix;
-
-    if (progress < 1) requestAnimationFrame(frame);
-  }
-
-  requestAnimationFrame(frame);
+// ---------------- Icon-Helfer ----------------
+function iconUrl(code) {
+  return `icons/${code}.png`;
 }
 
-function safeNumber(value) {
-  const n = Number(value);
-  return isNaN(n) ? 0 : n;
-}
+// ---------------- LIVE-DATEN ----------------
+onValue(ref(db, "/weather/live"), snap => {
+  const v = snap.val();
+  if (!v) return;
 
-// ---------------------------------------------------------
-// ESP32 LIVE-DATEN
-// ---------------------------------------------------------
-onValue(ref(db, "weather/live"), snap => {
-  const d = snap.val();
-  if (!d) return;
+  document.getElementById("live-temp").textContent = v.temp.toFixed(1);
+  document.getElementById("live-hum").textContent = v.humidity.toFixed(0);
+  document.getElementById("live-pres").textContent = v.pressure.toFixed(1);
 
-  const tempEl = document.getElementById("live-temp");
-  const humEl  = document.getElementById("live-hum");
-  const presEl = document.getElementById("live-pres");
-
-  animateNumber(tempEl, safeNumber(tempEl.textContent), Number(d.temp), 600, "", 1);
-  animateNumber(humEl,  safeNumber(humEl.textContent), Number(d.humidity), 600, "", 0);
-  animateNumber(presEl, safeNumber(presEl.textContent), Number(d.pressure), 600, "", 1);
-
-  // Timestamp
+  const d = new Date(v.timestamp * 1000);
   document.getElementById("timestamp").textContent =
-    d.timestamp
-      ? "Stand: " + new Date(d.timestamp * 1000).toLocaleTimeString("de-DE", {
-          hour: "2-digit",
-          minute: "2-digit"
-        })
-      : "Stand: --";
+    `Stand: ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
 
-  // ⭐ Live-Icon setzen
-  if (d.icon) {
-    document.getElementById("icon-top").src =
-      `https://openweathermap.org/img/wn/${d.icon}@2x.png`;
-  }
+  document.getElementById("icon-top").src = iconUrl(v.icon);
 });
 
-// ---------------------------------------------------------
-// OpenWeather – Icons (PNG von OpenWeather)
-// ---------------------------------------------------------
-function setSvgIcon(imgEl, iconCode) {
-  imgEl.src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+// ---------------- FORECAST 5h ----------------
+for (let i = 0; i < 5; i++) {
+  get(ref(db, `/weather/forecast/5h/${i}`)).then(snap => {
+    const v = snap.val();
+    if (!v) return;
+
+    document.getElementById(`ft${i}`).textContent = `${v.temp.toFixed(1)}°C`;
+    document.getElementById(`f${i}`).src = iconUrl(v.icon);
+  });
 }
 
-// ---------------------------------------------------------
-// OpenWeather – Werte (OneCall RAW)
-// ---------------------------------------------------------
-onValue(ref(db, "weather/openweather/raw"), snap => {
-  const data = snap.val();
-  if (!data || !data.current) return;
-
-  // Temperatur / Feuchte / Druck
-  document.getElementById("ow-temp").innerText     = data.current.temp.toFixed(1);
-  document.getElementById("ow-humidity").innerText = data.current.humidity;
-  document.getElementById("ow-pressure").innerText = data.current.pressure;
-
-  // Wind & Wolken
-  document.getElementById("ow-wind").innerText   = data.current.wind_speed;
-  document.getElementById("ow-clouds").innerText = data.current.clouds;
-
-  // Beschreibung
-  document.getElementById("ow-desc").innerText = data.current.weather[0].description;
-
-  // Zeit
-  document.getElementById("ow-time").innerText =
-    new Date(data.current.dt * 1000).toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-  // Sunrise / Sunset
-  document.getElementById("ow-sunrise").innerText =
-    new Date(data.current.sunrise * 1000).toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-  document.getElementById("ow-sunset").innerText =
-    new Date(data.current.sunset * 1000).toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-  // ⭐ ICON
-  const icon = data.current.weather[0].icon;
-  setSvgIcon(document.getElementById("ow-icon"), icon);
-  setSvgIcon(document.getElementById("icon-top"), icon);
-});
-
-// ---------------------------------------------------------
-// Charts (Woche & Jahr)
-// ---------------------------------------------------------
-onValue(ref(db, "weather/history/week"), snap => {
-  const data = snap.val();
-  if (!data) return;
-
-  const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
-
-  chartWeek.data.labels = entries.map(e =>
-    new Date(e.timestamp * 1000).toLocaleDateString("de-DE", {
-      day: "2-digit",
-      month: "2-digit"
-    })
-  );
-
-  chartWeek.data.datasets[0].data = entries.map(e => e.temp);
-
-  chartWeek.update();
-});
-
-onValue(ref(db, "weather/history/year"), snap => {
-  const data = snap.val();
-  if (!data) return;
-
-  const entries = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
-
-  chartYear.data.labels = entries.map(e =>
-    new Date(e.timestamp * 1000).toLocaleDateString("de-DE", {
-      month: "2-digit"
-    })
-  );
-
-  chartYear.data.datasets[0].data = entries.map(e => e.temp);
-
-  chartYear.update();
-});
-
-// ---------------------------------------------------------
-// Monats- und Jahresstatistik
-// ---------------------------------------------------------
-async function loadMonthYearStats() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth() + 1;
-  const key = `${year}-${month}`;
-
-  const getVal = async p => (await get(ref(db, p))).val();
-
-  const [
-    minM, maxM, sumM, countM,
-    minY, maxY, sumY, countY
-  ] = await Promise.all([
-    getVal(`weather/openweather/history/month/${key}/min`),
-    getVal(`weather/openweather/history/month/${key}/max`),
-    getVal(`weather/openweather/history/month/${key}/sum`),
-    getVal(`weather/openweather/history/month/${key}/count`),
-
-    getVal(`weather/openweather/history/year/min`),
-    getVal(`weather/openweather/history/year/max`),
-    getVal(`weather/openweather/history/year/sum`),
-    getVal(`weather/openweather/history/year/count`)
-  ]);
-
-  document.getElementById("minMonth").textContent = minM ? minM.toFixed(1) + "°C" : "-";
-  document.getElementById("maxMonth").textContent = maxM ? maxM.toFixed(1) + "°C" : "-";
-  document.getElementById("avgMonth").textContent =
-    sumM && countM ? (sumM / countM).toFixed(1) + "°C" : "-";
-
-  document.getElementById("minYear").textContent = minY ? minY.toFixed(1) + "°C" : "-";
-  document.getElementById("maxYear").textContent = maxY ? maxY.toFixed(1) + "°C" : "-";
-  document.getElementById("avgYear").textContent =
-    sumY && countY ? (sumY / countY).toFixed(1) + "°C" : "-";
+// ---------------- CHARTS ----------------
+function loadHistory(path, cb) {
+  get(ref(db, path)).then(snap => {
+    const val = snap.val();
+    if (!val) return;
+    const arr = Object.values(val).sort((a, b) => a.timestamp - b.timestamp);
+    cb(arr);
+  });
 }
 
-loadMonthYearStats();
+function buildChart(ctx, label, arr) {
+  return new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: arr.map(e => new Date(e.timestamp * 1000).toLocaleDateString("de-AT")),
+      datasets: [{
+        label,
+        data: arr.map(e => e.temp),
+        borderColor: "#4fc3f7",
+        backgroundColor: "rgba(79,195,247,0.15)",
+        tension: 0.25,
+        pointRadius: 0
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: "#ccc" }, grid: { color: "#222" } },
+        y: { ticks: { color: "#ccc" }, grid: { color: "#222" } }
+      }
+    }
+  });
+}
+
+// Woche
+loadHistory("/weather/history/week", arr => {
+  buildChart(
+    document.getElementById("chartWeek").getContext("2d"),
+    "Temperatur (Woche)",
+    arr
+  );
+});
+
+// Jahr
+loadHistory("/weather/history/year", arr => {
+  buildChart(
+    document.getElementById("chartYear").getContext("2d"),
+    "Temperatur (Jahr)",
+    arr
+  );
+});
+
+// ---------------- Monat / Jahr Stats ----------------
+function calcStats(path, minEl, maxEl, avgEl) {
+  loadHistory(path, arr => {
+    const temps = arr.map(e => e.temp);
+    const min = Math.min(...temps);
+    const max = Math.max(...temps);
+    const avg = temps.reduce((a, b) => a + b, 0) / temps.length;
+
+    document.getElementById(minEl).textContent = `${min.toFixed(1)} °C`;
+    document.getElementById(maxEl).textContent = `${max.toFixed(1)} °C`;
+    document.getElementById(avgEl).textContent = `${avg.toFixed(1)} °C`;
+  });
+}
+
+calcStats("/weather/history/month", "minMonth", "maxMonth", "avgMonth");
+calcStats("/weather/history/year", "minYear", "maxYear", "avgYear");
