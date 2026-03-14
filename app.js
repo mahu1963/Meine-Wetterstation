@@ -21,10 +21,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// ---------------- Icon-Helfer ----------------
-// Passe den Pfad an deine Icons an (z.B. icons/01d.png oder icons/weather/01d.svg)
+// ---------------- Icon-Helfer (SVG) ----------------
+// Deine Icons liegen in: /icons/01d.svg
 function iconUrl(code) {
-  return `icons/${code}.png`;
+  return `icons/${code}.svg`;
 }
 
 // ---------------- LIVE-DATEN ----------------
@@ -45,8 +45,6 @@ onValue(ref(db, "/weather/live"), snap => {
     const d = new Date(v.timestamp * 1000);
     document.getElementById("timestamp").textContent =
       `Stand: ${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
-  } else {
-    document.getElementById("timestamp").textContent = "Stand: --";
   }
 
   if (v.icon) {
