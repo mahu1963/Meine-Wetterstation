@@ -129,6 +129,21 @@
         align-items: flex-start;
         gap: 12px;
       }
+
+      .forecast-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+
+      .forecast-item img {
+        width: 36px;
+        height: 36px;
+      }
+
+      .stats-grid {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
@@ -155,7 +170,8 @@
         <span id="timestamp">Stand: --</span>
       </div>
     </div>
-    <img id="icon-top" src="icons/weather/01d.svg" alt="Wetter-Icon">
+    <!-- Pfad passend zu app.js: icons/${code}.svg -->
+    <img id="icon-top" src="icons/01d.svg" alt="Wetter-Icon">
   </div>
 
   <!-- SUNRISE + SUNSET -->
@@ -217,6 +233,12 @@
   <h2>Verlauf (Jahr)</h2>
   <canvas id="chartYear" height="120"></canvas>
 
+  <h2>Regen (Woche)</h2>
+  <canvas id="chartRain" height="120"></canvas>
+
+  <h2>Wind (Woche)</h2>
+  <canvas id="chartWind" height="120"></canvas>
+
   <!-- MONAT / JAHR STATS -->
   <div class="stats-grid">
     <div class="stats-card">
@@ -235,7 +257,6 @@
 
 </div>
 
-<!-- Wenn du keine lokale chart.js hast, lieber CDN nutzen: -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script type="module" src="app.js"></script>
 </body>
