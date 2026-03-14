@@ -31,8 +31,9 @@ const db = getDatabase(app);
 // --------------------------------------------------
 // LIVE-DATEN (KORREKTER PFAD!)
 // --------------------------------------------------
-onValue(ref(db, "/weather/forecast/openweather/live"), snap => {
+onValue(ref(db, "/weather/live"), snap => {
   const v = snap.val();
+  console.log("LIVE-DATEN:", v);
   if (!v) return;
 
   // Temperatur
