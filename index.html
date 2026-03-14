@@ -2,112 +2,74 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <title>Wetterstation Bernstein</title>
+  <title>Wetterstation Stuben</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
     body {
-      font-family: system-ui, sans-serif;
-      background: #0b1020;
-      color: #f5f5f5;
       margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      padding: 20px;
     }
 
     .container {
       max-width: 900px;
-      margin: 20px auto;
-      padding: 20px;
+      width: 100%;
+      background: #020617;
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+      border: 1px solid #1f2937;
     }
 
     h1 {
-      margin-bottom: 10px;
+      margin: 0;
+      font-size: 2.4rem;
+    }
+
+    .subtitle {
+      font-size: 1.4rem;
+      opacity: 0.9;
+      margin-top: 6px;
     }
 
     .current-box {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 16px 20px;
+      margin-top: 24px;
+      padding: 18px;
       border-radius: 16px;
-      background: linear-gradient(135deg, #1f2a3d, #283854);
-      margin-bottom: 20px;
+      background: radial-gradient(circle at top left, #1d4ed8, #020617);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
     }
 
-    .current-value {
-      font-size: 3rem;
+    .current-main {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .current-temp {
+      font-size: 3.4rem;
       font-weight: 600;
     }
 
-    .current-value .unit {
-      font-size: 1.4rem;
-      margin-left: 4px;
-      opacity: .8;
-    }
-
-    .current-sub {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      font-size: .95rem;
-      opacity: .9;
-    }
-
-    .sun-container {
-      display: flex;
-      gap: 24px;
-      margin: 20px 0;
-      flex-wrap: wrap;
-    }
-
-    .sunrise-icon,
-    .sunset-icon {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .forecast-row {
+    .current-meta {
       display: flex;
       gap: 16px;
-      margin: 20px 0;
-      flex-wrap: wrap;
+      font-size: 0.95rem;
+      opacity: 0.9;
     }
 
-    .forecast-item {
-      text-align: center;
-      font-size: .9rem;
-    }
-
-    .forecast-item img {
-      width: 40px;
-      height: 40px;
-      display: block;
-      margin: 0 auto 4px;
-    }
-
-    .stats-grid {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin: 20px 0;
-    }
-
-    .stats-card {
-      flex: 1 1 220px;
-      padding: 14px 16px;
-      border-radius: 14px;
-      background: #151b2b;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, .35);
-      font-size: .95rem;
-    }
-
-    canvas {
-      background: #111624;
-      border-radius: 12px;
-      padding: 8px;
-      width: 100%;
-      box-sizing: border-box;
+    .timestamp {
+      margin-top: 4px;
+      font-size: 0.9rem;
+      opacity: 0.8;
     }
 
     /* Animiertes Top-Icon */
@@ -115,12 +77,62 @@
       width: 80px;
       height: 80px;
       animation: float 3s ease-in-out infinite;
+      filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
     }
 
     @keyframes float {
       0% { transform: translateY(0); }
       50% { transform: translateY(-8px); }
       100% { transform: translateY(0); }
+    }
+
+    .section-title {
+      margin-top: 26px;
+      margin-bottom: 10px;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+
+    .forecast-row {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .forecast-item {
+      flex: 1;
+      min-width: 120px;
+      background: #020617;
+      border-radius: 12px;
+      padding: 10px;
+      border: 1px solid #1f2937;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.95rem;
+    }
+
+    .forecast-item img {
+      width: 42px;
+      height: 42px;
+    }
+
+    .stats-grid {
+      margin-top: 18px;
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .stat-box {
+      flex: 1;
+      min-width: 160px;
+      background: #020617;
+      border-radius: 12px;
+      padding: 10px 12px;
+      border: 1px solid #1f2937;
+      font-size: 0.95rem;
     }
 
     @media (max-width: 600px) {
@@ -149,115 +161,70 @@
 </head>
 
 <body>
-<div class="container">
-
-  <div style="text-align:center; margin-bottom:20px;">
-    <h1 style="margin:0; font-size:2.6rem;">Wetterstation-Stuben</h1>
-    <div style="font-size:2.3rem; margin-top:10px; opacity:0.9;">
-      Martin Huber
+  <div class="container">
+    <div style="text-align:center; margin-bottom:20px;">
+      <h1>Wetterstation Stuben</h1>
+      <div class="subtitle">Martin Huber</div>
     </div>
-  </div>
 
-  <!-- LIVE (ESP32) -->
-  <div class="current-box">
-    <div>
-      <div class="current-value">
-        <span id="live-temp">--.-</span><span class="unit">°C</span>
+    <!-- Aktuelle Werte -->
+    <div class="current-box">
+      <div class="current-main">
+        <div class="current-temp">
+          <span id="live-temp">--.-</span> °C
+        </div>
+        <div class="current-meta">
+          <div>Feuchte: <span id="live-hum">--</span> %</div>
+          <div>Druck: <span id="live-pres">--.-</span> hPa</div>
+        </div>
+        <div class="timestamp" id="timestamp">Stand: --:--</div>
       </div>
-      <div class="current-sub">
-        <span>Luftfeuchte: <b id="live-hum">--</b>%</span>
-        <span>Luftdruck: <b id="live-pres">----</b> hPa</span>
-        <span id="timestamp">Stand: --</span>
+      <div>
+        <img id="icon-top" src="" alt="Wetter-Icon">
       </div>
     </div>
-    <!-- Pfad passend zu app.js: icons/${code}.svg -->
-    <img id="icon-top" src="icons/01d.svg" alt="Wetter-Icon">
-  </div>
 
-  <!-- SUNRISE + SUNSET -->
-  <div class="sun-container">
-    <div class="sunrise-icon">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 2v6" />
-        <path d="M5.2 9.2l2.8 2.8" />
-        <path d="M18.8 9.2l-2.8 2.8" />
-        <path d="M4 16h16" />
-        <path d="M7 20h10" />
-      </svg>
-      <div id="sunrise">--:--</div>
+    <!-- Vorhersage -->
+    <div class="section-title">Vorhersage (nächste 5 Stunden)</div>
+    <div class="forecast-row">
+      <div class="forecast-item">
+        <img id="fc-icon-0" alt="">
+        <div id="fc-temp-0">--.- °C</div>
+      </div>
+      <div class="forecast-item">
+        <img id="fc-icon-1" alt="">
+        <div id="fc-temp-1">--.- °C</div>
+      </div>
+      <div class="forecast-item">
+        <img id="fc-icon-2" alt="">
+        <div id="fc-temp-2">--.- °C</div>
+      </div>
+      <div class="forecast-item">
+        <img id="fc-icon-3" alt="">
+        <div id="fc-temp-3">--.- °C</div>
+      </div>
+      <div class="forecast-item">
+        <img id="fc-icon-4" alt="">
+        <div id="fc-temp-4">--.- °C</div>
+      </div>
     </div>
 
-    <div class="sunset-icon">
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none"
-           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M12 22v-6" />
-        <path d="M5.2 14.8l2.8-2.8" />
-        <path d="M18.8 14.8l-2.8-2.8" />
-        <path d="M4 16h16" />
-        <path d="M7 20h10" />
-      </svg>
-      <div id="sunset">--:--</div>
-    </div>
-  </div>
-
-  <!-- FORECAST 5h -->
-  <h2>Vorhersage (nächste 5 Stunden)</h2>
-  <div class="forecast-row">
-    <div class="forecast-item">
-      <img id="f0" alt="Vorhersage 0">
-      <div id="ft0">--°C</div>
-    </div>
-    <div class="forecast-item">
-      <img id="f1" alt="Vorhersage 1">
-      <div id="ft1">--°C</div>
-    </div>
-    <div class="forecast-item">
-      <img id="f2" alt="Vorhersage 2">
-      <div id="ft2">--°C</div>
-    </div>
-    <div class="forecast-item">
-      <img id="f3" alt="Vorhersage 3">
-      <div id="ft3">--°C</div>
-    </div>
-    <div class="forecast-item">
-      <img id="f4" alt="Vorhersage 4">
-      <div id="ft4">--°C</div>
+    <!-- Verlauf / Stats (Platzhalter) -->
+    <div class="section-title">Verlauf / Statistik</div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        Woche (Ø Temp): <span id="week-avg">--.- °C</span>
+      </div>
+      <div class="stat-box">
+        Monat (Ø Temp): <span id="month-avg">--.- °C</span>
+      </div>
+      <div class="stat-box">
+        Jahr (Ø Temp): <span id="year-avg">--.- °C</span>
+      </div>
     </div>
   </div>
 
-  <!-- CHARTS -->
-  <h2>Verlauf (Woche)</h2>
-  <canvas id="chartWeek" height="120"></canvas>
-
-  <h2>Verlauf (Jahr)</h2>
-  <canvas id="chartYear" height="120"></canvas>
-
-  <h2>Regen (Woche)</h2>
-  <canvas id="chartRain" height="120"></canvas>
-
-  <h2>Wind (Woche)</h2>
-  <canvas id="chartWind" height="120"></canvas>
-
-  <!-- MONAT / JAHR STATS -->
-  <div class="stats-grid">
-    <div class="stats-card">
-      <h3>Monat</h3>
-      <p>Min: <b id="minMonth">-</b></p>
-      <p>Max: <b id="maxMonth">-</b></p>
-      <p>Ø: <b id="avgMonth">-</b></p>
-    </div>
-    <div class="stats-card">
-      <h3>Jahr</h3>
-      <p>Min: <b id="minYear">-</b></p>
-      <p>Max: <b id="maxYear">-</b></p>
-      <p>Ø: <b id="avgYear">-</b></p>
-    </div>
-  </div>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script type="module" src="app.js"></script>
+  <!-- Firebase + App -->
+  <script type="module" src="app.js"></script>
 </body>
 </html>
