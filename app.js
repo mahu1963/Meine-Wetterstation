@@ -33,9 +33,13 @@ function iconUrl(code) {
 }
 
 // ---------------- LIVE-DATEN ----------------
-onValue(ref(db, "/weather/live"), snap => {
+onValue(ref(db, "/weather/sun"), snap => {
   const v = snap.val();
   if (!v) return;
+
+  document.getElementById("sunrise").textContent = v.sunrise || "--:--";
+  document.getElementById("sunset").textContent = v.sunset || "--:--";
+});
 
   // Temperatur
   document.getElementById("live-temp").textContent =
