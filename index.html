@@ -72,7 +72,6 @@
       opacity: 0.8;
     }
 
-    /* Animiertes Top-Icon */
     #icon-top {
       width: 80px;
       height: 80px;
@@ -91,31 +90,6 @@
       margin-bottom: 10px;
       font-size: 1.2rem;
       font-weight: 500;
-    }
-
-    .forecast-row {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-    }
-
-    .forecast-item {
-      flex: 1;
-      min-width: 120px;
-      background: #020617;
-      border-radius: 12px;
-      padding: 10px;
-      border: 1px solid #1f2937;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
-      font-size: 0.95rem;
-    }
-
-    .forecast-item img {
-      width: 42px;
-      height: 42px;
     }
 
     .stats-grid {
@@ -140,17 +114,6 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
-      }
-
-      .forecast-row {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-      }
-
-      .forecast-item img {
-        width: 36px;
-        height: 36px;
       }
 
       .stats-grid {
@@ -184,28 +147,7 @@
       </div>
     </div>
 
-    <!-- Vorhersage -->
-    <div class="section-title">Verlauf / Statistik</div>
-<div class="stats-grid">
-  <div class="stat-box">
-    Woche (Ø Temp): <span id="week-avg">--.- °C</span>
-  </div>
-  <div class="stat-box">
-    Monat (Ø Temp): <span id="month-avg">--.- °C</span>
-  </div>
-  <div class="stat-box">
-    Jahr (Ø Temp): <span id="year-avg">--.- °C</span>
-  </div>
-
-  <div class="stat-box">
-    Sonnenaufgang: <span id="sunrise">--:--</span>
-  </div>
-  <div class="stat-box">
-    Sonnenuntergang: <span id="sunset">--:--</span>
-  </div>
-</div>
-
-    <!-- Verlauf / Stats (Platzhalter) -->
+    <!-- Verlauf / Statistik -->
     <div class="section-title">Verlauf / Statistik</div>
     <div class="stats-grid">
       <div class="stat-box">
@@ -216,6 +158,12 @@
       </div>
       <div class="stat-box">
         Jahr (Ø Temp): <span id="year-avg">--.- °C</span>
+      </div>
+      <div class="stat-box">
+        Sonnenaufgang: <span id="sunrise">--:--</span>
+      </div>
+      <div class="stat-box">
+        Sonnenuntergang: <span id="sunset">--:--</span>
       </div>
     </div>
   </div>
