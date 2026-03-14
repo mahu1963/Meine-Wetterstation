@@ -109,6 +109,13 @@
       font-size: 0.95rem;
     }
 
+    canvas {
+      margin-top: 20px;
+      background: #0f172a;
+      border-radius: 12px;
+      padding: 10px;
+    }
+
     @media (max-width: 600px) {
       .current-box {
         flex-direction: column;
@@ -166,7 +173,16 @@
         Sonnenuntergang: <span id="sunset">--:--</span>
       </div>
     </div>
+
+    <!-- Diagramme -->
+    <canvas id="weekChart"></canvas>
+    <canvas id="monthChart"></canvas>
+    <canvas id="yearChart"></canvas>
+
   </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <!-- Firebase + App -->
   <script type="module" src="app.js"></script>
