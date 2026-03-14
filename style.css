@@ -64,7 +64,7 @@ h1 {
 }
 
 /* -----------------------------------------
-   PULS-EFFEKT FÜR LIVE-ICON
+   LIVE ICON – PULSE
 ----------------------------------------- */
 
 #icon-top {
@@ -76,39 +76,81 @@ h1 {
 }
 
 @keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.6);
-        transform: scale(1);
-    }
-    50% {
-        box-shadow: 0 0 12px 12px rgba(255, 165, 0, 0);
-        transform: scale(1.06);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.6);
-        transform: scale(1);
-    }
+    0%   { box-shadow: 0 0 0 0 rgba(255,165,0,0.6); transform: scale(1); }
+    50%  { box-shadow: 0 0 12px 12px rgba(255,165,0,0); transform: scale(1.06); }
+    100% { box-shadow: 0 0 0 0 rgba(255,165,0,0.6); transform: scale(1); }
 }
 
+/* -----------------------------------------
+   SUNRISE / SUNSET
+----------------------------------------- */
+
+.sun-container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin: 20px 0;
+    text-align: center;
+}
+
+/* --- Sunrise Animation --- */
 .sun {
-  animation: rise 2s ease-in-out infinite alternate;
+    animation: sunriseMotion 3.4s cubic-bezier(0.55, 0.03, 0.29, 0.99) infinite alternate;
+    transform-origin: center;
+    transform-box: fill-box;
 }
 
-@keyframes rise {
-  from { transform: translateY(6px); }
-  to   { transform: translateY(0px); }
+@keyframes sunriseMotion {
+    0%   { transform: translateY(16px) scale(0.94); }
+    35%  { transform: translateY(4px)  scale(1.03); }
+    55%  { transform: translateY(-2px) scale(1.00); }
+    100% { transform: translateY(-8px) scale(1.00); }
 }
 
-.sunrise-icon svg {
-  filter: brightness(1000%) saturate(0%) drop-shadow(0 0 6px #ffd54f);
+/* --- Sunset Animation --- */
+.sunset-sun {
+    animation: sunsetMotion 3.4s cubic-bezier(0.55, 0.03, 0.29, 0.99) infinite alternate;
+    transform-origin: center;
+    transform-box: fill-box;
 }
 
-.sunrise-time {
-  margin-top: 6px;
-  font-size: 1.25rem;
-  color: #ffd54f;
-  text-shadow: 0 0 6px #ffd54f;
+@keyframes sunsetMotion {
+    0%   { transform: translateY(-8px) scale(1.00); }
+    35%  { transform: translateY(-2px) scale(1.03); }
+    55%  { transform: translateY(4px)  scale(1.00); }
+    100% { transform: translateY(16px) scale(0.94); }
 }
+
+/* --- Glow Pulse --- */
+@keyframes glowPulse {
+    0%   { filter: drop-shadow(0 0 2px #ffd54f) brightness(1); }
+    40%  { filter: drop-shadow(0 0 7px #ffd54f) brightness(1.25); }
+    60%  { filter: drop-shadow(0 0 10px #ffd54f) brightness(1.35); }
+    100% { filter: drop-shadow(0 0 4px #ffd54f) brightness(1.1); }
+}
+
+.sunrise-icon svg,
+.sunset-icon svg {
+    stroke: #ffd54f !important;
+    animation: glowPulse 3.4s ease-in-out infinite alternate;
+}
+
+.sunrise-icon,
+.sunset-icon {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #ffd54f !important;
+}
+
+.sunrise-time,
+.sunset-time {
+    margin-top: 6px;
+    font-size: 1.25rem;
+    color: #ffd54f;
+    text-shadow: 0 0 6px #ffd54f;
+}
+
 /* -----------------------------------------
    MIN/MAX-KARTEN
 ----------------------------------------- */
@@ -190,124 +232,3 @@ body.dark .stats-card {
     font-size: 1rem;
     opacity: 0.85;
 }
-
-/* Layout für Sunrise + Sunset */
-.sun-container {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin: 20px 0;
-  text-align: center;
-}
-
-/* Sunrise Animation */
-.sun {
-  animation: rise 2s ease-in-out infinite alternate;
-}
-
-@keyframes rise {
-  from { transform: translateY(6px); }
-  to   { transform: translateY(0px); }
-}
-
-/* Sunset Animation */
-.sunset-sun {
-  animation: set 2s ease-in-out infinite alternate;
-}
-
-@keyframes set {
-  from { transform: translateY(0px); }
-  to   { transform: translateY(6px); }
-}
-
-/* Glow */
-.sunrise-icon svg,
-.sunset-icon svg {
-  filter: brightness(1000%) saturate(0%) drop-shadow(0 0 6px #ffd54f);
-}
-
-/* Zeit unter den Icons */
-.sunrise-time,
-.sunset-time {
-  margin-top: 6px;
-  font-size: 1.25rem;
-  color: #ffd54f;
-  text-shadow: 0 0 6px #ffd54f;
-}
-/* Layout für Sunrise + Sunset */
-.sun-container {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin: 20px 0;
-  text-align: center;
-}
-
-/* --- REALISTISCHE SUNRISE BEWEGUNG --- */
-.sun {
-  animation: sunriseMotion 3.4s cubic-bezier(0.55, 0.03, 0.29, 0.99) infinite alternate;
-  transform-origin: center;
-  transform-box: fill-box;
-}
-
-@keyframes sunriseMotion {
-  0%   { transform: translateY(16px) scale(0.94); }
-  35%  { transform: translateY(4px)  scale(1.03); }
-  55%  { transform: translateY(-2px) scale(1.00); }
-  100% { transform: translateY(-8px) scale(1.00); }
-}
-
-/* --- REALISTISCHE SUNSET BEWEGUNG --- */
-.sunset-sun {
-  animation: sunsetMotion 3.4s cubic-bezier(0.55, 0.03, 0.29, 0.99) infinite alternate;
-  transform-origin: center;
-  transform-box: fill-box;
-}
-
-@keyframes sunsetMotion {
-  0%   { transform: translateY(-8px) scale(1.00); }
-  35%  { transform: translateY(-2px) scale(1.03); }
-  55%  { transform: translateY(4px)  scale(1.00); }
-  100% { transform: translateY(16px) scale(0.94); }
-}
-
-/* --- GLOW‑PULS (synchron zur Bewegung) --- */
-@keyframes glowPulse {
-  0%   { filter: drop-shadow(0 0 2px #ffd54f) brightness(1); }
-  40%  { filter: drop-shadow(0 0 7px #ffd54f) brightness(1.25); }
-  60%  { filter: drop-shadow(0 0 10px #ffd54f) brightness(1.35); }
-  100% { filter: drop-shadow(0 0 4px #ffd54f) brightness(1.1); }
-}
-
-.sunrise-icon svg {
-  animation: glowPulse 3.4s ease-in-out infinite alternate;
-}
-
-.sunset-icon svg {
-  animation: glowPulse 3.4s ease-in-out infinite alternate;
-}
-
-/* --- Farbe der Icons --- */
-.sunrise-icon,
-.sunset-icon {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: #ffd54f !important;
-}
-
-/* --- Stroke direkt setzen (100% sicher gelb) --- */
-.sunrise-icon svg,
-.sunset-icon svg {
-  stroke: #ffd54f !important;
-}
-
-/* --- Zeit unter den Icons --- */
-.sunrise-time,
-.sunset-time {
-  margin-top: 6px;
-  font-size: 1.25rem;
-  color: #ffd54f;
-  text-shadow: 0 0 6px #ffd54f;
-}
-
