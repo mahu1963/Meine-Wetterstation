@@ -29,9 +29,9 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // --------------------------------------------------
-// LIVE-DATEN
+// LIVE-DATEN (KORREKTER PFAD!)
 // --------------------------------------------------
-onValue(ref(db, "/weather/live"), snap => {
+onValue(ref(db, "/weather/forecast/openweather/live"), snap => {
   const v = snap.val();
   if (!v) return;
 
