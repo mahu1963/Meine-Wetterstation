@@ -29,11 +29,10 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // --------------------------------------------------
-// LIVE-DATEN (KORREKTER PFAD!)
+// LIVE-DATEN
 // --------------------------------------------------
 onValue(ref(db, "/weather/live"), snap => {
   const v = snap.val();
-  console.log("LIVE-DATEN:", v);
   if (!v) return;
 
   // Temperatur
@@ -60,51 +59,25 @@ onValue(ref(db, "/weather/live"), snap => {
   if (v.icon) {
     document.getElementById("icon-top").src = iconUrl(v.icon);
   }
-});
-
-// --------------------------------------------------
-// SONNENZEITEN
-// --------------------------------------------------
-onValue(ref(db, "/weather/sun"), snap => {
-  const v = snap.val();
-  if (!v) return;
-
-  document.getElementById("sunrise").textContent = v.sunrise || "--:--";
-  document.getElementById("sunset").textContent = v.sunset || "--:--";
 });
 
 // --------------------------------------------------
 // FORECAST (5 Stunden)
 // --------------------------------------------------
-onValue(ref(db, "/weather/live"), snap => {
-  const v = snap.val();
-  if (!v) return;
+onValue(ref(db, "/weather/forecast/5h"), snap => {
+  const data = snap.val();
+  if (!data) return;
 
-  // Temperatur
-  document.getElementById("live-temp").textContent =
-    v.temp != null ? v.temp.toFixed(1) : "--";
+  for (let i = 0; i < 5; i++) {
+    const item = data[i];
+    if (!item) continue;
 
-  // Feuchte
-  document.getElementById("live-hum").textContent =
-    v.humidity != null ? v.humidity.toFixed(0) : "--";
-
-  // Druck
-  document.getElementById("live-pres").textContent =
-    v.pressure != null ? v.pressure.toFixed(1) : "--";
-
-  // Zeitstempel
-  if (v.timestamp) {
-    const d = new Date(v.timestamp * 1000);
-    const hh = d.getHours().toString().padStart(2, "0");
-    const mm = d.getMinutes().toString().padStart(2, "0");
-    document.getElementById("timestamp").textContent = `Stand: ${hh}:${mm}`;
-  }
-
-  // Icon
-  if (v.icon) {
-    document.getElementById("icon-top").src = iconUrl(v.icon);
-  }
-});
+    // Temperatur
+    const tempEl = document.getElementById(`fc-temp-${i}`);
+    if (tempEl) {
+      tempEl.textContent =
+        item.temp != null ? item.temp.toFixed(1) + " °C" : "-- °C";
+    }
 
     // Icon
     const iconEl = document.getElementById(`fc-icon-${i}`);
