@@ -21,10 +21,38 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// ---------------- Icon-Helfer (SVG) ----------------
-// Deine Icons liegen in: /icons/01d.svg
+// ---------------- ICON MAP (SVG) ----------------
 function iconUrl(code) {
-  return `icons/${code}.svg`;
+  const map = {
+    "01d": "clear-day.svg",
+    "01n": "clear-night.svg",
+
+    "02d": "partly-cloudy-day.svg",
+    "02n": "partly-cloudy-night.svg",
+
+    "03d": "cloudy.svg",
+    "03n": "cloudy.svg",
+
+    "04d": "overcast.svg",
+    "04n": "overcast.svg",
+
+    "09d": "rain.svg",
+    "09n": "rain.svg",
+
+    "10d": "rain.svg",
+    "10n": "rain.svg",
+
+    "11d": "thunderstorm.svg",
+    "11n": "thunderstorm.svg",
+
+    "13d": "snow.svg",
+    "13n": "snow.svg",
+
+    "50d": "mist.svg",
+    "50n": "mist.svg"
+  };
+
+  return `icons/${map[code] || "cloudy.svg"}`;
 }
 
 // ---------------- LIVE-DATEN ----------------
@@ -48,8 +76,7 @@ onValue(ref(db, "/weather/live"), snap => {
   }
 
   if (v.icon) {
-    const img = document.getElementById("icon-top");
-    img.src = iconUrl(v.icon);
+    document.getElementById("icon-top").src = iconUrl(v.icon);
   }
 });
 
