@@ -1,6 +1,13 @@
+// --------------------------------------------------
+// OpenWeather Icon-URL
+// --------------------------------------------------
 function iconUrl(code) {
   return `https://openweathermap.org/img/wn/${code}@2x.png`;
 }
+
+// --------------------------------------------------
+// Firebase
+// --------------------------------------------------
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
   getDatabase,
@@ -8,9 +15,6 @@ import {
   onValue
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// --------------------------------------------------
-// Firebase-Konfiguration (ANPASSEN!)
-// --------------------------------------------------
 const firebaseConfig = {
   apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
   authDomain: "meine-wetterstation-default-rtdb.firebaseapp.com",
@@ -21,25 +25,15 @@ const firebaseConfig = {
   appId: "1:1234567890:web:abcdef123456"
 };
 
-// --------------------------------------------------
-// Init
-// --------------------------------------------------
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// OpenWeather Icon-URL
-function iconUrl(code) {
-  return `https://openweathermap.org/img/wn/${code}@2x.png`;
-}
-
-// ---------------- LIVE-DATEN ----------------
-onValue(ref(db, "/weather/sun"), snap => {
+// --------------------------------------------------
+// LIVE-DATEN
+// --------------------------------------------------
+onValue(ref(db, "/weather/live"), snap => {
   const v = snap.val();
   if (!v) return;
-
-  document.getElementById("sunrise").textContent = v.sunrise || "--:--";
-  document.getElementById("sunset").textContent = v.sunset || "--:--";
-});
 
   // Temperatur
   document.getElementById("live-temp").textContent =
@@ -67,7 +61,20 @@ onValue(ref(db, "/weather/sun"), snap => {
   }
 });
 
-// ---------------- FORECAST (5 Stunden) ----------------
+// --------------------------------------------------
+// SONNENZEITEN
+// --------------------------------------------------
+onValue(ref(db, "/weather/sun"), snap => {
+  const v = snap.val();
+  if (!v) return;
+
+  document.getElementById("sunrise").textContent = v.sunrise || "--:--";
+  document.getElementById("sunset").textContent = v.sunset || "--:--";
+});
+
+// --------------------------------------------------
+// FORECAST (5 Stunden)
+// --------------------------------------------------
 onValue(ref(db, "/weather/forecast/5h"), snap => {
   const data = snap.val();
   if (!data) return;
@@ -90,7 +97,3 @@ onValue(ref(db, "/weather/forecast/5h"), snap => {
     }
   }
 });
-
-// ---------------- Verlauf / Statistik (optional) ----------------
-// Hier könntest du später Woche/Monat/Jahr auswerten
-// z.B. /weather/history/week, /month, /year
