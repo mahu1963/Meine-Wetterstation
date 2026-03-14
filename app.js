@@ -1,3 +1,6 @@
+function iconUrl(code) {
+  return `https://openweathermap.org/img/wn/${code}@2x.png`;
+}
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {
   getDatabase,
