@@ -5,13 +5,16 @@ function iconUrl(code) {
   return `https://openweathermap.org/img/wn/${code}@2x.png`;
 }
 
-import fetch from "node-fetch";
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, update, get, child } from "firebase/database";
+// --------------------------------------------------
+// Firebase (Browser-Version)
+// --------------------------------------------------
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {
+  getDatabase,
+  ref,
+  onValue
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// --------------------------------------------------
-// Firebase
-// --------------------------------------------------
 const firebaseConfig = {
   apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
   authDomain: "meine-wetterstation-default-rtdb.firebaseapp.com",
@@ -26,103 +29,122 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // --------------------------------------------------
-// OpenWeather API
+// LIVE-DATEN
 // --------------------------------------------------
-const API_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
-const LAT = 47.43602311386345;
-const LON = 16.25550536923543;
+onValue(ref(db, "/weather/live"), snap => {
+  const v = snap.val();
+  if (!v) return;
 
-// --------------------------------------------------
-// 1. 5‑Stunden‑Vorhersage (Frontend erwartet: /weather/forecast/5h)
-// --------------------------------------------------
-async function updateForecast() {
-  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${LAT}&lon=${LON}&appid=${API_KEY}&units=metric&lang=de`;
-  const fc = await fetch(url).then(r => r.json());
+  document.getElementById("live-temp").textContent =
+    v.temp != null ? v.temp.toFixed(1) : "--";
 
-  const next5 = fc.list.slice(0, 5).map(item => ({
-    time: item.dt,
-    temp: item.main.temp,
-    icon: item.weather[0].icon
-  }));
+  document.getElementById("live-hum").textContent =
+    v.humidity != null ? v.humidity.toFixed(0) : "--";
 
-  await update(ref(db, "weather/forecast"), {
-    "5h": next5
-  });
+  document.getElementById("live-pres").textContent =
+    v.pressure != null ? v.pressure.toFixed(1) : "--";
 
-  console.log("5h-Vorhersage aktualisiert!");
-}
+  if (v.timestamp) {
+    const d = new Date(v.timestamp * 1000);
+    const hh = d.getHours().toString().padStart(2, "0");
+    const mm = d.getMinutes().toString().padStart(2, "0");
+    document.getElementById("timestamp").textContent = `Stand: ${hh}:${mm}`;
+  }
 
-// --------------------------------------------------
-// 2. History in drei fertige Arrays umwandeln
-// --------------------------------------------------
-async function updateHistoryArrays() {
-  const snap = await get(child(ref(db), "weather/history"));
-  const hist = snap.val() || {};
-
-  const entries = Object.entries(hist)
-    .sort(([a], [b]) => (a > b ? 1 : -1));
-
-  const week = entries.slice(-7).map(([ts, v]) => ({ temp: v.temp }));
-  const month = entries.slice(-30).map(([ts, v]) => ({ temp: v.temp }));
-  const year = entries.slice(-365).map(([ts, v]) => ({ temp: v.temp }));
-
-  await update(ref(db, "weather/history"), {
-    week,
-    month,
-    year
-  });
-
-  console.log("History-Arrays aktualisiert!");
-}
+  if (v.icon) {
+    document.getElementById("icon-top").src = iconUrl(v.icon);
+  }
+});
 
 // --------------------------------------------------
-// 3. Hauptfunktion
+// FORECAST (5 Stunden)
 // --------------------------------------------------
-async function updateWeather() {
-  console.log("Hole OpenWeather...");
-
-  const url = `https://api.openweathermap.org/data/2.5/weather?lat=${LAT}&lon=${LON}&appid=${API_KEY}&units=metric&lang=de`;
-  const ow = await fetch(url).then(r => r.json());
-
-  // LIVE-DATEN
-  await update(ref(db, "weather/live"), {
-    temp: ow.main.temp,
-    humidity: ow.main.humidity,
-    pressure: ow.main.pressure,
-    icon: ow.weather[0].icon,
-    timestamp: Math.floor(Date.now() / 1000)
-  });
-
-  // HISTORY (Tageswert speichern)
-  const today = Math.floor(Date.now() / 1000);
-  await update(ref(db, "weather/history/" + today), {
-    temp: ow.main.temp
-  });
-
-  // VORHERSAGE
-  await updateForecast();
-
-  // HISTORY-ARRAYS (Woche/Monat/Jahr)
-  await updateHistoryArrays();
-
-  console.log("Alles aktualisiert!");
-}
-
-// --------------------------------------------------
-// START
-// --------------------------------------------------
-updateWeather();
-// --------------------------------------------------
-// CHARTS
-// --------------------------------------------------
-function updateChart(canvasId, data, label) {
+onValue(ref(db, "/weather/forecast/5h"), snap => {
+  const data = snap.val();
   if (!data) return;
 
-  const timestamps = Object.keys(data).sort();
-  const labels = timestamps.map(ts =>
-    new Date(ts * 1000).toLocaleDateString()
-  );
-  const temps = timestamps.map(ts => data[ts].temp);
+  for (let i = 0; i < 5; i++) {
+    const item = data[i];
+    if (!item) continue;
+
+    const tempEl = document.getElementById(`fc-temp-${i}`);
+    if (tempEl) {
+      tempEl.textContent =
+        item.temp != null ? item.temp.toFixed(1) + " °C" : "-- °C";
+    }
+
+    const iconEl = document.getElementById(`fc-icon-${i}`);
+    if (iconEl && item.icon) {
+      iconEl.src = iconUrl(item.icon);
+    }
+  }
+});
+
+// --------------------------------------------------
+// SONNENAUF-/UNTERGANG
+// --------------------------------------------------
+onValue(ref(db, "/weather/sun"), snap => {
+  const v = snap.val();
+  if (!v) return;
+
+  document.getElementById("sunrise").textContent = v.sunrise || "--:--";
+  document.getElementById("sunset").textContent = v.sunset || "--:--";
+});
+
+// --------------------------------------------------
+// HILFSFUNKTION: Durchschnitt berechnen
+// --------------------------------------------------
+function calcAverage(arr) {
+  if (!arr || !Array.isArray(arr)) return null;
+
+  const values = arr.map(e => e.temp).filter(t => t != null);
+  if (values.length === 0) return null;
+
+  const sum = values.reduce((a, b) => a + b, 0);
+  return sum / values.length;
+}
+
+// --------------------------------------------------
+// WOCHE / MONAT / JAHR – DURCHSCHNITT + CHARTS
+// --------------------------------------------------
+onValue(ref(db, "/weather/history/week"), snap => {
+  const arr = snap.val();
+  const avg = calcAverage(arr);
+
+  document.getElementById("week-avg").textContent =
+    avg != null ? avg.toFixed(1) + " °C" : "--.- °C";
+
+  updateChart("weekChart", arr, "Woche (°C)");
+});
+
+onValue(ref(db, "/weather/history/month"), snap => {
+  const arr = snap.val();
+  const avg = calcAverage(arr);
+
+  document.getElementById("month-avg").textContent =
+    avg != null ? avg.toFixed(1) + " °C" : "--.- °C";
+
+  updateChart("monthChart", arr, "Monat (°C)");
+});
+
+onValue(ref(db, "/weather/history/year"), snap => {
+  const arr = snap.val();
+  const avg = calcAverage(arr);
+
+  document.getElementById("year-avg").textContent =
+    avg != null ? avg.toFixed(1) + " °C" : "--.- °C";
+
+  updateChart("yearChart", arr, "Jahr (°C)");
+});
+
+// --------------------------------------------------
+// CHARTS (angepasst für Arrays)
+// --------------------------------------------------
+function updateChart(canvasId, arr, label) {
+  if (!arr || !Array.isArray(arr)) return;
+
+  const labels = arr.map((_, i) => `Tag ${i + 1}`);
+  const temps = arr.map(e => e.temp);
 
   new Chart(document.getElementById(canvasId), {
     type: "line",
