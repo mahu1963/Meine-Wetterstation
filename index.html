@@ -128,23 +128,20 @@ canvas {
 
 <script>
 // ---------------- FIREBASE CONFIG ----------------
-const firebaseConfig = {
-  apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
+apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
   authDomain: "meine-wetterstation.firebaseapp.com",
   databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "meine-wetterstation",
   storageBucket: "meine-wetterstation.firebasestorage.app",
   messagingSenderId: "593494014586",
   appId: "1:593494014586:web:cad0037363543e946059c3",
-  measurementId: "G-139QB1TEMD"
-};
 };
 
 firebase.initializeApp(firebaseConfig);
 
 // ---------------- LIVE-DATEN ----------------
 function loadLive() {
-    firebase.database().ref("weather/live").on("value", snap => {
+    firebase.database().ref("live").on("value", snap => {
         const d = snap.val();
         if (!d) return;
 
@@ -152,14 +149,14 @@ function loadLive() {
         document.getElementById("details").innerText =
             "Feuchte: " + d.humidity.toFixed(1) + " %   Druck: " + d.pressure.toFixed(1) + " hPa";
 
-        const t = new Date(d.timestamp * 1000);
+        const t = new Date(d.timestamp);
         document.getElementById("time").innerText =
             "Stand: " + t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
     });
 }
 
 // ---------------- SUN ----------------
-firebase.database().ref("weather/sun").on("value", snap => {
+firebase.database().ref("sun").on("value", snap => {
     const d = snap.val();
     if (!d) return;
     document.getElementById("sunrise").innerText = d.sunrise;
@@ -168,7 +165,7 @@ firebase.database().ref("weather/sun").on("value", snap => {
 
 // ---------------- STATISTIK ----------------
 function loadStats() {
-    firebase.database().ref("weather/stats").on("value", snap => {
+    firebase.database().ref("stats").on("value", snap => {
         const d = snap.val();
         if (!d) return;
 
@@ -178,9 +175,9 @@ function loadStats() {
     });
 }
 
-// ---------------- FORECAST ----------------
+// ---------------- FORECAST (optional) ----------------
 function loadForecast() {
-    firebase.database().ref("weather/forecast/5h").on("value", snap => {
+    firebase.database().ref("forecast/5h").on("value", snap => {
         const data = snap.val();
         if (!data) return;
 
@@ -233,13 +230,15 @@ function drawChart(canvasId, labels, data, title) {
 
 // ---------------- HISTORY: WEEK ----------------
 function loadWeekChart() {
-    firebase.database().ref("weather/history/week").once("value", snap => {
+    firebase.database().ref("history/week").once("value", snap => {
         const data = snap.val();
+        if (!data) return;
+
         const labels = [];
         const temps = [];
 
         for (const ts in data) {
-            labels.push(new Date(ts * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
+            labels.push(new Date(Number(ts)).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
             temps.push(data[ts].temp);
         }
 
@@ -249,13 +248,15 @@ function loadWeekChart() {
 
 // ---------------- HISTORY: MONTH ----------------
 function loadMonthChart() {
-    firebase.database().ref("weather/history/month").once("value", snap => {
+    firebase.database().ref("history/month").once("value", snap => {
         const data = snap.val();
+        if (!data) return;
+
         const labels = [];
         const temps = [];
 
         for (const ts in data) {
-            labels.push(new Date(ts * 1000).toLocaleDateString("de-DE"));
+            labels.push(new Date(Number(ts)).toLocaleDateString("de-DE"));
             temps.push(data[ts].temp);
         }
 
@@ -265,13 +266,15 @@ function loadMonthChart() {
 
 // ---------------- HISTORY: YEAR ----------------
 function loadYearChart() {
-    firebase.database().ref("weather/history/year").once("value", snap => {
+    firebase.database().ref("history/year").once("value", snap => {
         const data = snap.val();
+        if (!data) return;
+
         const labels = [];
         const temps = [];
 
         for (const ts in data) {
-            labels.push(new Date(ts * 1000).toLocaleDateString("de-DE", { month: "short" }));
+            labels.push(new Date(Number(ts)).toLocaleDateString("de-DE", { month: "short" }));
             temps.push(data[ts].temp);
         }
 
