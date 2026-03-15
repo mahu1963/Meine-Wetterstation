@@ -21,7 +21,7 @@ body {
 
 /* HEADER */
 .header {
-    background: linear-gradient(90deg, #6ec6ff 0%, #2a66c7 40%, #0a1a33 100%);
+    background: linear-gradient(180deg, #1e3c72 0%, #2a5298 100%);
     padding: 35px 20px;
     border-radius: 15px;
     text-align: center;
@@ -77,14 +77,6 @@ canvas {
     padding: 20px;
     border-radius: 10px;
     margin-top: 20px;
-}
-
-/* STATISTIK BOX */
-.box {
-    background: #161b22;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
 }
 </style>
 </head>
@@ -143,7 +135,7 @@ firebase.initializeApp(firebaseConfig);
 
 // ---------------- LIVE-DATEN ----------------
 function loadLive() {
-    firebase.database().ref("live").on("value", snap => {
+    firebase.database().ref("weather/live").on("value", snap => {
         const d = snap.val();
         if (!d) return;
 
@@ -151,14 +143,14 @@ function loadLive() {
         document.getElementById("details").innerText =
             "Feuchte: " + d.humidity.toFixed(1) + " %   Druck: " + d.pressure.toFixed(1) + " hPa";
 
-        const t = new Date(d.timestamp);
+        const t = new Date(d.timestamp * 1000);
         document.getElementById("time").innerText =
             "Stand: " + t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
     });
 }
 
 // ---------------- SUN ----------------
-firebase.database().ref("sun").on("value", snap => {
+firebase.database().ref("weather/sun").on("value", snap => {
     const d = snap.val();
     if (!d) return;
     document.getElementById("sunrise").innerText = d.sunrise;
@@ -167,7 +159,7 @@ firebase.database().ref("sun").on("value", snap => {
 
 // ---------------- STATISTIK ----------------
 function loadStats() {
-    firebase.database().ref("stats").on("value", snap => {
+    firebase.database().ref("weather/stats").on("value", snap => {
         const d = snap.val();
         if (!d) return;
 
@@ -177,9 +169,9 @@ function loadStats() {
     });
 }
 
-// ---------------- FORECAST (optional) ----------------
+// ---------------- FORECAST ----------------
 function loadForecast() {
-    firebase.database().ref("forecast/5h").on("value", snap => {
+    firebase.database().ref("weather/forecast/5h").on("value", snap => {
         const data = snap.val();
         if (!data) return;
 
@@ -217,8 +209,8 @@ function drawChart(canvasId, labels, data, title) {
                 backgroundColor: "rgba(78,163,255,0.2)",
                 borderWidth: 2,
                 tension: 0.3,
-                pointRadius: 0,
-                pointHoverRadius: 6
+                pointRadius: 0,      // <--- KEINE PUNKTE
+                pointHoverRadius: 6  // Hover bleibt sichtbar
             }]
         },
         options: {
@@ -232,15 +224,13 @@ function drawChart(canvasId, labels, data, title) {
 
 // ---------------- HISTORY: WEEK ----------------
 function loadWeekChart() {
-    firebase.database().ref("history/week").once("value", snap => {
+    firebase.database().ref("weather/history/week").once("value", snap => {
         const data = snap.val();
-        if (!data) return;
-
         const labels = [];
         const temps = [];
 
         for (const ts in data) {
-            labels.push(new Date(Number(ts)).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
+            labels.push(new Date(ts * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
             temps.push(data[ts].temp);
         }
 
@@ -250,15 +240,13 @@ function loadWeekChart() {
 
 // ---------------- HISTORY: MONTH ----------------
 function loadMonthChart() {
-    firebase.database().ref("history/month").once("value", snap => {
+    firebase.database().ref("weather/history/month").once("value", snap => {
         const data = snap.val();
-        if (!data) return;
-
         const labels = [];
         const temps = [];
 
         for (const ts in data) {
-            labels.push(new Date(Number(ts)).toLocaleDateString("de-DE"));
+            labels.push(new Date(ts * 1000).toLocaleDateString("de-DE"));
             temps.push(data[ts].temp);
         }
 
@@ -268,15 +256,13 @@ function loadMonthChart() {
 
 // ---------------- HISTORY: YEAR ----------------
 function loadYearChart() {
-    firebase.database().ref("history/year").once("value", snap => {
+    firebase.database().ref("weather/history/year").once("value", snap => {
         const data = snap.val();
-        if (!data) return;
-
         const labels = [];
         const temps = [];
 
         for (const ts in data) {
-            labels.push(new Date(Number(ts)).toLocaleDateString("de-DE", { month: "short" }));
+            labels.push(new Date(ts * 1000).toLocaleDateString("de-DE", { month: "short" }));
             temps.push(data[ts].temp);
         }
 
