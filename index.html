@@ -4,10 +4,7 @@
 <meta charset="UTF-8">
 <title>Wetterstation – Stuben Martin Huber</title>
 
-<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
@@ -159,9 +156,9 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-// ---------------- LIVE-DATEN (history/live) ----------------
+// ---------------- LIVE-DATEN (ESP schreibt nach /live) ----------------
 function loadLive() {
-    firebase.database().ref("history/live").on("value", snap => {
+    firebase.database().ref("live").on("value", snap => {
         const d = snap.val();
         if (!d) return;
 
@@ -169,10 +166,9 @@ function loadLive() {
         document.getElementById("details").innerText =
             "Feuchte: " + d.humidity.toFixed(1) + " %   Druck: " + d.pressure.toFixed(1) + " hPa";
 
-        // Sekunden oder Millisekunden automatisch erkennen
         const ts = d.timestamp < 2000000000 ? d.timestamp * 1000 : d.timestamp;
-
         const t = new Date(ts);
+
         document.getElementById("time").innerText =
             "Stand: " + t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
     });
@@ -225,7 +221,7 @@ function loadForecast() {
     });
 }
 
-// ---------------- CHART FUNCTION (NO POINTS) ----------------
+// ---------------- CHART FUNCTION ----------------
 function drawChart(canvasId, labels, data, title) {
     new Chart(document.getElementById(canvasId), {
         type: "line",
@@ -238,20 +234,16 @@ function drawChart(canvasId, labels, data, title) {
                 backgroundColor: "rgba(78,163,255,0.2)",
                 borderWidth: 2,
                 tension: 0.3,
-                pointRadius: 0,
-                pointHoverRadius: 6
+                pointRadius: 0
             }]
         },
         options: {
-            responsive: true,
-            scales: {
-                y: { beginAtZero: false }
-            }
+            responsive: true
         }
     });
 }
 
-// ---------------- HISTORY: WEEK ----------------
+// ---------------- HISTORY CHARTS ----------------
 function loadWeekChart() {
     firebase.database().ref("history/week").once("value", snap => {
         const data = snap.val();
@@ -269,7 +261,6 @@ function loadWeekChart() {
     });
 }
 
-// ---------------- HISTORY: MONTH ----------------
 function loadMonthChart() {
     firebase.database().ref("history/month").once("value", snap => {
         const data = snap.val();
@@ -287,7 +278,6 @@ function loadMonthChart() {
     });
 }
 
-// ---------------- HISTORY: YEAR ----------------
 function loadYearChart() {
     firebase.database().ref("history/year").once("value", snap => {
         const data = snap.val();
