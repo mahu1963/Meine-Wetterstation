@@ -143,9 +143,11 @@ function loadLive() {
         document.getElementById("details").innerText =
             "Feuchte: " + d.humidity.toFixed(1) + " %   Druck: " + d.pressure.toFixed(1) + " hPa";
 
-        const ts = d.timestamp < 2000000000 ? d.timestamp * 1000 : d.timestamp;
-        const t = new Date(ts);
+       const ts = d.timestamp * 1000;
+       const t = new Date(ts);
 
+       document.getElementById("time").innerText =
+       "Stand: " + t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
         document.getElementById("time").innerText =
             "Stand: " + t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
     });
