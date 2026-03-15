@@ -141,9 +141,9 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-// ---------------- LIVE-DATEN ----------------
+// ---------------- LIVE-DATEN (history/live) ----------------
 function loadLive() {
-    firebase.database().ref("live").on("value", snap => {
+    firebase.database().ref("history/live").on("value", snap => {
         const d = snap.val();
         if (!d) return;
 
