@@ -56,6 +56,14 @@ body {
     line-height: 1.4;
 }
 
+/* STATISTIK BOX */
+.box {
+    background: #161b22;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
 /* FORECAST */
 .forecast-container {
     display: flex;
@@ -77,14 +85,6 @@ canvas {
     padding: 20px;
     border-radius: 10px;
     margin-top: 20px;
-}
-
-/* STATISTIK BOX */
-.box {
-    background: #161b22;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
 }
 </style>
 </head>
@@ -151,7 +151,10 @@ function loadLive() {
         document.getElementById("details").innerText =
             "Feuchte: " + d.humidity.toFixed(1) + " %   Druck: " + d.pressure.toFixed(1) + " hPa";
 
-        const t = new Date(d.timestamp);
+        // Sekunden oder Millisekunden automatisch erkennen
+        const ts = d.timestamp < 2000000000 ? d.timestamp * 1000 : d.timestamp;
+
+        const t = new Date(ts);
         document.getElementById("time").innerText =
             "Stand: " + t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
     });
