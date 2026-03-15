@@ -91,7 +91,7 @@ async function updateWeather() {
 
   console.log("OpenWeather OK:", ow.weather[0].description);
 
-  // LIVE-DATEN
+  // LIVE
   await update(ref(db, "weather/live"), {
     temp: ow.main.temp,
     humidity: ow.main.humidity,
@@ -100,30 +100,24 @@ async function updateWeather() {
     timestamp: Math.floor(Date.now() / 1000)
   });
 
-  // ROHDATEN
-  await update(ref(db, "weather/openweather/raw"), ow);
-
-  // SONNE
+  // SUN
   await update(ref(db, "weather/sun"), {
     sunrise: ow.sys.sunrise,
     sunset: ow.sys.sunset
   });
 
-  // HISTORY (einzelner Tageswert)
+  // HISTORY
   const ts = Math.floor(Date.now() / 1000);
   await update(ref(db, "weather/history/" + ts), {
+    ts,
     temp: ow.main.temp
   });
 
-  // FORECAST
+  // FORECAST HIER AUFRUFEN
   await updateForecast();
-
-  // HISTORY-ARRAYS
-  await updateHistoryArrays();
 
   console.log("Firebase komplett aktualisiert!");
 }
-
 // --------------------------------------------------
 // START
 // --------------------------------------------------
