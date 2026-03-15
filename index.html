@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Wetterstation – Diagramme</title>
+<title>Wetterstation</title>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -18,21 +18,65 @@ body {
     font-family: Arial, sans-serif;
     padding: 20px;
 }
-h2 {
-    margin-top: 40px;
+
+h1 {
+    font-size: 42px;
+    margin-bottom: 10px;
 }
+
+.section {
+    margin-top: 30px;
+}
+
+.box {
+    background: #161b22;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.forecast-container {
+    display: flex;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.forecast-box {
+    background: #161b22;
+    padding: 10px;
+    border-radius: 10px;
+    width: 80px;
+    text-align: center;
+}
+
 canvas {
     background: #161b22;
     padding: 20px;
     border-radius: 10px;
-    margin-bottom: 40px;
+    margin-top: 20px;
 }
 </style>
 </head>
 
 <body>
 
-<h1>Wetterstation – Temperaturverläufe</h1>
+<h1 id="temp">--.- °C</h1>
+<div id="details">Feuchte: -- % &nbsp;&nbsp; Druck: ---- hPa</div>
+<div id="time">Stand: --:--</div>
+
+<div class="section box">
+    <h2>Verlauf / Statistik</h2>
+    <div>Woche (Ø Temp): <span id="weekAvg">--.- °C</span></div>
+    <div>Monat (Ø Temp): <span id="monthAvg">--.- °C</span></div>
+    <div>Jahr (Ø Temp): <span id="yearAvg">--.- °C</span></div>
+    <div>Sonnenaufgang: <span id="sunrise">--:--</span></div>
+    <div>Sonnenuntergang: <span id="sunset">--:--</span></div>
+</div>
+
+<div class="section">
+    <h2>Vorhersage (5 Stunden)</h2>
+    <div class="forecast-container" id="forecast"></div>
+</div>
 
 <h2>Wochenverlauf</h2>
 <canvas id="weekChart"></canvas>
@@ -58,7 +102,68 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-// ---------------- UNIVERSAL CHART FUNCTION ----------------
+// ---------------- LIVE-DATEN ----------------
+function loadLive() {
+    firebase.database().ref("weather/live").on("value", snap => {
+        const d = snap.val();
+        if (!d) return;
+
+        document.getElementById("temp").innerText = d.temp.toFixed(1) + " °C";
+        document.getElementById("details").innerText =
+            "Feuchte: " + d.humidity + " %   Druck: " + d.pressure + " hPa";
+
+        const t = new Date(d.timestamp * 1000);
+        document.getElementById("time").innerText =
+            "Stand: " + t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    });
+}
+
+// ---------------- STATISTIK ----------------
+function loadStats() {
+    firebase.database().ref("weather/stats").on("value", snap => {
+        const d = snap.val();
+        if (!d) return;
+        document.getElementById("weekAvg").innerText = d.weekAvg ? d.weekAvg.toFixed(1) + " °C" : "--.- °C";
+        document.getElementById("monthAvg").innerText = d.monthAvg ? d.monthAvg.toFixed(1) + " °C" : "--.- °C";
+        document.getElementById("yearAvg").innerText = d.yearAvg ? d.yearAvg.toFixed(1) + " °C" : "--.- °C";
+    });
+
+    firebase.database().ref("weather/sun").on("value", snap => {
+        const d = snap.val();
+        if (!d) return;
+        document.getElementById("sunrise").innerText = d.sunrise;
+        document.getElementById("sunset").innerText = d.sunset;
+    });
+}
+
+// ---------------- FORECAST ----------------
+function loadForecast() {
+    firebase.database().ref("weather/forecast/5h").on("value", snap => {
+        const data = snap.val();
+        if (!data) return;
+
+        const container = document.getElementById("forecast");
+        container.innerHTML = "";
+
+        for (let i = 0; i < 5; i++) {
+            const f = data[i];
+            if (!f) continue;
+
+            const box = document.createElement("div");
+            box.className = "forecast-box";
+
+            box.innerHTML = `
+                <img src="https://openweathermap.org/img/wn/${f.icon}.png">
+                <div>${f.temp.toFixed(1)}°C</div>
+                <div>${f.time || ""}</div>
+            `;
+
+            container.appendChild(box);
+        }
+    });
+}
+
+// ---------------- CHART FUNCTION ----------------
 function drawChart(canvasId, labels, data, title) {
     new Chart(document.getElementById(canvasId), {
         type: "line",
@@ -83,19 +188,15 @@ function drawChart(canvasId, labels, data, title) {
     });
 }
 
-// ---------------- WEEK DATA ----------------
-function loadWeekData() {
-    const ref = firebase.database().ref("weather/history/week");
-    ref.once("value", snap => {
+// ---------------- HISTORY: WEEK ----------------
+function loadWeekChart() {
+    firebase.database().ref("weather/history/week").once("value", snap => {
         const data = snap.val();
         const labels = [];
         const temps = [];
 
         for (const ts in data) {
-            labels.push(new Date(ts * 1000).toLocaleString("de-DE", {
-                hour: "2-digit",
-                minute: "2-digit"
-            }));
+            labels.push(new Date(ts * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
             temps.push(data[ts].temp);
         }
 
@@ -103,10 +204,9 @@ function loadWeekData() {
     });
 }
 
-// ---------------- MONTH DATA ----------------
-function loadMonthData() {
-    const ref = firebase.database().ref("weather/history/month");
-    ref.once("value", snap => {
+// ---------------- HISTORY: MONTH ----------------
+function loadMonthChart() {
+    firebase.database().ref("weather/history/month").once("value", snap => {
         const data = snap.val();
         const labels = [];
         const temps = [];
@@ -120,18 +220,15 @@ function loadMonthData() {
     });
 }
 
-// ---------------- YEAR DATA ----------------
-function loadYearData() {
-    const ref = firebase.database().ref("weather/history/year");
-    ref.once("value", snap => {
+// ---------------- HISTORY: YEAR ----------------
+function loadYearChart() {
+    firebase.database().ref("weather/history/year").once("value", snap => {
         const data = snap.val();
         const labels = [];
         const temps = [];
 
         for (const ts in data) {
-            labels.push(new Date(ts * 1000).toLocaleDateString("de-DE", {
-                month: "short"
-            }));
+            labels.push(new Date(ts * 1000).toLocaleDateString("de-DE", { month: "short" }));
             temps.push(data[ts].temp);
         }
 
@@ -141,9 +238,12 @@ function loadYearData() {
 
 // ---------------- START ----------------
 window.onload = function() {
-    loadWeekData();
-    loadMonthData();
-    loadYearData();
+    loadLive();
+    loadStats();
+    loadForecast();
+    loadWeekChart();
+    loadMonthChart();
+    loadYearChart();
 };
 </script>
 
