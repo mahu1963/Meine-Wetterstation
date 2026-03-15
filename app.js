@@ -138,12 +138,15 @@ onValue(ref(db, "/weather/history/year"), snap => {
 });
 
 // --------------------------------------------------
-// CHARTS (angepasst für Arrays)
+// CHARTS (Variante B: mit Timestamp)
 // --------------------------------------------------
 function updateChart(canvasId, arr, label) {
   if (!arr || !Array.isArray(arr)) return;
 
-  const labels = arr.map((_, i) => `Tag ${i + 1}`);
+  const labels = arr.map(e =>
+    new Date(e.ts * 1000).toLocaleDateString()
+  );
+
   const temps = arr.map(e => e.temp);
 
   new Chart(document.getElementById(canvasId), {
