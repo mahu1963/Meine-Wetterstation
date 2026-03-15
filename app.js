@@ -5,16 +5,13 @@ function iconUrl(code) {
   return `https://openweathermap.org/img/wn/${code}@2x.png`;
 }
 
+import fetch from "node-fetch";
+import { initializeApp } from "firebase/app";
+import { getDatabase, ref, update, get, child } from "firebase/database";
+
 // --------------------------------------------------
 // Firebase
 // --------------------------------------------------
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {
-  getDatabase,
-  ref,
-  onValue
-} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
 const firebaseConfig = {
   apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
   authDomain: "meine-wetterstation-default-rtdb.firebaseapp.com",
@@ -29,108 +26,92 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 // --------------------------------------------------
-// LIVE-DATEN
+// OpenWeather API
 // --------------------------------------------------
-onValue(ref(db, "/weather/live"), snap => {
-  const v = snap.val();
-  if (!v) return;
-
-  document.getElementById("live-temp").textContent =
-    v.temp != null ? v.temp.toFixed(1) : "--";
-
-  document.getElementById("live-hum").textContent =
-    v.humidity != null ? v.humidity.toFixed(0) : "--";
-
-  document.getElementById("live-pres").textContent =
-    v.pressure != null ? v.pressure.toFixed(1) : "--";
-
-  if (v.timestamp) {
-    const d = new Date(v.timestamp * 1000);
-    const hh = d.getHours().toString().padStart(2, "0");
-    const mm = d.getMinutes().toString().padStart(2, "0");
-    document.getElementById("timestamp").textContent = `Stand: ${hh}:${mm}`;
-  }
-
-  if (v.icon) {
-    document.getElementById("icon-top").src = iconUrl(v.icon);
-  }
-});
+const API_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
+const LAT = 47.43602311386345;
+const LON = 16.25550536923543;
 
 // --------------------------------------------------
-// FORECAST (5 Stunden)
+// 1. 5‑Stunden‑Vorhersage (Frontend erwartet: /weather/forecast/5h)
 // --------------------------------------------------
-onValue(ref(db, "/weather/forecast/5h"), snap => {
-  const data = snap.val();
-  if (!data) return;
+async function updateForecast() {
+  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${LAT}&lon=${LON}&appid=${API_KEY}&units=metric&lang=de`;
+  const fc = await fetch(url).then(r => r.json());
 
-  for (let i = 0; i < 5; i++) {
-    const item = data[i];
-    if (!item) continue;
+  const next5 = fc.list.slice(0, 5).map(item => ({
+    time: item.dt,
+    temp: item.main.temp,
+    icon: item.weather[0].icon
+  }));
 
-    const tempEl = document.getElementById(`fc-temp-${i}`);
-    if (tempEl) {
-      tempEl.textContent =
-        item.temp != null ? item.temp.toFixed(1) + " °C" : "-- °C";
-    }
+  await update(ref(db, "weather/forecast"), {
+    "5h": next5
+  });
 
-    const iconEl = document.getElementById(`fc-icon-${i}`);
-    if (iconEl && item.icon) {
-      iconEl.src = iconUrl(item.icon);
-    }
-  }
-});
-
-// --------------------------------------------------
-// SONNENAUF-/UNTERGANG
-// --------------------------------------------------
-onValue(ref(db, "/weather/sun"), snap => {
-  const v = snap.val();
-  if (!v) return;
-
-  document.getElementById("sunrise").textContent = v.sunrise || "--:--";
-  document.getElementById("sunset").textContent = v.sunset || "--:--";
-});
-
-// --------------------------------------------------
-// HILFSFUNKTION: Durchschnitt berechnen
-// --------------------------------------------------
-function calcAverage(obj) {
-  if (!obj) return null;
-
-  const values = Object.values(obj).map(e => e.temp).filter(t => t != null);
-  if (values.length === 0) return null;
-
-  const sum = values.reduce((a, b) => a + b, 0);
-  return sum / values.length;
+  console.log("5h-Vorhersage aktualisiert!");
 }
 
 // --------------------------------------------------
-// WOCHE / MONAT / JAHR – DURCHSCHNITT
+// 2. History in drei fertige Arrays umwandeln
 // --------------------------------------------------
-onValue(ref(db, "/weather/history/week"), snap => {
-  const avg = calcAverage(snap.val());
-  document.getElementById("week-avg").textContent =
-    avg != null ? avg.toFixed(1) + " °C" : "--.- °C";
+async function updateHistoryArrays() {
+  const snap = await get(child(ref(db), "weather/history"));
+  const hist = snap.val() || {};
 
-  updateChart("weekChart", snap.val(), "Woche (°C)");
-});
+  const entries = Object.entries(hist)
+    .sort(([a], [b]) => (a > b ? 1 : -1));
 
-onValue(ref(db, "/weather/history/month"), snap => {
-  const avg = calcAverage(snap.val());
-  document.getElementById("month-avg").textContent =
-    avg != null ? avg.toFixed(1) + " °C" : "--.- °C";
+  const week = entries.slice(-7).map(([ts, v]) => ({ temp: v.temp }));
+  const month = entries.slice(-30).map(([ts, v]) => ({ temp: v.temp }));
+  const year = entries.slice(-365).map(([ts, v]) => ({ temp: v.temp }));
 
-  updateChart("monthChart", snap.val(), "Monat (°C)");
-});
+  await update(ref(db, "weather/history"), {
+    week,
+    month,
+    year
+  });
 
-onValue(ref(db, "/weather/history/year"), snap => {
-  const avg = calcAverage(snap.val());
-  document.getElementById("year-avg").textContent =
-    avg != null ? avg.toFixed(1) + " °C" : "--.- °C";
+  console.log("History-Arrays aktualisiert!");
+}
 
-  updateChart("yearChart", snap.val(), "Jahr (°C)");
-});
+// --------------------------------------------------
+// 3. Hauptfunktion
+// --------------------------------------------------
+async function updateWeather() {
+  console.log("Hole OpenWeather...");
 
+  const url = `https://api.openweathermap.org/data/2.5/weather?lat=${LAT}&lon=${LON}&appid=${API_KEY}&units=metric&lang=de`;
+  const ow = await fetch(url).then(r => r.json());
+
+  // LIVE-DATEN
+  await update(ref(db, "weather/live"), {
+    temp: ow.main.temp,
+    humidity: ow.main.humidity,
+    pressure: ow.main.pressure,
+    icon: ow.weather[0].icon,
+    timestamp: Math.floor(Date.now() / 1000)
+  });
+
+  // HISTORY (Tageswert speichern)
+  const today = Math.floor(Date.now() / 1000);
+  await update(ref(db, "weather/history/" + today), {
+    temp: ow.main.temp
+  });
+
+  // VORHERSAGE
+  await updateForecast();
+
+  // HISTORY-ARRAYS (Woche/Monat/Jahr)
+  await updateHistoryArrays();
+
+  console.log("Alles aktualisiert!");
+}
+
+// --------------------------------------------------
+// START
+// --------------------------------------------------
+updateWeather();
 // --------------------------------------------------
 // CHARTS
 // --------------------------------------------------
