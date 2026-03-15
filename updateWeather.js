@@ -30,6 +30,7 @@ const LON = 16.25550536923543;
 // --------------------------------------------------
 async function updateForecast() {
   const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${LAT}&lon=${LON}&appid=${API_KEY}&units=metric&lang=de`;
+
   const fc = await fetch(url).then(r => r.json());
 
   const next5 = fc.list.slice(0, 5).map(item => ({
@@ -42,7 +43,7 @@ async function updateForecast() {
     "5h": next5
   });
 
-  console.log("5h-Vorhersage aktualisiert!");
+  console.log("Forecast aktualisiert!");
 }
 
 // --------------------------------------------------
