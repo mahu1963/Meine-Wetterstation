@@ -24,7 +24,6 @@ body {
     background: linear-gradient(90deg, #6ec6ff 0%, #2a66c7 40%, #0a1a33 100%);
     padding: 35px 20px;
     border-radius: 15px;
-    text-align: center;
     margin-bottom: 25px;
     color: white;
 }
@@ -33,6 +32,21 @@ body {
     font-size: 22px;
     font-weight: bold;
     margin-bottom: 15px;
+}
+
+.header-main-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-main-left {
+    text-align: left;
+}
+
+.header-main-right {
+    text-align: right;
+    font-size: 16px;
 }
 
 .header-temp {
@@ -48,12 +62,11 @@ body {
 
 .header-time {
     font-size: 16px;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
-.header-sun {
-    font-size: 16px;
-    line-height: 1.4;
+.header-sun-line {
+    margin: 3px 0;
 }
 
 /* STATISTIK BOX */
@@ -94,13 +107,18 @@ canvas {
 <!-- HEADER -->
 <div class="header">
     <div class="header-title">Wetterstation – Stuben Martin Huber</div>
-    <div class="header-temp" id="temp">--.- °C</div>
-    <div class="header-details" id="details">Feuchte: -- %   Druck: ---- hPa</div>
-    <div class="header-time" id="time">Stand: --:--</div>
 
-    <div class="header-sun">
-        <div>Sonnenaufgang: <span id="sunrise">--:--</span></div>
-        <div>Sonnenuntergang: <span id="sunset">--:--</span></div>
+    <div class="header-main-row">
+        <div class="header-main-left">
+            <div class="header-temp" id="temp">--.- °C</div>
+            <div class="header-details" id="details">Feuchte: -- %   Druck: ---- hPa</div>
+            <div class="header-time" id="time">Stand: --:--</div>
+        </div>
+
+        <div class="header-main-right">
+            <div class="header-sun-line">Sonnenaufgang: <span id="sunrise">--:--</span></div>
+            <div class="header-sun-line">Sonnenuntergang: <span id="sunset">--:--</span></div>
+        </div>
     </div>
 </div>
 
@@ -138,7 +156,6 @@ const firebaseConfig = {
   appId: "1:593494014586:web:cad0037363543e946059c3",
   measurementId: "G-139QB1TEMD"
 };
-
 
 firebase.initializeApp(firebaseConfig);
 
