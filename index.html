@@ -23,27 +23,13 @@ body {
     border-radius: 15px;
     margin-bottom: 25px;
     color: white;
+    text-align: center;
 }
 
 .header-title {
     font-size: 22px;
     font-weight: bold;
     margin-bottom: 15px;
-}
-
-.header-main-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.header-main-left {
-    text-align: left;
-}
-
-.header-main-right {
-    text-align: right;
-    font-size: 16px;
 }
 
 .header-temp {
@@ -60,10 +46,6 @@ body {
 .header-time {
     font-size: 16px;
     margin-bottom: 10px;
-}
-
-.header-sun-line {
-    margin: 3px 0;
 }
 
 /* STATISTIK BOX */
@@ -104,19 +86,9 @@ canvas {
 <!-- HEADER -->
 <div class="header">
     <div class="header-title">Wetterstation – Stuben Martin Huber</div>
-
-    <div class="header-main-row">
-        <div class="header-main-left">
-            <div class="header-temp" id="temp">--.- °C</div>
-            <div class="header-details" id="details">Feuchte: -- %   Druck: ---- hPa</div>
-            <div class="header-time" id="time">Stand: --:--</div>
-        </div>
-
-        <div class="header-main-right">
-            <div class="header-sun-line">Sonnenaufgang: <span id="sunrise">--:--</span></div>
-            <div class="header-sun-line">Sonnenuntergang: <span id="sunset">--:--</span></div>
-        </div>
-    </div>
+    <div class="header-temp" id="temp">--.- °C</div>
+    <div class="header-details" id="details">Feuchte: -- %   Druck: ---- hPa</div>
+    <div class="header-time" id="time">Stand: --:--</div>
 </div>
 
 <!-- STATISTIK -->
@@ -125,6 +97,11 @@ canvas {
     <div>Woche (Ø Temp): <span id="weekAvg">--.- °C</span></div>
     <div>Monat (Ø Temp): <span id="monthAvg">--.- °C</span></div>
     <div>Jahr (Ø Temp): <span id="yearAvg">--.- °C</span></div>
+
+    <br>
+
+    <div>Sonnenaufgang: <span id="sunrise">--:--</span></div>
+    <div>Sonnenuntergang: <span id="sunset">--:--</span></div>
 </div>
 
 <!-- FORECAST -->
@@ -237,9 +214,7 @@ function drawChart(canvasId, labels, data, title) {
                 pointRadius: 0
             }]
         },
-        options: {
-            responsive: true
-        }
+        options: { responsive: true }
     });
 }
 
