@@ -245,7 +245,7 @@ firebase.database().ref("weather/forecast/5h").on("value", snap => {
 
         box.innerHTML += `
             <div class="forecast-box">
-                <img src="https://openweathermap.org/img/wn/${item.icon}.png">
+                <img src="https://openweathermap.org/img/wn/${item.icon}@2x.webp">
                 <div>${item.temp.toFixed(1)}°C</div>
                 <div>${hour}:00</div>
             </div>
@@ -268,7 +268,7 @@ function drawForecastChart(data) {
 
     const icons = data.map(e => {
         const img = new Image();
-        img.src = `https://openweathermap.org/img/wn/${e.icon}.png`;
+        img.src = `https://openweathermap.org/img/wn/${e.icon}@2x.webp`;
         return img;
     });
 
