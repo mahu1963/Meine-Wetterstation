@@ -108,6 +108,18 @@ canvas {
 <h2>Vorhersage (5 Stunden)</h2>
 <div class="forecast-container" id="forecast"></div>
 
+<!-- ▼▼▼ NEU: Forecast Diagramm ▼▼▼ -->
+<h2>Vorhersage Diagramm</h2>
+
+<div class="forecast-buttons">
+    <button onclick="loadForecast('5h')">5h</button>
+    <button onclick="loadForecast('24h')">24h</button>
+    <button onclick="loadForecast('48h')">48h</button>
+</div>
+
+<canvas id="forecastChart"></canvas>
+<!-- ▲▲▲ ENDE NEUER BLOCK ▲▲▲ -->
+
 <!-- CHARTS -->
 <h2>Wochenverlauf</h2>
 <canvas id="weekChart"></canvas>
@@ -128,101 +140,7 @@ canvas {
 <canvas id="windRose" class="windrose"></canvas>
 
 <script>
-// --------------------------------------------------
-// FIREBASE CONFIG
-// --------------------------------------------------
-const firebaseConfig = {
-  apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
-  authDomain: "meine-wetterstation.firebaseapp.com",
-  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "meine-wetterstation",
-  storageBucket: "meine-wetterstation.firebasestorage.app",
-  messagingSenderId: "593494014586",
-  appId: "1:593494014586:web:cad0037363543e946059c3",
-  measurementId: "G-139QB1TEMD"
-};
-
-firebase.initializeApp(firebaseConfig);
-
-// --------------------------------------------------
-// LIVE-DATEN
-// --------------------------------------------------
-function loadLive() {
-    firebase.database().ref("weather/live").on("value", snap => {
-        const d = snap.val();
-        if (!d) return;
-
-        document.getElementById("temp").innerText =
-            d.temp?.toFixed ? d.temp.toFixed(1) + " °C" : "--.- °C";
-
-        const hum = typeof d.humidity === "number" ? d.humidity.toFixed(1) : "--";
-        const press = typeof d.pressure === "number" ? d.pressure.toFixed(1) : "----";
-
-        document.getElementById("details").innerText =
-            `Feuchte: ${hum} %   Druck: ${press} hPa`;
-
-        if (d.wind !== undefined)
-            document.getElementById("wind").innerText =
-                `Wind: ${d.wind.toFixed(1)} km/h aus ${d.winddir}°`;
-
-        if (d.rain !== undefined)
-            document.getElementById("rain").innerText =
-                `Regen (1h): ${d.rain.toFixed(1)} mm`;
-
-        if (d.clouds !== undefined)
-            document.getElementById("clouds").innerText =
-                `Wolken: ${d.clouds}%`;
-
-        if (typeof d.timestamp === "number") {
-            const t = new Date(d.timestamp * 1000);
-            document.getElementById("time").innerText =
-                "Stand: " + t.toLocaleTimeString("de-DE", {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                });
-        }
-    });
-}
-
-// --------------------------------------------------
-// SONNE
-// --------------------------------------------------
-firebase.database().ref("weather/sun").on("value", snap => {
-    const d = snap.val();
-    if (!d) return;
-
-    document.getElementById("sunrise").innerText =
-        new Date(d.sunrise * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-
-    document.getElementById("sunset").innerText =
-        new Date(d.sunset * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-});
-
-// --------------------------------------------------
-// FORECAST (5h)
-// --------------------------------------------------
-firebase.database().ref("weather/forecast/5h").on("value", snap => {
-    const arr = snap.val();
-    if (!arr) return;
-
-    const box = document.getElementById("forecast");
-    box.innerHTML = "";
-
-    arr.forEach(item => {
-        const t = new Date(item.ts * 1000);
-        const hour = t.getHours().toString().padStart(2, "0");
-
-        box.innerHTML += `
-            <div class="forecast-box">
-                <img src="https://openweathermap.org/img/wn/${item.icon}.png">
-                <div>${item.temp.toFixed(1)}°C</div>
-                <div>${hour}:00</div>
-            </div>
-        `;
-    });
-});
-
-// --------------------------------------------------
+ // --------------------------------------------------
 // CHART HELPER FUNCTIONS
 // --------------------------------------------------
 function linearRegression(yValues) {
@@ -334,6 +252,72 @@ function drawWindRose(windDirections) {
     });
 }
 
+///// ▼▼▼ NEU: FORECAST DIAGRAMM + ICONS ▼▼▼
+
+// global Chart instance
+let forecastChart = null;
+
+// Forecast Diagramm zeichnen
+function drawForecastChart(data) {
+    const labels = data.map(e => {
+        const t = new Date(e.ts * 1000);
+        return t.toLocaleTimeString("de-DE", { hour: "2-digit" });
+    });
+
+    const temps = data.map(e => e.temp);
+
+    const icons = data.map(e => {
+        const img = new Image();
+        img.src = `https://openweathermap.org/img/wn/${e.icon}.png`;
+        return img;
+    });
+
+    const ctx = document.getElementById("forecastChart");
+
+    if (forecastChart) forecastChart.destroy();
+
+    forecastChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: "Temperatur",
+                    data: temps,
+                    borderColor: "#4ea3ff",
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 14,
+                    pointStyle: icons
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: "#ccc" } }
+            },
+            scales: {
+                x: { ticks: { color: "#ccc" } },
+                y: { ticks: { color: "#ccc" } }
+            }
+        }
+    });
+}
+
+// Forecast Loader (5h / 24h / 48h)
+function loadForecast(type) {
+    firebase.database().ref("weather/forecast/" + type).once("value", snap => {
+        const arr = snap.val();
+        if (!arr) return;
+
+        drawForecastChart(arr);
+    });
+}
+
+///// ▲▲▲ ENDE NEU ▲▲▲
+
+
 // --------------------------------------------------
 // HISTORY → CHARTS
 // --------------------------------------------------
@@ -404,8 +388,9 @@ firebase.database().ref("weather/history").on("value", snap => {
 // --------------------------------------------------
 window.onload = function() {
     loadLive();
+    loadForecast("5h");   // Forecast Diagramm initial laden
 };
 </script>
 
 </body>
-</html>
+</html>   
