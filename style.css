@@ -232,3 +232,32 @@ body.dark .stats-card {
     font-size: 1rem;
     opacity: 0.85;
 }
+
+/* Forecast Buttons */
+.forecast-buttons {
+    margin: 10px 0;
+    display: flex;
+    gap: 10px;
+}
+
+.forecast-buttons button {
+    padding: 8px 14px;
+    background: #333;
+    color: #eee;
+    border: 1px solid #555;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.forecast-buttons button:hover {
+    background: #444;
+}
+
+/* Chart Canvas */
+#forecastChart {
+    width: 100%;
+    max-width: 900px;
+    height: 300px;
+    margin: 20px auto;
+    display: block;
+}
