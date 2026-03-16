@@ -107,6 +107,7 @@ canvas {
 <!-- FORECAST -->
 <h2>Vorhersage (5 Stunden)</h2>
 <div class="forecast-container" id="forecast"></div>
+
 <!-- CHARTS -->
 <h2>Wochenverlauf</h2>
 <canvas id="weekChart"></canvas>
@@ -117,7 +118,6 @@ canvas {
 <h2>Jahresverlauf</h2>
 <canvas id="yearChart"></canvas>
 
-<!-- NEUE CHARTS -->
 <h2>Windverlauf</h2>
 <canvas id="windChart"></canvas>
 
@@ -221,6 +221,7 @@ firebase.database().ref("weather/forecast/5h").on("value", snap => {
         `;
     });
 });
+
 // --------------------------------------------------
 // CHART HELPER FUNCTIONS
 // --------------------------------------------------
@@ -247,23 +248,14 @@ function minLine(values) {
     return values.map(() => min);
 }
 
-function tempColor(temp) {
-    if (temp <= 0) return "#4ea3ff";
-    if (temp <= 10) return "#6ec6ff";
-    if (temp <= 20) return "#ffd966";
-    if (temp <= 30) return "#ff8c42";
-    return "#ff4d4d";
-}
-
 // --------------------------------------------------
-// DRAW CHART
+// DRAW CHART (ohne Punkte)
 // --------------------------------------------------
 function drawChart(id, labels, data, title) {
     const ctx = document.getElementById(id);
 
     const trend = linearRegression(data);
     const minL = minLine(data);
-    const colors = data.map(t => tempColor(t));
 
     new Chart(ctx, {
         type: "line",
@@ -277,9 +269,7 @@ function drawChart(id, labels, data, title) {
                     backgroundColor: "rgba(255,255,255,0.1)",
                     borderWidth: 2,
                     tension: 0.3,
-                    pointRadius: 4,
-                    pointBackgroundColor: colors,
-                    pointBorderColor: colors
+                    pointRadius: 0
                 },
                 {
                     label: "Trend",
@@ -318,7 +308,6 @@ function drawChart(id, labels, data, title) {
 // WINDROSE
 // --------------------------------------------------
 function drawWindRose(windDirections) {
-    const sectors = [0,45,90,135,180,225,270,315];
     const counts = new Array(8).fill(0);
 
     windDirections.forEach(dir => {
@@ -419,4 +408,4 @@ window.onload = function() {
 </script>
 
 </body>
-</html>    
+</html>
