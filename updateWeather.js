@@ -6,17 +6,19 @@ import { getDatabase, ref, update } from "firebase/database";
 // Firebase Config
 // --------------------------------------------------
 const firebaseConfig = {
-  apiKey: "DEIN_API_KEY",
+  apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
   authDomain: "meine-wetterstation.firebaseapp.com",
   databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "meine-wetterstation",
-  storageBucket: "meine-wetterstation.appspot.com",
-  messagingSenderId: "DEINE_ID",
-  appId: "DEINE_APP_ID"
+  storageBucket: "meine-wetterstation.firebasestorage.app",
+  messagingSenderId: "593494014586",
+  appId: "1:593494014586:web:cad0037363543e946059c3",
+  measurementId: "G-139QB1TEMD"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const analytics = getAnalytics(app);
 
 // --------------------------------------------------
 // OpenWeather API
