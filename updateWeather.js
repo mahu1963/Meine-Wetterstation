@@ -1,76 +1,120 @@
-// --------------------------------------------------
-// updateWeather.js – Node Backend
-// --------------------------------------------------
+// Firebase laden
+const db = firebase.database();
 
-import fetch from "node-fetch";
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set, push } from "firebase/database";
+// -------------------------------
+// LIVE Wetter
+// -------------------------------
+function loadLive() {
+    db.ref("weather/live").on("value", snap => {
+        const d = snap.val();
+        if (!d) return;
 
-// --------------------------------------------------
-// Firebase Config (gleich wie im Frontend)
-// --------------------------------------------------
-const firebaseConfig = {
-  apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
-  authDomain: "meine-wetterstation.firebaseapp.com",
-  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "meine-wetterstation",
-  storageBucket: "meine-wetterstation.firebasestorage.app",
-  messagingSenderId: "593494014586",
-  appId: "1:593494014586:web:cad0037363543e946059c3",
-  measurementId: "G-139QB1TEMD"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-// --------------------------------------------------
-// OpenWeather API
-// --------------------------------------------------
-const API_KEY = "27602f1bbb8e3dd3587a1da6e3de24b6";
-const LAT = 47.402;   // Beispiel Koordinaten
-const LON = 16.260;
-
-// --------------------------------------------------
-// Wetter abrufen
-// --------------------------------------------------
-async function updateWeather() {
-  const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${LAT}&lon=${LON}&units=metric&lang=de&appid=${API_KEY}`;
-  const res = await fetch(url);
-  const data = await res.json();
-
-  // LIVE-Daten (erstes Element)
-  const live = data.list[0];
-  const now = Math.floor(Date.now() / 1000);
-
-  await set(ref(db, "weather/live"), {
-    temp: live.main.temp,
-    humidity: live.main.humidity,
-    pressure: live.main.pressure,
-    timestamp: now
-  });
-
-  // SUN
-  await set(ref(db, "weather/sun"), {
-    sunrise: data.city.sunrise,
-    sunset: data.city.sunset
-  });
-
-  // FORECAST (5 Stunden)
-  const fc = data.list.slice(0, 5).map(item => ({
-    ts: item.dt,
-    temp: item.main.temp,
-    icon: item.weather[0].icon
-  }));
-
-  await set(ref(db, "weather/forecast/5h"), fc);
-
-  // HISTORY (jede Ausführung ein Eintrag)
-  await push(ref(db, "weather/history"), {
-    ts: now,
-    temp: live.main.temp
-  });
-
-  console.log("Firebase komplett aktualisiert!");
+        document.getElementById("live").innerHTML = `
+            <div class="live-box">
+                <h3>Aktuell</h3>
+                <p>${d.temp}°C</p>
+                <p>${d.humidity}%</p>
+                <p>${d.pressure} hPa</p>
+                <img src="https://openweathermap.org/img/wn/${d.icon}.png">
+            </div>
+        `;
+    });
 }
 
-updateWeather();
+// -------------------------------
+// 5h Forecast Kacheln
+// -------------------------------
+function loadForecastBoxes() {
+    db.ref("weather/forecast/5h").on("value", snap => {
+        const arr = snap.val();
+        if (!arr) return;
+
+        let html = "";
+
+        arr.forEach(e => {
+            const t = new Date(e.ts * 1000);
+            const time = t.toLocaleTimeString("de-DE", { hour: "2-digit" });
+
+            html += `
+                <div class="forecast-box">
+                    <p>${time}</p>
+                    <img src="https://openweathermap.org/img/wn/${e.icon}.png">
+                    <p>${e.temp}°C</p>
+                </div>
+            `;
+        });
+
+        document.getElementById("forecast5h").innerHTML = html;
+    });
+}
+
+// -------------------------------
+// Forecast Diagramm
+// -------------------------------
+let forecastChart = null;
+
+function drawForecastChart(data) {
+    const labels = data.map(e => {
+        const t = new Date(e.ts * 1000);
+        return t.toLocaleTimeString("de-DE", { hour: "2-digit" });
+    });
+
+    const temps = data.map(e => e.temp);
+
+    const icons = data.map(e => {
+        const img = new Image();
+        img.src = `https://openweathermap.org/img/wn/${e.icon}.png`;
+        return img;
+    });
+
+    const ctx = document.getElementById("forecastChart");
+
+    if (forecastChart) forecastChart.destroy();
+
+    forecastChart = new Chart(ctx, {
+        type: "line",
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: "Temperatur",
+                    data: temps,
+                    borderColor: "#4ea3ff",
+                    borderWidth: 2,
+                    tension: 0.3,
+                    pointRadius: 14,
+                    pointStyle: icons
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { labels: { color: "#ccc" } }
+            },
+            scales: {
+                x: { ticks: { color: "#ccc" } },
+                y: { ticks: { color: "#ccc" } }
+            }
+        }
+    });
+}
+
+// -------------------------------
+// Forecast Loader (5h / 24h / 48h)
+// -------------------------------
+function loadForecast(type) {
+    db.ref("weather/forecast/" + type).once("value", snap => {
+        const arr = snap.val();
+        if (!arr) return;
+
+        drawForecastChart(arr);
+    });
+}
+
+// -------------------------------
+// INIT
+// -------------------------------
+loadLive();
+loadForecastBoxes();
+loadForecast("5h");
