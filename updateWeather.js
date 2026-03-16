@@ -3,6 +3,16 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, ref, update } from "firebase/database";
 
 // --------------------------------------------------
+// Firebase (Browser-Version)
+// --------------------------------------------------
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import {
+  getDatabase,
+  ref,
+  onValue
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+// --------------------------------------------------
 // Firebase Config
 // --------------------------------------------------
 const firebaseConfig = {
@@ -16,10 +26,11 @@ const firebaseConfig = {
   measurementId: "G-139QB1TEMD"
 };
 
+// --------------------------------------------------
 // Initialize Firebase
+// --------------------------------------------------
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-
+const db = getDatabase(app);
 // --------------------------------------------------
 // OpenWeather API
 // --------------------------------------------------
