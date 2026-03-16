@@ -230,7 +230,7 @@ firebase.database().ref("weather/sun").on("value", snap => {
 });
 
 // --------------------------------------------------
-// FORECAST (5h KACHELN)
+// FORECAST (5h KACHELN) – KORRIGIERT
 // --------------------------------------------------
 firebase.database().ref("weather/forecast/5h").on("value", snap => {
     const arr = snap.val();
@@ -240,21 +240,26 @@ firebase.database().ref("weather/forecast/5h").on("value", snap => {
     box.innerHTML = "";
 
     arr.forEach(item => {
+        const icon = item.icon && item.icon.length > 0 ? item.icon : "01d";
+
         const t = new Date(item.ts * 1000);
-        const hour = t.getHours().toString().padStart(2, "0");
+        const hour = t.toLocaleTimeString("de-DE", {
+            hour: "2-digit",
+            minute: "2-digit"
+        });
 
         box.innerHTML += `
             <div class="forecast-box">
-                <img src="https://openweathermap.org/img/wn/${item.icon}@2x.webp">
+                <img src="https://openweathermap.org/img/wn/${icon}@2x.png">
                 <div>${item.temp.toFixed(1)}°C</div>
-                <div>${hour}:00</div>
+                <div>${hour}</div>
             </div>
         `;
     });
 });
 
 // --------------------------------------------------
-// FORECAST DIAGRAMM
+// FORECAST DIAGRAMM – KORRIGIERT
 // --------------------------------------------------
 let forecastChart = null;
 
@@ -267,8 +272,9 @@ function drawForecastChart(data) {
     const temps = data.map(e => e.temp);
 
     const icons = data.map(e => {
+        const iconCode = e.icon && e.icon.length > 0 ? e.icon : "01d";
         const img = new Image();
-        img.src = `https://openweathermap.org/img/wn/${e.icon}@2x.webp`;
+        img.src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
         return img;
     });
 
@@ -314,7 +320,7 @@ function loadForecast(type) {
 }
 
 // --------------------------------------------------
-// HISTORY → CHARTS
+// HISTORY → CHARTS (unverändert)
 // --------------------------------------------------
 function linearRegression(yValues) {
     const n = yValues.length;
