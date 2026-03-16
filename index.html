@@ -207,7 +207,7 @@ canvas {
 
 <script>
 /* --------------------------------------------------
-   FIREBASE CONFIG
+   FIREBASE CONFIG (v8 KORREKT!)
 -------------------------------------------------- */
 const firebaseConfig = {
   apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
@@ -220,6 +220,7 @@ const firebaseConfig = {
   measurementId: "G-139QB1TEMD"
 };
 
+// Firebase v8 Initialisierung
 firebase.initializeApp(firebaseConfig);
 
 /* --------------------------------------------------
@@ -372,7 +373,7 @@ function loadForecast(type) {
 }
 
 /* --------------------------------------------------
-   HISTORY → CHARTS (unverändert)
+   HISTORY → CHARTS
 -------------------------------------------------- */
 function linearRegression(yValues) {
     const n = yValues.length;
@@ -536,4 +537,23 @@ firebase.database().ref("weather/history").on("value", snap => {
     }
 
     drawChart("weekChart", weekLabels, weekTemps, "Wochentemperatur");
-   
+    drawChart("monthChart", monthLabels, monthTemps, "Monatstemperatur");
+    drawChart("yearChart", yearLabels, yearTemps, "Jahrestemperatur");
+
+      drawChart("windChart", windLabels, windValues, "Wind (km/h)");
+    drawChart("rainChart", rainLabels, rainValues, "Regen (mm)");
+
+    drawWindRose(windDirValues);
+});
+
+/* --------------------------------------------------
+   START
+-------------------------------------------------- */
+window.onload = function() {
+    loadLive();
+    loadForecast("5h");
+};
+</script>
+
+</body>
+</html>
