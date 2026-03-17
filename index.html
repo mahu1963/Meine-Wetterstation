@@ -12,9 +12,6 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
-/* --------------------------------------------------
-   GLOBAL
--------------------------------------------------- */
 body {
     background: #0d1117;
     color: #e6edf3;
@@ -23,9 +20,7 @@ body {
     margin: 0;
 }
 
-/* --------------------------------------------------
-   HEADER
--------------------------------------------------- */
+/* HEADER */
 .header {
     background: linear-gradient(90deg, #6ec6ff 0%, #2a66c7 40%, #0a1a33 100%);
     padding: 35px 20px;
@@ -56,9 +51,7 @@ body {
 .header-details { font-size: 18px; margin-bottom: 5px; }
 .header-time { font-size: 16px; margin-bottom: 10px; }
 
-/* --------------------------------------------------
-   STATISTIK BOX
--------------------------------------------------- */
+/* BOX */
 .box {
     background: #161b22;
     padding: 20px;
@@ -66,9 +59,7 @@ body {
     margin-bottom: 20px;
 }
 
-/* --------------------------------------------------
-   FORECAST KACHELN
--------------------------------------------------- */
+/* FORECAST */
 .forecast-container {
     display: flex;
     gap: 15px;
@@ -93,9 +84,7 @@ body {
     height: 70px;
 }
 
-/* --------------------------------------------------
-   FORECAST BUTTONS
--------------------------------------------------- */
+/* BUTTONS */
 .forecast-buttons {
     margin: 10px 0;
     display: flex;
@@ -111,13 +100,6 @@ body {
     cursor: pointer;
 }
 
-.forecast-buttons button:hover {
-    background: #444;
-}
-
-/* --------------------------------------------------
-   CHARTS
--------------------------------------------------- */
 canvas {
     background: #161b22;
     padding: 20px;
@@ -125,9 +107,6 @@ canvas {
     margin-top: 20px;
 }
 
-/* --------------------------------------------------
-   WINDROSE
--------------------------------------------------- */
 .windrose {
     max-width: 400px;
     margin: 0 auto;
@@ -152,7 +131,6 @@ canvas {
 
     <div class="header-time" id="time">Stand: --:--</div>
 
-    <!-- LIVE ICON -->
     <div class="header-icon">
         <img id="liveIcon" src="https://openweathermap.org/img/wn/01d@2x.png">
     </div>
@@ -175,7 +153,6 @@ canvas {
 <h2>Vorhersage (5 Stunden)</h2>
 <div class="forecast-container" id="forecast"></div>
 
-<!-- FORECAST DIAGRAMM -->
 <h2>Vorhersage Diagramm</h2>
 
 <div class="forecast-buttons">
@@ -207,7 +184,7 @@ canvas {
 
 <script>
 /* --------------------------------------------------
-   FIREBASE CONFIG (v8 KORREKT!)
+   FIREBASE CONFIG (v8)
 -------------------------------------------------- */
 const firebaseConfig = {
   apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
@@ -220,11 +197,10 @@ const firebaseConfig = {
   measurementId: "G-139QB1TEMD"
 };
 
-// Firebase v8 Initialisierung
 firebase.initializeApp(firebaseConfig);
 
 /* --------------------------------------------------
-   LIVE-DATEN + LIVE ICON
+   LIVE-DATEN
 -------------------------------------------------- */
 function loadLive() {
     firebase.database().ref("weather/live").on("value", snap => {
@@ -234,35 +210,23 @@ function loadLive() {
         document.getElementById("temp").innerText =
             d.temp?.toFixed ? d.temp.toFixed(1) + " °C" : "--.- °C";
 
-        const hum = typeof d.humidity === "number" ? d.humidity.toFixed(1) : "--";
-        const press = typeof d.pressure === "number" ? d.pressure.toFixed(1) : "----";
-
         document.getElementById("details").innerText =
-            `Feuchte: ${hum} %   Druck: ${press} hPa`;
+            `Feuchte: ${d.humidity}%   Druck: ${d.pressure} hPa`;
 
-        if (d.wind !== undefined)
-            document.getElementById("wind").innerText =
-                `Wind: ${d.wind.toFixed(1)} km/h aus ${d.winddir}°`;
+        document.getElementById("wind").innerText =
+            `Wind: ${d.wind} km/h aus ${d.winddir}°`;
 
-        if (d.rain !== undefined)
-            document.getElementById("rain").innerText =
-                `Regen (1h): ${d.rain.toFixed(1)} mm`;
+        document.getElementById("rain").innerText =
+            `Regen (1h): ${d.rain} mm`;
 
-        if (d.clouds !== undefined)
-            document.getElementById("clouds").innerText =
-                `Wolken: ${d.clouds}%`;
+        document.getElementById("clouds").innerText =
+            `Wolken: ${d.clouds}%`;
 
-        if (typeof d.timestamp === "number") {
-            const t = new Date(d.timestamp * 1000);
-            document.getElementById("time").innerText =
-                "Stand: " + t.toLocaleTimeString("de-DE", {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                });
-        }
+        const t = new Date(d.timestamp * 1000);
+        document.getElementById("time").innerText =
+            "Stand: " + t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-        /* LIVE ICON */
-        const icon = d.icon && d.icon.length > 0 ? d.icon : "01d";
+        const icon = d.icon || "01d";
         document.getElementById("liveIcon").src =
             `https://openweathermap.org/img/wn/${icon}@2x.png`;
     });
@@ -283,7 +247,7 @@ firebase.database().ref("weather/sun").on("value", snap => {
 });
 
 /* --------------------------------------------------
-   FORECAST KACHELN – PNG + Fallback
+   FORECAST KACHELN
 -------------------------------------------------- */
 firebase.database().ref("weather/forecast/5h").on("value", snap => {
     const arr = snap.val();
@@ -293,17 +257,14 @@ firebase.database().ref("weather/forecast/5h").on("value", snap => {
     box.innerHTML = "";
 
     arr.forEach(item => {
-        const icon = item.icon && item.icon.length > 0 ? item.icon : "01d";
-
+        const icon = item.icon || "01d";
         const t = new Date(item.ts * 1000);
-        const hour = t.toLocaleTimeString("de-DE", {
-            hour: "2-digit",
-            minute: "2-digit"
-        });
+        const hour = t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
         box.innerHTML += `
             <div class="forecast-box">
-                <img src="https://openweathermap.org/img/wn/${icon}@2x.png">
+                <img src="https://openweathermap.org/img/wn/${icon}@2x.png"
+                     onerror="this.src='https://openweathermap.org/img/wn/01d@2x.png'">
                 <div>${item.temp.toFixed(1)}°C</div>
                 <div>${hour}</div>
             </div>
@@ -312,7 +273,7 @@ firebase.database().ref("weather/forecast/5h").on("value", snap => {
 });
 
 /* --------------------------------------------------
-   FORECAST DIAGRAMM – PNG + Fallback
+   FORECAST DIAGRAMM
 -------------------------------------------------- */
 let forecastChart = null;
 
@@ -325,9 +286,10 @@ function drawForecastChart(data) {
     const temps = data.map(e => e.temp);
 
     const icons = data.map(e => {
-        const iconCode = e.icon && e.icon.length > 0 ? e.icon : "01d";
+        const iconCode = e.icon || "01d";
         const img = new Image();
         img.src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+        img.onload = () => forecastChart?.update();
         return img;
     });
 
@@ -540,7 +502,7 @@ firebase.database().ref("weather/history").on("value", snap => {
     drawChart("monthChart", monthLabels, monthTemps, "Monatstemperatur");
     drawChart("yearChart", yearLabels, yearTemps, "Jahrestemperatur");
 
-      drawChart("windChart", windLabels, windValues, "Wind (km/h)");
+    drawChart("windChart", windLabels, windValues, "Wind (km/h)");
     drawChart("rainChart", rainLabels, rainValues, "Regen (mm)");
 
     drawWindRose(windDirValues);
