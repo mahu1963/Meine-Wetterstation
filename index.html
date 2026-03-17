@@ -282,8 +282,10 @@ firebase.database().ref("weather/forecast/5h").on("value", snap => {
 /* --------------------------------------------------
    START
 -------------------------------------------------- */
-loadLive();
-</script>
+window.onload = function() {
+    loadLive();
+    loadForecast("5h");
+};
 
 /* --------------------------------------------------
    FORECAST DIAGRAMM
