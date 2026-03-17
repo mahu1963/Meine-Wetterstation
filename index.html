@@ -200,77 +200,90 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 /* --------------------------------------------------
+   ⭐ ANONYMER LOGIN (v8)
+-------------------------------------------------- */
+firebase.auth().signInAnonymously()
+  .then(() => console.log("Web anonym eingeloggt"))
+  .catch(err => console.error("Login Fehler:", err));
+
+/* --------------------------------------------------
    LIVE-DATEN
 -------------------------------------------------- */
 function loadLive() {
-    firebase.database().ref("weather/live").on("value", snap => {
-        const d = snap.val();
-        if (!d) return;
+  firebase.database().ref("weather/live").on("value", snap => {
+    const d = snap.val();
+    if (!d) return;
 
-        document.getElementById("temp").innerText =
-            d.temp?.toFixed ? d.temp.toFixed(1) + " °C" : "--.- °C";
+    document.getElementById("temp").innerText =
+      d.temp?.toFixed ? d.temp.toFixed(1) + " °C" : "--.- °C";
 
-        document.getElementById("details").innerText =
-            `Feuchte: ${d.humidity}%   Druck: ${d.pressure} hPa`;
+    document.getElementById("details").innerText =
+      `Feuchte: ${d.humidity}%   Druck: ${d.pressure} hPa`;
 
-        document.getElementById("wind").innerText =
-            `Wind: ${d.wind} km/h aus ${d.winddir}°`;
+    document.getElementById("wind").innerText =
+      `Wind: ${d.wind} km/h aus ${d.winddir}°`;
 
-        document.getElementById("rain").innerText =
-            `Regen (1h): ${d.rain} mm`;
+    document.getElementById("rain").innerText =
+      `Regen (1h): ${d.rain} mm`;
 
-        document.getElementById("clouds").innerText =
-            `Wolken: ${d.clouds}%`;
+    document.getElementById("clouds").innerText =
+      `Wolken: ${d.clouds}%`;
 
-        const t = new Date(d.timestamp * 1000);
-        document.getElementById("time").innerText =
-            "Stand: " + t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    const t = new Date(d.timestamp * 1000);
+    document.getElementById("time").innerText =
+      "Stand: " + t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-        const icon = d.icon || "01d";
-        document.getElementById("liveIcon").src =
-            `https://openweathermap.org/img/wn/${icon}@2x.png`;
-    });
+    const icon = d.icon || "01d";
+    document.getElementById("liveIcon").src =
+      `https://openweathermap.org/img/wn/${icon}@2x.png`;
+  });
 }
 
 /* --------------------------------------------------
    SONNE
 -------------------------------------------------- */
 firebase.database().ref("weather/sun").on("value", snap => {
-    const d = snap.val();
-    if (!d) return;
+  const d = snap.val();
+  if (!d) return;
 
-    document.getElementById("sunrise").innerText =
-        new Date(d.sunrise * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  document.getElementById("sunrise").innerText =
+    new Date(d.sunrise * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-    document.getElementById("sunset").innerText =
-        new Date(d.sunset * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  document.getElementById("sunset").innerText =
+    new Date(d.sunset * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 });
 
 /* --------------------------------------------------
    FORECAST KACHELN
 -------------------------------------------------- */
 firebase.database().ref("weather/forecast/5h").on("value", snap => {
-    const arr = snap.val();
-    if (!arr) return;
+  const arr = snap.val();
+  if (!arr) return;
 
-    const box = document.getElementById("forecast");
-    box.innerHTML = "";
+  const box = document.getElementById("forecast");
+  box.innerHTML = "";
 
-    arr.forEach(item => {
-        const icon = item.icon || "01d";
-        const t = new Date(item.ts * 1000);
-        const hour = t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  arr.forEach(item => {
+    const icon = item.icon || "01d";
+    const t = new Date(item.ts * 1000);
+    const hour = t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
-        box.innerHTML += `
-            <div class="forecast-box">
-                <img src="https://openweathermap.org/img/wn/${icon}@2x.png"
-                     onerror="this.src='https://openweathermap.org/img/wn/01d@2x.png'">
-                <div>${item.temp.toFixed(1)}°C</div>
-                <div>${hour}</div>
-            </div>
-        `;
-    });
+    box.innerHTML += `
+      <div class="forecast-box">
+        <img src="https://openweathermap.org/img/wn/${icon}@2x.png"
+             onerror="this.src='https://openweathermap.org/img/wn/01d@2x.png'">
+        <div>${item.temp.toFixed(1)}°C</div>
+        <div>${hour}</div>
+      </div>
+    `;
+  });
 });
+
+/* --------------------------------------------------
+   START
+-------------------------------------------------- */
+loadLive();
+</script>
 
 /* --------------------------------------------------
    FORECAST DIAGRAMM
