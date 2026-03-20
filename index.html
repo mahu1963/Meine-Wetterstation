@@ -135,14 +135,19 @@ function loadLive() {
     const e = snap.val();
     if (!e) return;
 
+    const time = new Date(e.timestamp * 1000).toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
     document.getElementById("live").innerHTML = `
       <b>${e.temp.toFixed(1)}°C</b><br>
-      Feuchte: ${e.hum}%<br>
-      Druck: ${e.press} hPa<br>
+      Feuchte: ${e.humidity}%<br>
+      Druck: ${e.pressure} hPa<br>
       Wind: ${e.wind} km/h aus ${e.winddir}°<br>
       Regen (1h): ${e.rain} mm<br>
       Wolken: ${e.clouds}%<br>
-      Stand: ${new Date(e.ts * 1000).toLocaleTimeString("de-DE")}
+      Stand: ${time}
     `;
   });
 }
