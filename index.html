@@ -10,8 +10,8 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<!-- Chart.js lokal (wichtig!) -->
-<script src="/js/chart.js"></script>
+<!-- Chart.js (CDN, damit kein 404) -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <style>
   body { background:#0d1117; color:#e6edf3; font-family:Arial; margin:20px; }
@@ -76,7 +76,8 @@
 /* --------------------------------------------------
    Firebase Init
 -------------------------------------------------- */
- apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
+firebase.initializeApp({
+  apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
   authDomain: "meine-wetterstation.firebaseapp.com",
   databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
   projectId: "meine-wetterstation",
@@ -84,6 +85,8 @@
   messagingSenderId: "593494014586",
   appId: "1:593494014586:web:cad0037363543e946059c3",
   measurementId: "G-139QB1TEMD"
+});
+
 /* --------------------------------------------------
    ANONYMER LOGIN
 -------------------------------------------------- */
