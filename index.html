@@ -3,22 +3,66 @@
 <head>
 <meta charset="UTF-8">
 <title>Meine Wetterstation</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-<!-- Chart.js (CDN, damit kein 404) -->
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
 <style>
-  body { background:#0d1117; color:#e6edf3; font-family:Arial; margin:20px; }
-  .forecast-box {
-    display:inline-block; width:80px; padding:10px; margin:5px;
-    background:#161b22; border-radius:8px; text-align:center;
-  }
+body {
+  background: #0f0f0f;
+  color: #e6edf3;
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+/* TIMELINE FORECAST */
+.timeline {
+  display: flex;
+  overflow-x: auto;
+  gap: 12px;
+  padding: 10px 0;
+  scrollbar-width: thin;
+}
+
+.timeline::-webkit-scrollbar {
+  height: 6px;
+}
+
+.timeline::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 3px;
+}
+
+.timeline-box {
+  min-width: 85px;
+  background: #1e1e1e;
+  border-radius: 12px;
+  padding: 10px 6px;
+  text-align: center;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+}
+
+.timeline-box img {
+  width: 42px;
+  height: 42px;
+}
+
+.timeline-temp {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.timeline-hour {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
 </style>
 </head>
 
@@ -27,30 +71,17 @@
 <h1>Meine Wetterstation</h1>
 
 <!-- LIVE -->
-<div>
-  <h2>Live</h2>
-  <img id="liveIcon" width="80">
-  <div id="temp">--.- °C</div>
-  <div id="details"></div>
-  <div id="wind"></div>
-  <div id="rain"></div>
-  <div id="clouds"></div>
-  <div id="time"></div>
-</div>
+<h2>Live Wetter</h2>
+<div id="live"></div>
 
-<!-- SONNE -->
-<div>
-  <h2>Sonne</h2>
-  Sonnenaufgang: <span id="sunrise">--:--</span><br>
-  Sonnenuntergang: <span id="sunset">--:--</span>
-</div>
+<!-- SUN -->
+<h2>Sonne</h2>
+<div id="sun"></div>
 
-<!-- FORECAST KACHELN -->
+<!-- FORECAST -->
 <h2>Vorhersage (5 Stunden)</h2>
-<div id="forecast"></div>
+<div id="forecastTimeline" class="timeline"></div>
 
-<!-- FORECAST DIAGRAMM -->
-<h2>Vorhersage Diagramm</h2>
 <canvas id="forecastChart" height="120"></canvas>
 
 <!-- HISTORY -->
@@ -73,102 +104,87 @@
 <canvas id="windRose" height="200"></canvas>
 
 <script>
-/* --------------------------------------------------
-   Firebase Init
--------------------------------------------------- */
-firebase.initializeApp({
-  apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
-  authDomain: "meine-wetterstation.firebaseapp.com",
-  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "meine-wetterstation",
-  storageBucket: "meine-wetterstation.firebasestorage.app",
-  messagingSenderId: "593494014586",
-  appId: "1:593494014586:web:cad0037363543e946059c3",
-  measurementId: "G-139QB1TEMD"
-});
+// --------------------------------------------------
+// FIREBASE INIT
+// --------------------------------------------------
+const firebaseConfig = {
+  apiKey: "DEIN_KEY",
+  authDomain: "DEIN_DOMAIN",
+  databaseURL: "DEINE_URL",
+  projectId: "DEIN_PROJECT",
+  storageBucket: "DEIN_BUCKET",
+  messagingSenderId: "DEINE_ID",
+  appId: "DEINE_APPID"
+};
 
-/* --------------------------------------------------
-   ANONYMER LOGIN
--------------------------------------------------- */
+firebase.initializeApp(firebaseConfig);
+
 firebase.auth().signInAnonymously()
   .then(() => console.log("Web anonym eingeloggt"))
-  .catch(err => console.error("Login Fehler:", err));
+  .catch(err => console.error(err));
 
-/* --------------------------------------------------
-   LIVE-DATEN
--------------------------------------------------- */
+
+// --------------------------------------------------
+// LIVE
+// --------------------------------------------------
 function loadLive() {
   firebase.database().ref("weather/live").on("value", snap => {
-    const d = snap.val();
-    if (!d) return;
+    const e = snap.val();
+    if (!e) return;
 
-    document.getElementById("temp").innerText =
-      d.temp?.toFixed ? d.temp.toFixed(1) + " °C" : "--.- °C";
-
-    document.getElementById("details").innerText =
-      `Feuchte: ${d.humidity}%   Druck: ${d.pressure} hPa`;
-
-    document.getElementById("wind").innerText =
-      `Wind: ${d.wind} km/h aus ${d.winddir}°`;
-
-    document.getElementById("rain").innerText =
-      `Regen (1h): ${d.rain} mm`;
-
-    document.getElementById("clouds").innerText =
-      `Wolken: ${d.clouds}%`;
-
-    const t = new Date(d.timestamp * 1000);
-    document.getElementById("time").innerText =
-      "Stand: " + t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-
-    const icon = d.icon || "01d";
-    document.getElementById("liveIcon").src =
-      `https://openweathermap.org/img/wn/${icon}@2x.png`;
+    document.getElementById("live").innerHTML = `
+      <b>${e.temp.toFixed(1)}°C</b><br>
+      Feuchte: ${e.hum}%<br>
+      Druck: ${e.press} hPa<br>
+      Wind: ${e.wind} km/h aus ${e.winddir}°<br>
+      Regen (1h): ${e.rain} mm<br>
+      Wolken: ${e.clouds}%<br>
+      Stand: ${new Date(e.ts * 1000).toLocaleTimeString("de-DE")}
+    `;
   });
 }
 
-/* --------------------------------------------------
-   SONNE
--------------------------------------------------- */
+
+// --------------------------------------------------
+// SUN
+// --------------------------------------------------
 firebase.database().ref("weather/sun").on("value", snap => {
-  const d = snap.val();
-  if (!d) return;
+  const s = snap.val();
+  if (!s) return;
 
-  document.getElementById("sunrise").innerText =
-    new Date(d.sunrise * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
-
-  document.getElementById("sunset").innerText =
-    new Date(d.sunset * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  document.getElementById("sun").innerHTML = `
+    Sonnenaufgang: ${s.sunrise}<br>
+    Sonnenuntergang: ${s.sunset}
+  `;
 });
 
-/* --------------------------------------------------
-   FORECAST KACHELN (5h)
--------------------------------------------------- */
-firebase.database().ref("weather/forecast/5h").on("value", snap => {
-  const arr = snap.val();
-  if (!arr) return;
 
-  const box = document.getElementById("forecast");
+// --------------------------------------------------
+// TIMELINE FORECAST
+// --------------------------------------------------
+function renderTimeline(arr) {
+  const box = document.getElementById("forecastTimeline");
   box.innerHTML = "";
 
   arr.forEach(item => {
     const icon = item.icon || "01d";
     const t = new Date(item.ts * 1000);
-    const hour = t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+    const hour = t.toLocaleTimeString("de-DE", { hour: "2-digit" });
 
     box.innerHTML += `
-      <div class="forecast-box">
+      <div class="timeline-box">
+        <div class="timeline-temp">${item.temp.toFixed(1)}°C</div>
         <img src="https://openweathermap.org/img/wn/${icon}@2x.png">
-        <div>${item.temp.toFixed(1)}°C</div>
-        <div>${hour}</div>
+        <div class="timeline-hour">${hour}</div>
       </div>
     `;
   });
-});
+}
 
-/* --------------------------------------------------
-   FORECAST DIAGRAMM
--------------------------------------------------- */
+
+// --------------------------------------------------
+// FORECAST DIAGRAMM
+// --------------------------------------------------
 let forecastChart = null;
 
 function drawForecastChart(data) {
@@ -216,28 +232,24 @@ function drawForecastChart(data) {
   });
 }
 
-/* --------------------------------------------------
-   FORECAST LADEN (WICHTIG!)
--------------------------------------------------- */
+
+// --------------------------------------------------
+// FORECAST LADEN
+// --------------------------------------------------
 function loadForecast(type) {
   firebase.database().ref("weather/forecast/" + type).on("value", snap => {
     const arr = snap.val();
     if (!arr) return;
 
+    renderTimeline(arr);
     drawForecastChart(arr);
   });
 }
-/* --------------------------------------------------
-   START
--------------------------------------------------- */
-window.onload = function() {
-  loadLive();
-  loadForecast("5h");
-};  
-  
-  /* --------------------------------------------------
-   HISTORY
--------------------------------------------------- */
+
+
+// --------------------------------------------------
+// HISTORY (unverändert aus deinem Code)
+// --------------------------------------------------
 function linearRegression(yValues) {
   const n = yValues.length;
   if (n < 2) return null;
@@ -312,39 +324,10 @@ function drawChart(id, labels, data, title) {
   });
 }
 
-/* --------------------------------------------------
-   WINDROSE
--------------------------------------------------- */
-function drawWindRose(windDirections) {
-  const counts = new Array(8).fill(0);
 
-  windDirections.forEach(dir => {
-    const index = Math.floor((dir % 360) / 45);
-    counts[index]++;
-  });
-
-  new Chart(document.getElementById("windRose"), {
-    type: "polarArea",
-    data: {
-      labels: ["N","NO","O","SO","S","SW","W","NW"],
-      datasets: [{
-        data: counts,
-        backgroundColor: [
-          "#4ea3ff","#6ec6ff","#ffd966","#ff8c42",
-          "#ff4d4d","#d9534f","#5bc0de","#5cb85c"
-        ]
-      }]
-    },
-    options: {
-      scales: { r: { ticks: { color: "#e6edf3" } } },
-      plugins: { legend: { labels: { color: "#e6edf3" } } }
-    }
-  });
-}
-
-/* --------------------------------------------------
-   HISTORY LADEN
--------------------------------------------------- */
+// --------------------------------------------------
+// HISTORY LADEN
+// --------------------------------------------------
 firebase.database().ref("weather/history").on("value", snap => {
   const data = snap.val();
   if (!data) return;
@@ -407,9 +390,41 @@ firebase.database().ref("weather/history").on("value", snap => {
   drawWindRose(windDirValues);
 });
 
-/* --------------------------------------------------
-   START
--------------------------------------------------- */
+
+// --------------------------------------------------
+// WINDROSE
+// --------------------------------------------------
+function drawWindRose(windDirections) {
+  const counts = new Array(8).fill(0);
+
+  windDirections.forEach(dir => {
+    const index = Math.floor((dir % 360) / 45);
+    counts[index]++;
+  });
+
+  new Chart(document.getElementById("windRose"), {
+    type: "polarArea",
+    data: {
+      labels: ["N","NO","O","SO","S","SW","W","NW"],
+      datasets: [{
+        data: counts,
+        backgroundColor: [
+          "#4ea3ff","#6ec6ff","#ffd966","#ff8c42",
+          "#ff4d4d","#d9534f","#5bc0de","#5cb85c"
+        ]
+      }]
+    },
+    options: {
+      scales: { r: { ticks: { color: "#e6edf3" } } },
+      plugins: { legend: { labels: { color: "#e6edf3" } } }
+    }
+  });
+}
+
+
+// --------------------------------------------------
+// START
+// --------------------------------------------------
 window.onload = function() {
   loadLive();
   loadForecast("5h");
