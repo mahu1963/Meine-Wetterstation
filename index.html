@@ -155,12 +155,21 @@ firebase.database().ref("weather/sun").on("value", snap => {
   const s = snap.val();
   if (!s) return;
 
+  const sunrise = new Date(s.sunrise * 1000).toLocaleTimeString("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+  const sunset = new Date(s.sunset * 1000).toLocaleTimeString("de-DE", {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
   document.getElementById("sun").innerHTML = `
-    Sonnenaufgang: ${s.sunrise}<br>
-    Sonnenuntergang: ${s.sunset}
+    Sonnenaufgang: ${sunrise}<br>
+    Sonnenuntergang: ${sunset}
   `;
 });
-
 
 // --------------------------------------------------
 // TIMELINE FORECAST
