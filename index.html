@@ -217,6 +217,25 @@ function drawForecastChart(data) {
 }
 
 /* --------------------------------------------------
+   FORECAST LADEN (WICHTIG!)
+-------------------------------------------------- */
+function loadForecast(type) {
+  firebase.database().ref("weather/forecast/" + type).on("value", snap => {
+    const arr = snap.val();
+    if (!arr) return;
+
+    drawForecastChart(arr);
+  });
+}
+/* --------------------------------------------------
+   START
+-------------------------------------------------- */
+window.onload = function() {
+  loadLive();
+  loadForecast("5h");
+};  
+  
+  /* --------------------------------------------------
    HISTORY
 -------------------------------------------------- */
 function linearRegression(yValues) {
