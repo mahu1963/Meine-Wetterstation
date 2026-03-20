@@ -2,206 +2,89 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Wetterstation – Stuben Martin Huber</title>
+<title>Meine Wetterstation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- Chart.js lokal -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<!-- Firebase v8 -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<!-- Chart.js lokal (wichtig!) -->
+<script src="/js/chart.js"></script>
 
 <style>
-body {
-    background: #0d1117;
-    color: #e6edf3;
-    font-family: Arial, sans-serif;
-    padding: 20px;
-    margin: 0;
-}
-
-/* HEADER */
-.header {
-    background: linear-gradient(90deg, #6ec6ff 0%, #2a66c7 40%, #0a1a33 100%);
-    padding: 35px 20px;
-    border-radius: 15px;
-    margin-bottom: 25px;
-    color: white;
-    text-align: center;
-    position: relative;
-}
-
-.header-icon {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: rgba(255,255,255,0.2);
-    padding: 10px;
-    border-radius: 12px;
-    backdrop-filter: blur(6px);
-}
-
-.header-icon img {
-    width: 70px;
-    height: 70px;
-}
-
-.header-title { font-size: 22px; font-weight: bold; margin-bottom: 15px; }
-.header-temp { font-size: 48px; font-weight: bold; margin-bottom: 10px; }
-.header-details { font-size: 18px; margin-bottom: 5px; }
-.header-time { font-size: 16px; margin-bottom: 10px; }
-
-/* BOX */
-.box {
-    background: #161b22;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-}
-
-/* FORECAST */
-.forecast-container {
-    display: flex;
-    gap: 15px;
-    margin-top: 10px;
-}
-
-.forecast-box {
-    background: #161b22;
-    padding: 12px;
-    border-radius: 12px;
-    width: 90px;
-    text-align: center;
-    transition: transform 0.2s ease;
-}
-
-.forecast-box:hover {
-    transform: translateY(-4px);
-}
-
-.forecast-box img {
-    width: 70px;
-    height: 70px;
-}
-
-/* BUTTONS */
-.forecast-buttons {
-    margin: 10px 0;
-    display: flex;
-    gap: 10px;
-}
-
-.forecast-buttons button {
-    padding: 8px 14px;
-    background: #333;
-    color: #eee;
-    border: 1px solid #555;
-    border-radius: 6px;
-    cursor: pointer;
-}
-
-canvas {
-    background: #161b22;
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 20px;
-}
-
-.windrose {
-    max-width: 400px;
-    margin: 0 auto;
-}
+  body { background:#0d1117; color:#e6edf3; font-family:Arial; margin:20px; }
+  .forecast-box {
+    display:inline-block; width:80px; padding:10px; margin:5px;
+    background:#161b22; border-radius:8px; text-align:center;
+  }
 </style>
 </head>
 
 <body>
 
-<!-- HEADER -->
-<div class="header">
-    <div class="header-title">Wetterstation – Stuben Martin Huber</div>
-    <div class="header-temp" id="temp">--.- °C</div>
+<h1>Meine Wetterstation</h1>
 
-    <div class="header-details" id="details">
-        Feuchte: -- %   Druck: ---- hPa
-    </div>
-
-    <div class="header-details" id="wind">Wind: -- km/h aus --°</div>
-    <div class="header-details" id="rain">Regen (1h): -- mm</div>
-    <div class="header-details" id="clouds">Wolken: -- %</div>
-
-    <div class="header-time" id="time">Stand: --:--</div>
-
-    <div class="header-icon">
-        <img id="liveIcon" src="https://openweathermap.org/img/wn/01d@2x.png">
-    </div>
+<!-- LIVE -->
+<div>
+  <h2>Live</h2>
+  <img id="liveIcon" width="80">
+  <div id="temp">--.- °C</div>
+  <div id="details"></div>
+  <div id="wind"></div>
+  <div id="rain"></div>
+  <div id="clouds"></div>
+  <div id="time"></div>
 </div>
 
-<!-- STATISTIK -->
-<div class="box">
-    <h2>Verlauf / Statistik</h2>
-    <div>Woche (Ø Temp): <span id="avg-week">--.- °C</span></div>
-    <div>Monat (Ø Temp): <span id="avg-month">--.- °C</span></div>
-    <div>Jahr (Ø Temp): <span id="avg-year">--.- °C</span></div>
-
-    <br>
-
-    <div>Sonnenaufgang: <span id="sunrise">--:--</span></div>
-    <div>Sonnenuntergang: <span id="sunset">--:--</span></div>
+<!-- SONNE -->
+<div>
+  <h2>Sonne</h2>
+  Sonnenaufgang: <span id="sunrise">--:--</span><br>
+  Sonnenuntergang: <span id="sunset">--:--</span>
 </div>
 
-<!-- FORECAST -->
+<!-- FORECAST KACHELN -->
 <h2>Vorhersage (5 Stunden)</h2>
-<div class="forecast-container" id="forecast"></div>
+<div id="forecast"></div>
 
+<!-- FORECAST DIAGRAMM -->
 <h2>Vorhersage Diagramm</h2>
+<canvas id="forecastChart" height="120"></canvas>
 
-<div class="forecast-buttons">
-    <button onclick="loadForecast('5h')">5h</button>
-    <button onclick="loadForecast('24h')">24h</button>
-    <button onclick="loadForecast('48h')">48h</button>
-</div>
+<!-- HISTORY -->
+<h2>Wochentemperatur</h2>
+<canvas id="weekChart" height="120"></canvas>
 
-<canvas id="forecastChart"></canvas>
+<h2>Monatstemperatur</h2>
+<canvas id="monthChart" height="120"></canvas>
 
-<!-- CHARTS -->
-<h2>Wochenverlauf</h2>
-<canvas id="weekChart"></canvas>
+<h2>Jahrestemperatur</h2>
+<canvas id="yearChart" height="120"></canvas>
 
-<h2>Monatsverlauf</h2>
-<canvas id="monthChart"></canvas>
+<h2>Wind</h2>
+<canvas id="windChart" height="120"></canvas>
 
-<h2>Jahresverlauf</h2>
-<canvas id="yearChart"></canvas>
-
-<h2>Windverlauf</h2>
-<canvas id="windChart"></canvas>
-
-<h2>Regenverlauf</h2>
-<canvas id="rainChart"></canvas>
+<h2>Regen</h2>
+<canvas id="rainChart" height="120"></canvas>
 
 <h2>Windrose</h2>
-<canvas id="windRose" class="windrose"></canvas>
+<canvas id="windRose" height="200"></canvas>
 
 <script>
 /* --------------------------------------------------
-   FIREBASE CONFIG (v8)
+   Firebase Init
 -------------------------------------------------- */
-const firebaseConfig = {
+firebase.initializeApp({
   apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
   authDomain: "meine-wetterstation.firebaseapp.com",
-  databaseURL: "https://meine-wetterstation-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "meine-wetterstation",
-  storageBucket: "meine-wetterstation.firebasestorage.app",
-  messagingSenderId: "593494014586",
-  appId: "1:593494014586:web:cad0037363543e946059c3",
-  measurementId: "G-139QB1TEMD"
-};
-
-firebase.initializeApp(firebaseConfig);
+  databaseURL: "https://DEIN_PROJEKT-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "meine-wetterstation"
+});
 
 /* --------------------------------------------------
-   ⭐ ANONYMER LOGIN (v8)
+   ANONYMER LOGIN
 -------------------------------------------------- */
 firebase.auth().signInAnonymously()
   .then(() => console.log("Web anonym eingeloggt"))
@@ -255,7 +138,7 @@ firebase.database().ref("weather/sun").on("value", snap => {
 });
 
 /* --------------------------------------------------
-   FORECAST KACHELN
+   FORECAST KACHELN (5h)
 -------------------------------------------------- */
 firebase.database().ref("weather/forecast/5h").on("value", snap => {
   const arr = snap.val();
@@ -265,14 +148,13 @@ firebase.database().ref("weather/forecast/5h").on("value", snap => {
   box.innerHTML = "";
 
   arr.forEach(item => {
-    const icon = item.icon || "01d";
+    const icon = item.icon || item.weather?.[0]?.icon || "01d";
     const t = new Date(item.ts * 1000);
     const hour = t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
     box.innerHTML += `
       <div class="forecast-box">
-        <img src="https://openweathermap.org/img/wn/${icon}@2x.png"
-             onerror="this.src='https://openweathermap.org/img/wn/01d@2x.png'">
+        <img src="https://openweathermap.org/img/wn/${icon}@2x.png">
         <div>${item.temp.toFixed(1)}°C</div>
         <div>${hour}</div>
       </div>
@@ -294,7 +176,7 @@ function drawForecastChart(data) {
   const temps = data.map(e => e.temp);
 
   const icons = data.map(e => {
-    const iconCode = e.icon || "01d";
+    const iconCode = e.icon || e.weather?.[0]?.icon || "01d";
     const img = new Image();
     img.src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
     img.onload = () => forecastChart?.update();
@@ -309,23 +191,19 @@ function drawForecastChart(data) {
     type: "line",
     data: {
       labels,
-      datasets: [
-        {
-          label: "Temperatur",
-          data: temps,
-          borderColor: "#4ea3ff",
-          borderWidth: 2,
-          tension: 0.3,
-          pointRadius: 14,
-          pointStyle: icons
-        }
-      ]
+      datasets: [{
+        label: "Temperatur",
+        data: temps,
+        borderColor: "#4ea3ff",
+        borderWidth: 2,
+        tension: 0.3,
+        pointRadius: 14,
+        pointStyle: icons
+      }]
     },
     options: {
       responsive: true,
-      plugins: {
-        legend: { labels: { color: "#ccc" } }
-      },
+      plugins: { legend: { labels: { color: "#ccc" } } },
       scales: {
         x: { ticks: { color: "#ccc" } },
         y: { ticks: { color: "#ccc" } }
@@ -343,7 +221,7 @@ function loadForecast(type) {
 }
 
 /* --------------------------------------------------
-   HISTORY → CHARTS
+   HISTORY
 -------------------------------------------------- */
 function linearRegression(yValues) {
   const n = yValues.length;
@@ -410,9 +288,7 @@ function drawChart(id, labels, data, title) {
     },
     options: {
       responsive: true,
-      plugins: {
-        legend: { labels: { color: "#ccc" } }
-      },
+      plugins: { legend: { labels: { color: "#ccc" } } },
       scales: {
         x: { ticks: { color: "#ccc" } },
         y: { ticks: { color: "#ccc" } }
@@ -452,7 +328,7 @@ function drawWindRose(windDirections) {
 }
 
 /* --------------------------------------------------
-   HISTORY
+   HISTORY LADEN
 -------------------------------------------------- */
 firebase.database().ref("weather/history").on("value", snap => {
   const data = snap.val();
@@ -514,12 +390,6 @@ firebase.database().ref("weather/history").on("value", snap => {
   drawChart("rainChart", rainLabels, rainValues, "Regen (mm)");
 
   drawWindRose(windDirValues);
-
-  // Durchschnittswerte für Box oben
-  const avg = arr => arr.length ? (arr.reduce((a,b)=>a+b)/arr.length).toFixed(1) : "--.-";
-  document.getElementById("avg-week").innerText  = avg(weekTemps)  + " °C";
-  document.getElementById("avg-month").innerText = avg(monthTemps) + " °C";
-  document.getElementById("avg-year").innerText  = avg(yearTemps)  + " °C";
 });
 
 /* --------------------------------------------------
