@@ -152,7 +152,7 @@ firebase.database().ref("weather/forecast/5h").on("value", snap => {
   box.innerHTML = "";
 
   arr.forEach(item => {
-    const icon = item.icon || item.weather?.[0]?.icon || "01d";
+    const icon = item.icon || "01d";
     const t = new Date(item.ts * 1000);
     const hour = t.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
 
@@ -180,9 +180,9 @@ function drawForecastChart(data) {
   const temps = data.map(e => e.temp);
 
   const icons = data.map(e => {
-    const iconCode = e.icon || e.weather?.[0]?.icon || "01d";
+    const iconCode = e.icon || "01d";
     const img = new Image();
-    img.src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+    img.src = `https://openweathermap.org/img/wn/${iconCode}.png`;
     img.onload = () => forecastChart?.update();
     return img;
   });
@@ -213,14 +213,6 @@ function drawForecastChart(data) {
         y: { ticks: { color: "#ccc" } }
       }
     }
-  });
-}
-
-function loadForecast(type) {
-  firebase.database().ref("weather/forecast/" + type).once("value", snap => {
-    const arr = snap.val();
-    if (!arr) return;
-    drawForecastChart(arr);
   });
 }
 
