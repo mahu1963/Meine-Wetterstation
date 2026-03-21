@@ -189,7 +189,6 @@ function loadLive() {
   });
 }
 
-
 // --------------------------------------------------
 // SUN
 // --------------------------------------------------
@@ -207,10 +206,8 @@ firebase.database().ref("weather/sun").on("value", snap => {
     minute: "2-digit"
   });
 
-  document.getElementById("sun").innerHTML = `
-    Sonnenaufgang: ${sunrise}<br>
-    Sonnenuntergang: ${sunset}
-  `;
+  document.getElementById("sunriseText").textContent = sunrise;
+  document.getElementById("sunsetText").textContent = sunset;
 });
 
 
