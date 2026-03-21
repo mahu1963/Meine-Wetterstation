@@ -86,16 +86,38 @@ body {
 
 <h2>Sonne</h2>
 
-<div class="sun-box">
-  <div class="sun-item">
-    <div class="sun-icon sunrise"></div>
-    <span id="sunriseText"></span>
-  </div>
+<div class="sun-container">
 
-  <div class="sun-item">
-    <div class="sun-icon sunset"></div>
-    <span id="sunsetText"></span>
-  </div>
+    <!-- SUNRISE -->
+    <div class="sunrise-icon">
+        <svg class="sun" width="60" height="60" viewBox="0 0 24 24" fill="none"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="14" r="4"></circle>
+            <line x1="12" y1="2" x2="12" y2="6"></line>
+            <line x1="4.93" y1="7.05" x2="7.76" y2="9.88"></line>
+            <line x1="19.07" y1="7.05" x2="16.24" y2="9.88"></line>
+            <line x1="2" y1="14" x2="6" y2="14"></line>
+            <line x1="18" y1="14" x2="22" y2="14"></line>
+            <polyline points="8 17 12 21 16 17"></polyline>
+        </svg>
+        <div id="sunriseText" class="sunrise-time"></div>
+    </div>
+
+    <!-- SUNSET -->
+    <div class="sunset-icon">
+        <svg class="sunset-sun" width="60" height="60" viewBox="0 0 24 24" fill="none"
+             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="10" r="4"></circle>
+            <line x1="12" y1="2" x2="12" y2="6"></line>
+            <line x1="4.93" y1="7.05" x2="7.76" y2="9.88"></line>
+            <line x1="19.07" y1="7.05" x2="16.24" y2="9.88"></line>
+            <line x1="2" y1="14" x2="6" y2="14"></line>
+            <line x1="18" y1="14" x2="22" y2="14"></line>
+            <polyline points="16 17 12 21 8 17"></polyline>
+        </svg>
+        <div id="sunsetText" class="sunset-time"></div>
+    </div>
+
 </div>
 
 <h2>Wochentemperatur</h2>
