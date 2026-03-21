@@ -1,18 +1,11 @@
 /* -----------------------------------------
-   ROOT – LIGHT & DARK MODE
+   DARK BLUE THEME
 ----------------------------------------- */
 :root {
-    --bg: #ffffff;
-    --text: #222;
-    --card: #ffffff;
-    --accent: #4a90e2;
-}
-
-.dark {
-    --bg: #1e1e1e;
-    --text: #e0e0e0;
-    --card: #2a2a2a;
-    --accent: #4a90e2;
+    --bg: #0d1117;          /* dunkles Blau/Schwarz */
+    --text: #e6edf3;        /* helles Blau/Weiß */
+    --card: #161b22;        /* dunkle Karten */
+    --accent: #58a6ff;      /* helles Blau */
 }
 
 /* -----------------------------------------
@@ -49,7 +42,7 @@ body {
 .main-title {
     font-size: 2.8rem;
     font-weight: 700;
-    margin-bottom: 4px;
+    color: var(--text);
 }
 
 .sub-title {
@@ -66,19 +59,19 @@ body {
    LIVE-BEREICH
 ----------------------------------------- */
 .current-box {
-    background: rgba(0, 0, 0, 0.25);
+    background: var(--card);
     border-radius: 16px;
     padding: 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    backdrop-filter: blur(8px);
-    margin-bottom: 20px;
+    border: 1px solid rgba(255,255,255,0.08);
 }
 
 .current-value {
     font-size: 3rem;
     font-weight: 600;
+    color: var(--accent);
 }
 
 .current-value .unit {
@@ -90,7 +83,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    font-size: 0.95rem;
+    font-size: 1rem;
     opacity: 0.9;
 }
 
@@ -110,9 +103,9 @@ body {
 }
 
 @keyframes sunPulse {
-    0%   { transform: scale(1); box-shadow: 0 0 12px 4px rgba(255,200,0,0.7); }
-    50%  { transform: scale(1.08); box-shadow: 0 0 20px 10px rgba(255,200,0,0.3); }
-    100% { transform: scale(1); box-shadow: 0 0 12px 4px rgba(255,200,0,0.7); }
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.08); }
+    100% { transform: scale(1); }
 }
 
 /* Wolken */
@@ -122,9 +115,9 @@ body {
 }
 
 @keyframes cloudPulse {
-    0%   { transform: scale(1); opacity: 0.9; }
-    50%  { transform: scale(1.04); opacity: 1; }
-    100% { transform: scale(1); opacity: 0.9; }
+    0%   { opacity: 0.9; }
+    50%  { opacity: 1; }
+    100% { opacity: 0.9; }
 }
 
 /* Regen */
@@ -199,45 +192,6 @@ body {
     margin-top: 6px;
     font-size: 1.25rem;
     color: #ffd54f;
-    text-shadow: 0 0 6px #ffd54f;
-}
-
-/* Sunrise Animation */
-.sun {
-    animation: sunriseMotion 3.4s cubic-bezier(0.55, 0.03, 0.29, 0.99) infinite alternate;
-}
-
-@keyframes sunriseMotion {
-    0%   { transform: translateY(16px) scale(0.94); }
-    35%  { transform: translateY(4px)  scale(1.03); }
-    55%  { transform: translateY(-2px) scale(1.00); }
-    100% { transform: translateY(-8px) scale(1.00); }
-}
-
-/* Sunset Animation */
-.sunset-sun {
-    animation: sunsetMotion 3.4s cubic-bezier(0.55, 0.03, 0.29, 0.99) infinite alternate;
-}
-
-@keyframes sunsetMotion {
-    0%   { transform: translateY(-8px) scale(1.00); }
-    35%  { transform: translateY(-2px) scale(1.03); }
-    55%  { transform: translateY(4px)  scale(1.00); }
-    100% { transform: translateY(16px) scale(0.94); }
-}
-
-/* Glow Pulse */
-.sunrise-icon svg,
-.sunset-icon svg {
-    stroke: #ffd54f !important;
-    animation: glowPulse 3.4s ease-in-out infinite alternate;
-}
-
-@keyframes glowPulse {
-    0%   { filter: drop-shadow(0 0 2px #ffd54f) brightness(1); }
-    40%  { filter: drop-shadow(0 0 7px #ffd54f) brightness(1.25); }
-    60%  { filter: drop-shadow(0 0 10px #ffd54f) brightness(1.35); }
-    100% { filter: drop-shadow(0 0 4px #ffd54f) brightness(1.1); }
 }
 
 /* -----------------------------------------
@@ -268,11 +222,13 @@ body {
 }
 
 /* -----------------------------------------
-   CHARTS
+   CHARTS – perfekt lesbar
 ----------------------------------------- */
 canvas {
-    background: rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.06);
     border-radius: 12px;
     padding: 10px;
     margin-bottom: 24px;
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(6px);
 }
