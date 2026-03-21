@@ -162,8 +162,8 @@ function loadLive() {
       Stand: ${time}
     `;
 
-    // ICON LADEN
-    firebase.database().ref("weather/openweather/history/icon").once("value", iconSnap => {
+    // ICON LADEN (KORREKTER PFAD!)
+    firebase.database().ref("weather/openweather/icon").once("value", iconSnap => {
       const iconCode = iconSnap.val() || "04d";
       const icon = document.getElementById("liveIcon");
 
