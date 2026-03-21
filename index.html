@@ -12,58 +12,12 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 
-
-  <style>
+<style>
 body {
   background: #0f0f0f;
   color: #e6edf3;
   font-family: Arial, sans-serif;
   margin: 20px;
-}
-
-/* TIMELINE FORECAST */
-.timeline {
-  display: flex;
-  overflow-x: auto;
-  gap: 12px;
-  padding: 10px 0;
-  scrollbar-width: thin;
-}
-
-.timeline::-webkit-scrollbar {
-  height: 6px;
-}
-
-.timeline::-webkit-scrollbar-thumb {
-  background: #555;
-  border-radius: 3px;
-}
-
-.timeline-box {
-  min-width: 85px;
-  background: #1e1e1e;
-  border-radius: 12px;
-  padding: 10px 6px;
-  text-align: center;
-  color: #fff;
-  box-shadow: 0 0 6px rgba(0,0,0,0.3);
-  flex-shrink: 0;
-}
-
-.timeline-box img {
-  width: 42px;
-  height: 42px;
-}
-
-.timeline-temp {
-  font-size: 1.2rem;
-  font-weight: bold;
-  margin-bottom: 4px;
-}
-
-.timeline-hour {
-  font-size: 0.9rem;
-  opacity: 0.8;
 }
 </style>
 </head>
@@ -79,12 +33,6 @@ body {
 <!-- SUN -->
 <h2>Sonne</h2>
 <div id="sun"></div>
-
-<!-- FORECAST -->
-<h2>Vorhersage (5 Stunden)</h2>
-<div id="forecastTimeline" class="timeline"></div>
-
-<canvas id="forecastChart" height="120"></canvas>
 
 <!-- HISTORY -->
 <h2>Wochentemperatur</h2>
@@ -178,7 +126,7 @@ firebase.database().ref("weather/sun").on("value", snap => {
 
 
 // --------------------------------------------------
-// HISTORY (unverändert aus deinem Code)
+// HISTORY
 // --------------------------------------------------
 function linearRegression(yValues) {
   const n = yValues.length;
@@ -357,7 +305,6 @@ function drawWindRose(windDirections) {
 // --------------------------------------------------
 window.onload = function() {
   loadLive();
-  loadForecast("5h");
 };
 </script>
 
