@@ -19,22 +19,74 @@ body {
   font-family: Arial, sans-serif;
   margin: 20px;
 }
+
+/* --------------------------------------------------
+   GLAS-HEADER
+-------------------------------------------------- */
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 25px;
+  margin-bottom: 25px;
+
+  background: linear-gradient(90deg,
+    rgba(120,180,255,0.35) 0%,
+    rgba(40,60,100,0.25) 40%,
+    rgba(10,10,20,0.35) 100%
+  );
+
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.title-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #e6edf3;
+}
+
+.sub-title {
+  font-size: 1rem;
+  opacity: 0.75;
+}
+
+.weather-icon-box img {
+  width: 70px;
+  height: 70px;
+  filter: drop-shadow(0 0 8px rgba(255,255,255,0.4));
+}
 </style>
 </head>
 
 <body>
 
-<h1>Meine Wetterstation</h1>
+<!-- --------------------------------------------------
+     HEADER
+-------------------------------------------------- -->
+<header class="top-header">
+  <div class="title-box">
+    <div class="main-title">Wetterstation Stuben</div>
+    <div class="sub-title">Martin Huber</div>
+  </div>
 
-<!-- LIVE -->
+  <div class="weather-icon-box">
+    <img src="https://openweathermap.org/img/wn/01d@2x.png" id="liveIcon">
+  </div>
+</header>
+
 <h2>Live Wetter</h2>
 <div id="live"></div>
 
-<!-- SUN -->
 <h2>Sonne</h2>
 <div id="sun"></div>
 
-<!-- HISTORY -->
 <h2>Wochentemperatur</h2>
 <canvas id="weekChart" height="120"></canvas>
 
@@ -88,6 +140,10 @@ function loadLive() {
       minute: "2-digit"
     });
 
+    // Live Icon aktualisieren
+    document.getElementById("liveIcon").src =
+      `https://openweathermap.org/img/wn/${e.icon}@2x.png`;
+
     document.getElementById("live").innerHTML = `
       <b>${e.temp.toFixed(1)}°C</b><br>
       Feuchte: ${e.humidity}%<br>
@@ -126,7 +182,7 @@ firebase.database().ref("weather/sun").on("value", snap => {
 
 
 // --------------------------------------------------
-// HISTORY
+// HISTORY (Charts)
 // --------------------------------------------------
 function linearRegression(yValues) {
   const n = yValues.length;
