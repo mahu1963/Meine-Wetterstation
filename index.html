@@ -221,9 +221,26 @@ function loadLive() {
       minute: "2-digit"
     });
 
-    document.getElementById("liveIcon").src =
-      `https://openweathermap.org/img/wn/${e.icon}@2x.png`;
+    // Live Icon aktualisieren
+    const icon = document.getElementById("liveIcon");
+    icon.src = `https://openweathermap.org/img/wn/${e.icon}@2x.png`;
 
+    // Wetterabhängige Icon-Animation
+    icon.className = ""; // Reset
+
+    if (e.icon.startsWith("01")) icon.classList.add("icon-sun");
+    else if (e.icon.startsWith("02") || e.icon.startsWith("03") || e.icon.startsWith("04"))
+        icon.classList.add("icon-cloud");
+    else if (e.icon.startsWith("09") || e.icon.startsWith("10"))
+        icon.classList.add("icon-rain");
+    else if (e.icon.startsWith("13"))
+        icon.classList.add("icon-snow");
+    else if (e.icon.startsWith("11"))
+        icon.classList.add("icon-storm");
+    else if (e.icon.endsWith("n"))
+        icon.classList.add("icon-night");
+
+    // Live Werte
     document.getElementById("live").innerHTML = `
       <b>${e.temp.toFixed(1)}°C</b><br>
       Feuchte: ${e.humidity}%<br>
