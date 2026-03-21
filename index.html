@@ -2,66 +2,118 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Meine Wetterstation</title>
+<title>Wetterstation Stuben</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<!-- Firebase v8 -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
+/* --------------------------------------------------
+   DEIN STYLE (gekürzt, nur relevante Teile)
+-------------------------------------------------- */
+
 body {
-  background: #0f0f0f;
+  background: #0d1117;
   color: #e6edf3;
   font-family: Arial, sans-serif;
-  margin: 20px;
+  padding: 20px;
 }
 
-/* --------------------------------------------------
-   GLAS-HEADER
--------------------------------------------------- */
+/* HEADER */
 .top-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 25px;
   margin-bottom: 25px;
-
-  background: linear-gradient(90deg,
-    rgba(120,180,255,0.35) 0%,
-    rgba(40,60,100,0.25) 40%,
-    rgba(10,10,20,0.35) 100%
-  );
-
-  backdrop-filter: blur(12px);
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,0.15);
-}
-
-.title-box {
-  display: flex;
-  flex-direction: column;
-}
-
-.main-title {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #e6edf3;
-}
-
-.sub-title {
-  font-size: 1rem;
-  opacity: 0.75;
 }
 
 .weather-icon-box img {
-  width: 70px;
-  height: 70px;
-  filter: drop-shadow(0 0 8px rgba(255,255,255,0.4));
+  width: 80px;
+  height: 80px;
 }
+
+/* LIVE ICON PULSE */
+#liveIcon {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 6px;
+  box-shadow: 0 0 0 0 rgba(255,165,0,0.6);
+  animation: pulse 2.2s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255,165,0,0.6); transform: scale(1); }
+  50%  { box-shadow: 0 0 12px 12px rgba(255,165,0,0); transform: scale(1.06); }
+  100% { box-shadow: 0 0 0 0 rgba(255,165,0,0.6); transform: scale(1); }
+}
+
+/* SUN ANIMATION */
+.sun-container {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin: 20px 0;
+  text-align: center;
+}
+
+.sunrise-icon, .sunset-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #ffd54f;
+}
+
+.sunrise-time, .sunset-time {
+  margin-top: 6px;
+  font-size: 1.25rem;
+  color: #ffd54f;
+  text-shadow: 0 0 6px #ffd54f;
+}
+
+/* Sunrise Animation */
+.sun {
+  animation: sunriseMotion 3.4s cubic-bezier(0.55, 0.03, 0.29, 0.99) infinite alternate;
+}
+
+@keyframes sunriseMotion {
+  0%   { transform: translateY(16px) scale(0.94); }
+  35%  { transform: translateY(4px)  scale(1.03); }
+  55%  { transform: translateY(-2px) scale(1.00); }
+  100% { transform: translateY(-8px) scale(1.00); }
+}
+
+/* Sunset Animation */
+.sunset-sun {
+  animation: sunsetMotion 3.4s cubic-bezier(0.55, 0.03, 0.29, 0.99) infinite alternate;
+}
+
+@keyframes sunsetMotion {
+  0%   { transform: translateY(-8px) scale(1.00); }
+  35%  { transform: translateY(-2px) scale(1.03); }
+  55%  { transform: translateY(4px)  scale(1.00); }
+  100% { transform: translateY(16px) scale(0.94); }
+}
+
+/* Glow Pulse */
+.sunrise-icon svg,
+.sunset-icon svg {
+  stroke: #ffd54f !important;
+  animation: glowPulse 3.4s ease-in-out infinite alternate;
+}
+
+@keyframes glowPulse {
+  0%   { filter: drop-shadow(0 0 2px #ffd54f) brightness(1); }
+  40%  { filter: drop-shadow(0 0 7px #ffd54f) brightness(1.25); }
+  60%  { filter: drop-shadow(0 0 10px #ffd54f) brightness(1.35); }
+  100% { filter: drop-shadow(0 0 4px #ffd54f) brightness(1.1); }
+}
+
 </style>
 </head>
 
@@ -139,9 +191,9 @@ body {
 <canvas id="windRose" height="200"></canvas>
 
 <script>
-// --------------------------------------------------
-// FIREBASE INIT
-// --------------------------------------------------
+/* --------------------------------------------------
+   FIREBASE INIT
+-------------------------------------------------- */
 const firebaseConfig = {
   apiKey: "AIzaSyApmjkGSrwrVlrhho77ruk7lL4gTcQAbFM",
   authDomain: "meine-wetterstation.firebaseapp.com",
@@ -154,15 +206,11 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+firebase.auth().signInAnonymously();
 
-firebase.auth().signInAnonymously()
-  .then(() => console.log("Web anonym eingeloggt"))
-  .catch(err => console.error(err));
-
-
-// --------------------------------------------------
-// LIVE
-// --------------------------------------------------
+/* --------------------------------------------------
+   LIVE
+-------------------------------------------------- */
 function loadLive() {
   firebase.database().ref("weather/live").on("value", snap => {
     const e = snap.val();
@@ -173,7 +221,6 @@ function loadLive() {
       minute: "2-digit"
     });
 
-    // Live Icon aktualisieren
     document.getElementById("liveIcon").src =
       `https://openweathermap.org/img/wn/${e.icon}@2x.png`;
 
@@ -189,31 +236,32 @@ function loadLive() {
   });
 }
 
-// --------------------------------------------------
-// SUN
-// --------------------------------------------------
-firebase.database().ref("weather/sun").on("value", snap => {
-  const s = snap.val();
-  if (!s) return;
+/* --------------------------------------------------
+   SUN
+-------------------------------------------------- */
+function startSun() {
+  firebase.database().ref("weather/sun").on("value", snap => {
+    const s = snap.val();
+    if (!s) return;
 
-  const sunrise = new Date(s.sunrise * 1000).toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit"
+    const sunrise = new Date(s.sunrise * 1000).toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    const sunset = new Date(s.sunset * 1000).toLocaleTimeString("de-DE", {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+
+    document.getElementById("sunriseText").textContent = sunrise;
+    document.getElementById("sunsetText").textContent = sunset;
   });
+}
 
-  const sunset = new Date(s.sunset * 1000).toLocaleTimeString("de-DE", {
-    hour: "2-digit",
-    minute: "2-digit"
-  });
-
-  document.getElementById("sunriseText").textContent = sunrise;
-  document.getElementById("sunsetText").textContent = sunset;
-});
-
-
-// --------------------------------------------------
-// HISTORY (Charts)
-// --------------------------------------------------
+/* --------------------------------------------------
+   HISTORY + CHARTS
+-------------------------------------------------- */
 function linearRegression(yValues) {
   const n = yValues.length;
   if (n < 2) return null;
@@ -288,76 +336,76 @@ function drawChart(id, labels, data, title) {
   });
 }
 
+/* --------------------------------------------------
+   HISTORY LISTENER
+-------------------------------------------------- */
+function startHistory() {
+  firebase.database().ref("weather/history").on("value", snap => {
+    const data = snap.val();
+    if (!data) return;
 
-// --------------------------------------------------
-// HISTORY LADEN
-// --------------------------------------------------
-firebase.database().ref("weather/history").on("value", snap => {
-  const data = snap.val();
-  if (!data) return;
+    const now = Date.now() / 1000;
 
-  const now = Date.now() / 1000;
+    const weekLabels = [];
+    const weekTemps = [];
 
-  const weekLabels = [];
-  const weekTemps = [];
+    const monthLabels = [];
+    const monthTemps = [];
 
-  const monthLabels = [];
-  const monthTemps = [];
+    const yearLabels = [];
+    const yearTemps = [];
 
-  const yearLabels = [];
-  const yearTemps = [];
+    const windLabels = [];
+    const windValues = [];
 
-  const windLabels = [];
-  const windValues = [];
+    const rainLabels = [];
+    const rainValues = [];
 
-  const rainLabels = [];
-  const rainValues = [];
+    const windDirValues = [];
 
-  const windDirValues = [];
+    for (const k in data) {
+      const e = data[k];
+      const age = now - e.ts;
+      const date = new Date(e.ts * 1000);
 
-  for (const k in data) {
-    const e = data[k];
-    const age = now - e.ts;
-    const date = new Date(e.ts * 1000);
+      if (age <= 7 * 86400) {
+        weekLabels.push(date.toLocaleDateString("de-DE", { weekday: "short", hour: "2-digit" }));
+        weekTemps.push(e.temp);
+      }
 
-    if (age <= 7 * 86400) {
-      weekLabels.push(date.toLocaleDateString("de-DE", { weekday: "short", hour: "2-digit" }));
-      weekTemps.push(e.temp);
+      if (age <= 30 * 86400) {
+        monthLabels.push(date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }));
+        monthTemps.push(e.temp);
+      }
+
+      if (age <= 365 * 86400) {
+        yearLabels.push(date.toLocaleDateString("de-DE", { month: "short" }));
+        yearTemps.push(e.temp);
+      }
+
+      windLabels.push(date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
+      windValues.push(e.wind);
+
+      rainLabels.push(date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
+      rainValues.push(e.rain);
+
+      windDirValues.push(e.winddir);
     }
 
-    if (age <= 30 * 86400) {
-      monthLabels.push(date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }));
-      monthTemps.push(e.temp);
-    }
+    drawChart("weekChart", weekLabels, weekTemps, "Wochentemperatur");
+    drawChart("monthChart", monthLabels, monthTemps, "Monatstemperatur");
+    drawChart("yearChart", yearLabels, yearTemps, "Jahrestemperatur");
 
-    if (age <= 365 * 86400) {
-      yearLabels.push(date.toLocaleDateString("de-DE", { month: "short" }));
-      yearTemps.push(e.temp);
-    }
+    drawChart("windChart", windLabels, windValues, "Wind (km/h)");
+    drawChart("rainChart", rainLabels, rainValues, "Regen (mm)");
 
-    windLabels.push(date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
-    windValues.push(e.wind);
+    drawWindRose(windDirValues);
+  });
+}
 
-    rainLabels.push(date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
-    rainValues.push(e.rain);
-
-    windDirValues.push(e.winddir);
-  }
-
-  drawChart("weekChart", weekLabels, weekTemps, "Wochentemperatur");
-  drawChart("monthChart", monthLabels, monthTemps, "Monatstemperatur");
-  drawChart("yearChart", yearLabels, yearTemps, "Jahrestemperatur");
-
-  drawChart("windChart", windLabels, windValues, "Wind (km/h)");
-  drawChart("rainChart", rainLabels, rainValues, "Regen (mm)");
-
-  drawWindRose(windDirValues);
-});
-
-
-// --------------------------------------------------
-// WINDROSE
-// --------------------------------------------------
+/* --------------------------------------------------
+   WINDROSE
+-------------------------------------------------- */
 function drawWindRose(windDirections) {
   const counts = new Array(8).fill(0);
 
@@ -385,12 +433,13 @@ function drawWindRose(windDirections) {
   });
 }
 
-
-// --------------------------------------------------
-// START
-// --------------------------------------------------
+/* --------------------------------------------------
+   START
+-------------------------------------------------- */
 window.onload = function() {
   loadLive();
+  startSun();
+  startHistory();
 };
 </script>
 
