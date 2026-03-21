@@ -1,195 +1,124 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<meta charset="UTF-8">
-<title>Wetterstation Stuben</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Wetterstation Stuben</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Chart.js -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- CSS ausgelagert -->
+    <link rel="stylesheet" href="style.css">
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<style>
-/* --------------------------------------------------
-   DEIN STYLE (gekürzt, nur relevante Teile)
--------------------------------------------------- */
-
-body {
-  background: #0d1117;
-  color: #e6edf3;
-  font-family: Arial, sans-serif;
-  padding: 20px;
-}
-
-/* HEADER */
-.top-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 25px;
-}
-
-.weather-icon-box img {
-  width: 80px;
-  height: 80px;
-}
-
-/* LIVE ICON PULSE */
-#liveIcon {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 6px;
-  box-shadow: 0 0 0 0 rgba(255,165,0,0.6);
-  animation: pulse 2.2s infinite ease-in-out;
-}
-
-@keyframes pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(255,165,0,0.6); transform: scale(1); }
-  50%  { box-shadow: 0 0 12px 12px rgba(255,165,0,0); transform: scale(1.06); }
-  100% { box-shadow: 0 0 0 0 rgba(255,165,0,0.6); transform: scale(1); }
-}
-
-/* SUN ANIMATION */
-.sun-container {
-  display: flex;
-  justify-content: center;
-  gap: 40px;
-  margin: 20px 0;
-  text-align: center;
-}
-
-.sunrise-icon, .sunset-icon {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: #ffd54f;
-}
-
-.sunrise-time, .sunset-time {
-  margin-top: 6px;
-  font-size: 1.25rem;
-  color: #ffd54f;
-  text-shadow: 0 0 6px #ffd54f;
-}
-
-/* Sunrise Animation */
-.sun {
-  animation: sunriseMotion 3.4s cubic-bezier(0.55, 0.03, 0.29, 0.99) infinite alternate;
-}
-
-@keyframes sunriseMotion {
-  0%   { transform: translateY(16px) scale(0.94); }
-  35%  { transform: translateY(4px)  scale(1.03); }
-  55%  { transform: translateY(-2px) scale(1.00); }
-  100% { transform: translateY(-8px) scale(1.00); }
-}
-
-/* Sunset Animation */
-.sunset-sun {
-  animation: sunsetMotion 3.4s cubic-bezier(0.55, 0.03, 0.29, 0.99) infinite alternate;
-}
-
-@keyframes sunsetMotion {
-  0%   { transform: translateY(-8px) scale(1.00); }
-  35%  { transform: translateY(-2px) scale(1.03); }
-  55%  { transform: translateY(4px)  scale(1.00); }
-  100% { transform: translateY(16px) scale(0.94); }
-}
-
-/* Glow Pulse */
-.sunrise-icon svg,
-.sunset-icon svg {
-  stroke: #ffd54f !important;
-  animation: glowPulse 3.4s ease-in-out infinite alternate;
-}
-
-@keyframes glowPulse {
-  0%   { filter: drop-shadow(0 0 2px #ffd54f) brightness(1); }
-  40%  { filter: drop-shadow(0 0 7px #ffd54f) brightness(1.25); }
-  60%  { filter: drop-shadow(0 0 10px #ffd54f) brightness(1.35); }
-  100% { filter: drop-shadow(0 0 4px #ffd54f) brightness(1.1); }
-}
-
-</style>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 
 <body>
 
+<div class="container">
+
+    <!-- --------------------------------------------------
+         HEADER – Titel zentriert, Icon rechts
+    -------------------------------------------------- -->
+    <header class="top-header">
+        <div class="header-left">
+            <div class="main-title">Wetterstation Stuben</div>
+            <div class="sub-title">Martin Huber</div>
+        </div>
+
+        <div class="header-right">
+            <img id="liveIcon" src="" alt="Live Icon">
+        </div>
+    </header>
+
+    <!-- --------------------------------------------------
+         LIVE-BEREICH
+    -------------------------------------------------- -->
+    <div class="current-box">
+        <div class="current-value">
+            <span id="liveTemp">--</span><span class="unit">°C</span>
+        </div>
+
+        <div class="current-sub" id="live">
+            Lade Daten…
+        </div>
+    </div>
+
+    <!-- --------------------------------------------------
+         SUNRISE / SUNSET
+    -------------------------------------------------- -->
+    <h2 class="section-title">Sonnenaufgang & Sonnenuntergang</h2>
+
+    <div class="sun-container">
+
+        <!-- Sunrise -->
+        <div class="sunrise-icon">
+            <svg class="sun" width="60" height="60" viewBox="0 0 24 24" fill="none"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="14" r="4"></circle>
+                <line x1="12" y1="2" x2="12" y2="6"></line>
+                <line x1="4.93" y1="7.05" x2="7.76" y2="9.88"></line>
+                <line x1="19.07" y1="7.05" x2="16.24" y2="9.88"></line>
+                <line x1="2" y1="14" x2="6" y2="14"></line>
+                <line x1="18" y1="14" x2="22" y2="14"></line>
+                <polyline points="8 17 12 21 16 17"></polyline>
+            </svg>
+            <div id="sunriseText" class="sunrise-time">--:--</div>
+        </div>
+
+        <!-- Sunset -->
+        <div class="sunset-icon">
+            <svg class="sunset-sun" width="60" height="60" viewBox="0 0 24 24" fill="none"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="10" r="4"></circle>
+                <line x1="12" y1="2" x2="12" y2="6"></line>
+                <line x1="4.93" y1="7.05" x2="7.76" y2="9.88"></line>
+                <line x1="19.07" y1="7.05" x2="16.24" y2="9.88"></line>
+                <line x1="2" y1="14" x2="6" y2="14"></line>
+                <line x1="18" y1="14" x2="22" y2="14"></line>
+                <polyline points="16 17 12 21 8 17"></polyline>
+            </svg>
+            <div id="sunsetText" class="sunset-time">--:--</div>
+        </div>
+
+    </div>
+
+    <!-- --------------------------------------------------
+         TEMPERATUR-CHARTS
+    -------------------------------------------------- -->
+    <h2 class="section-title">Wochentemperatur</h2>
+    <canvas id="weekChart" height="120"></canvas>
+
+    <h2 class="section-title">Monatstemperatur</h2>
+    <canvas id="monthChart" height="120"></canvas>
+
+    <h2 class="section-title">Jahrestemperatur</h2>
+    <canvas id="yearChart" height="120"></canvas>
+
+    <!-- --------------------------------------------------
+         WIND & REGEN
+    -------------------------------------------------- -->
+    <h2 class="section-title">Wind</h2>
+    <canvas id="windChart" height="120"></canvas>
+
+    <h2 class="section-title">Regen</h2>
+    <canvas id="rainChart" height="120"></canvas>
+
+    <!-- --------------------------------------------------
+         WINDROSE
+    -------------------------------------------------- -->
+    <h2 class="section-title">Windrose</h2>
+    <canvas id="windRose" height="200"></canvas>
+
+</div> <!-- container -->
+
 <!-- --------------------------------------------------
-     HEADER
+     JAVASCRIPT
 -------------------------------------------------- -->
-<header class="top-header">
-  <div class="title-box">
-    <div class="main-title">Wetterstation Stuben</div>
-    <div class="sub-title">Martin Huber</div>
-  </div>
-
-  <div class="weather-icon-box">
-    <img src="https://openweathermap.org/img/wn/01d@2x.png" id="liveIcon">
-  </div>
-</header>
-
-<h2>Live Wetter</h2>
-<div id="live"></div>
-
-<h2>Sonne</h2>
-
-<div class="sun-container">
-
-    <!-- SUNRISE -->
-    <div class="sunrise-icon">
-        <svg class="sun" width="60" height="60" viewBox="0 0 24 24" fill="none"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="14" r="4"></circle>
-            <line x1="12" y1="2" x2="12" y2="6"></line>
-            <line x1="4.93" y1="7.05" x2="7.76" y2="9.88"></line>
-            <line x1="19.07" y1="7.05" x2="16.24" y2="9.88"></line>
-            <line x1="2" y1="14" x2="6" y2="14"></line>
-            <line x1="18" y1="14" x2="22" y2="14"></line>
-            <polyline points="8 17 12 21 16 17"></polyline>
-        </svg>
-        <div id="sunriseText" class="sunrise-time"></div>
-    </div>
-
-    <!-- SUNSET -->
-    <div class="sunset-icon">
-        <svg class="sunset-sun" width="60" height="60" viewBox="0 0 24 24" fill="none"
-             stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="10" r="4"></circle>
-            <line x1="12" y1="2" x2="12" y2="6"></line>
-            <line x1="4.93" y1="7.05" x2="7.76" y2="9.88"></line>
-            <line x1="19.07" y1="7.05" x2="16.24" y2="9.88"></line>
-            <line x1="2" y1="14" x2="6" y2="14"></line>
-            <line x1="18" y1="14" x2="22" y2="14"></line>
-            <polyline points="16 17 12 21 8 17"></polyline>
-        </svg>
-        <div id="sunsetText" class="sunset-time"></div>
-    </div>
-
-</div>
-
-<h2>Wochentemperatur</h2>
-<canvas id="weekChart" height="120"></canvas>
-
-<h2>Monatstemperatur</h2>
-<canvas id="monthChart" height="120"></canvas>
-
-<h2>Jahrestemperatur</h2>
-<canvas id="yearChart" height="120"></canvas>
-
-<h2>Wind</h2>
-<canvas id="windChart" height="120"></canvas>
-
-<h2>Regen</h2>
-<canvas id="rainChart" height="120"></canvas>
-
-<h2>Windrose</h2>
-<canvas id="windRose" height="200"></canvas>
-
 <script>
 /* --------------------------------------------------
    FIREBASE INIT
@@ -209,36 +138,37 @@ firebase.initializeApp(firebaseConfig);
 firebase.auth().signInAnonymously();
 
 /* --------------------------------------------------
-   LIVE
+   LIVE-DATEN
 -------------------------------------------------- */
 function loadLive() {
   firebase.database().ref("weather/live").on("value", snap => {
     const e = snap.val();
     if (!e) return;
 
+    document.getElementById("liveTemp").textContent = e.temp.toFixed(1);
+
     const time = new Date(e.timestamp * 1000).toLocaleTimeString("de-DE", {
       hour: "2-digit",
       minute: "2-digit"
     });
 
-    const icon = document.getElementById("liveIcon");
+    // Live-Werte
+    document.getElementById("live").innerHTML = `
+      Feuchte: ${e.humidity}%<br>
+      Druck: ${e.pressure} hPa<br>
+      Wind: ${e.wind} km/h aus ${e.winddir}°<br>
+      Regen (1h): ${e.rain} mm<br>
+      Wolken: ${e.clouds}%<br>
+      Stand: ${time}
+    `;
 
-    // -----------------------------------------
-    // ICON AUS OPENWEATHER/HISTORY LADEN
-    // -----------------------------------------
+    // ICON LADEN
     firebase.database().ref("weather/openweather/history/icon").once("value", iconSnap => {
-      const owIcon = iconSnap.val();
+      const iconCode = iconSnap.val() || "04d";
+      const icon = document.getElementById("liveIcon");
 
-      // Fallback, falls kein Icon vorhanden
-      const iconCode = owIcon || "04d";
-
-      // Bild setzen
       icon.src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
-
-      // -----------------------------------------
-      // WETTER-ANIMATION
-      // -----------------------------------------
-      icon.className = ""; // Reset
+      icon.className = "";
 
       if (iconCode.startsWith("01")) icon.classList.add("icon-sun");
       else if (iconCode.startsWith("02") || iconCode.startsWith("03") || iconCode.startsWith("04"))
@@ -252,31 +182,34 @@ function loadLive() {
       else if (iconCode.endsWith("n"))
           icon.classList.add("icon-night");
     });
-
-    // -----------------------------------------
-    // LIVE-WERTE
-    // -----------------------------------------
-    document.getElementById("live").innerHTML = `
-      <b>${e.temp.toFixed(1)}°C</b><br>
-      Feuchte: ${e.humidity}%<br>
-      Druck: ${e.pressure} hPa<br>
-      Wind: ${e.wind} km/h aus ${e.winddir}°<br>
-      Regen (1h): ${e.rain} mm<br>
-      Wolken: ${e.clouds}%<br>
-      Stand: ${time}
-    `;
   });
 }
 
 /* --------------------------------------------------
-   HISTORY + CHARTS
+   SUN
 -------------------------------------------------- */
-function linearRegression(yValues) {
-  const n = yValues.length;
-  if (n < 2) return null;
+function startSun() {
+  firebase.database().ref("weather/sun").on("value", snap => {
+    const s = snap.val();
+    if (!s) return;
+
+    document.getElementById("sunriseText").textContent =
+      new Date(s.sunrise * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+
+    document.getElementById("sunsetText").textContent =
+      new Date(s.sunset * 1000).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  });
+}
+
+/* --------------------------------------------------
+   CHART-FUNKTIONEN
+-------------------------------------------------- */
+function linearRegression(values) {
+  const n = values.length;
+  if (n < 2) return values;
 
   const x = [...Array(n).keys()];
-  const y = yValues;
+  const y = values;
 
   const sumX = x.reduce((a,b)=>a+b,0);
   const sumY = y.reduce((a,b)=>a+b,0);
@@ -295,12 +228,7 @@ function minLine(values) {
 }
 
 function drawChart(id, labels, data, title) {
-  const ctx = document.getElementById(id);
-
-  const trend = linearRegression(data) || data;
-  const minL = minLine(data);
-
-  new Chart(ctx, {
+  new Chart(document.getElementById(id), {
     type: "line",
     data: {
       labels,
@@ -316,7 +244,7 @@ function drawChart(id, labels, data, title) {
         },
         {
           label: "Trend",
-          data: trend,
+          data: linearRegression(data),
           borderColor: "#00ff88",
           borderWidth: 2,
           borderDash: [6, 6],
@@ -325,7 +253,7 @@ function drawChart(id, labels, data, title) {
         },
         {
           label: "Minimum",
-          data: minL,
+          data: minLine(data),
           borderColor: "#ff4444",
           borderWidth: 1,
           borderDash: [4, 4],
@@ -346,7 +274,7 @@ function drawChart(id, labels, data, title) {
 }
 
 /* --------------------------------------------------
-   HISTORY LISTENER
+   HISTORY
 -------------------------------------------------- */
 function startHistory() {
   firebase.database().ref("weather/history").on("value", snap => {
@@ -355,21 +283,11 @@ function startHistory() {
 
     const now = Date.now() / 1000;
 
-    const weekLabels = [];
-    const weekTemps = [];
-
-    const monthLabels = [];
-    const monthTemps = [];
-
-    const yearLabels = [];
-    const yearTemps = [];
-
-    const windLabels = [];
-    const windValues = [];
-
-    const rainLabels = [];
-    const rainValues = [];
-
+    const weekLabels = [], weekTemps = [];
+    const monthLabels = [], monthTemps = [];
+    const yearLabels = [], yearTemps = [];
+    const windLabels = [], windValues = [];
+    const rainLabels = [], rainValues = [];
     const windDirValues = [];
 
     for (const k in data) {
