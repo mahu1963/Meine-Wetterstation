@@ -5,7 +5,7 @@
     <title>Wetterstation Stuben</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- CSS ausgelagert -->
+    <!-- CSS -->
     <link rel="stylesheet" href="style.css">
 
     <!-- Chart.js -->
@@ -236,8 +236,8 @@ function drawChart(id, labels, data, title) {
         {
           label: title,
           data,
-          borderColor: "#ffffff",
-          backgroundColor: "rgba(255,255,255,0.1)",
+          borderColor: "#58a6ff",
+          backgroundColor: "rgba(88,166,255,0.15)",
           borderWidth: 2,
           tension: 0.3,
           pointRadius: 0
@@ -245,7 +245,7 @@ function drawChart(id, labels, data, title) {
         {
           label: "Trend",
           data: linearRegression(data),
-          borderColor: "#00ff88",
+          borderColor: "#00ff99",
           borderWidth: 2,
           borderDash: [6, 6],
           pointRadius: 0,
@@ -264,10 +264,10 @@ function drawChart(id, labels, data, title) {
     },
     options: {
       responsive: true,
-      plugins: { legend: { labels: { color: "#ccc" } } },
+      plugins: { legend: { labels: { color: "#e6edf3" } } },
       scales: {
-        x: { ticks: { color: "#ccc" } },
-        y: { ticks: { color: "#ccc" } }
+        x: { ticks: { color: "#e6edf3" } },
+        y: { ticks: { color: "#e6edf3" } }
       }
     }
   });
