@@ -224,9 +224,9 @@ function loadLive() {
     const icon = document.getElementById("liveIcon");
 
     // -----------------------------------------
-    // ICON AUS OPENWEATHER LADEN
+    // ICON AUS OPENWEATHER/HISTORY LADEN
     // -----------------------------------------
-    firebase.database().ref("weather/openweather/icon").once("value", iconSnap => {
+    firebase.database().ref("weather/openweather/history/icon").once("value", iconSnap => {
       const owIcon = iconSnap.val();
 
       // Fallback, falls kein Icon vorhanden
@@ -265,28 +265,6 @@ function loadLive() {
       Wolken: ${e.clouds}%<br>
       Stand: ${time}
     `;
-  });
-}
-/* --------------------------------------------------
-   SUN
--------------------------------------------------- */
-function startSun() {
-  firebase.database().ref("weather/sun").on("value", snap => {
-    const s = snap.val();
-    if (!s) return;
-
-    const sunrise = new Date(s.sunrise * 1000).toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-    const sunset = new Date(s.sunset * 1000).toLocaleTimeString("de-DE", {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-
-    document.getElementById("sunriseText").textContent = sunrise;
-    document.getElementById("sunsetText").textContent = sunset;
   });
 }
 
