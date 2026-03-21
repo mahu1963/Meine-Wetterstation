@@ -221,26 +221,41 @@ function loadLive() {
       minute: "2-digit"
     });
 
-    // Live Icon aktualisieren
     const icon = document.getElementById("liveIcon");
-    icon.src = `https://openweathermap.org/img/wn/${e.icon}@2x.png`;
 
-    // Wetterabhängige Icon-Animation
-    icon.className = ""; // Reset
+    // -----------------------------------------
+    // ICON AUS OPENWEATHER LADEN
+    // -----------------------------------------
+    firebase.database().ref("weather/openweather/icon").once("value", iconSnap => {
+      const owIcon = iconSnap.val();
 
-    if (e.icon.startsWith("01")) icon.classList.add("icon-sun");
-    else if (e.icon.startsWith("02") || e.icon.startsWith("03") || e.icon.startsWith("04"))
-        icon.classList.add("icon-cloud");
-    else if (e.icon.startsWith("09") || e.icon.startsWith("10"))
-        icon.classList.add("icon-rain");
-    else if (e.icon.startsWith("13"))
-        icon.classList.add("icon-snow");
-    else if (e.icon.startsWith("11"))
-        icon.classList.add("icon-storm");
-    else if (e.icon.endsWith("n"))
-        icon.classList.add("icon-night");
+      // Fallback, falls kein Icon vorhanden
+      const iconCode = owIcon || "04d";
 
-    // Live Werte
+      // Bild setzen
+      icon.src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+
+      // -----------------------------------------
+      // WETTER-ANIMATION
+      // -----------------------------------------
+      icon.className = ""; // Reset
+
+      if (iconCode.startsWith("01")) icon.classList.add("icon-sun");
+      else if (iconCode.startsWith("02") || iconCode.startsWith("03") || iconCode.startsWith("04"))
+          icon.classList.add("icon-cloud");
+      else if (iconCode.startsWith("09") || iconCode.startsWith("10"))
+          icon.classList.add("icon-rain");
+      else if (iconCode.startsWith("13"))
+          icon.classList.add("icon-snow");
+      else if (iconCode.startsWith("11"))
+          icon.classList.add("icon-storm");
+      else if (iconCode.endsWith("n"))
+          icon.classList.add("icon-night");
+    });
+
+    // -----------------------------------------
+    // LIVE-WERTE
+    // -----------------------------------------
     document.getElementById("live").innerHTML = `
       <b>${e.temp.toFixed(1)}°C</b><br>
       Feuchte: ${e.humidity}%<br>
@@ -252,7 +267,6 @@ function loadLive() {
     `;
   });
 }
-
 /* --------------------------------------------------
    SUN
 -------------------------------------------------- */
