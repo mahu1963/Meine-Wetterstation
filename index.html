@@ -192,7 +192,30 @@ fog: `
 /* --------------------------------------------------
    AUTOMATISCHE ICON-LOGIK
 -------------------------------------------------- */
-function autoWeatherIcon(e) {/* --------------------------------------------------
+function autoWeatherIcon(e) {
+
+    // Gewitter
+    if (e.weatherId >= 200 && e.weatherId < 300)
+        return "storm";
+
+    // Schnee
+    if (e.weatherId >= 600 && e.weatherId < 700)
+        return "snow";
+
+    // Regen
+    if ((e.weatherId >= 500 && e.weatherId < 600) || e.rain > 0)
+        return "rain";
+
+    // Nebel
+    if (e.weatherId >= 700 && e.weatherId < 800)
+        return "fog";
+
+    // Sonne / Wolken
+    if (e.clouds < 10) return "sun";
+    if (e.clouds < 50) return "suncloud";
+    return "cloud";
+}
+ /* --------------------------------------------------
    LIVE-DATEN
 -------------------------------------------------- */
 function loadLive() {
@@ -414,26 +437,3 @@ window.onload = function() {
 
 </body>
 </html>
-
-    // Gewitter
-    if (e.weatherId >= 200 && e.weatherId < 300)
-        return "storm";
-
-    // Schnee
-    if (e.weatherId >= 600 && e.weatherId < 700)
-        return "snow";
-
-    // Regen
-    if ((e.weatherId >= 500 && e.weatherId < 600) || e.rain > 0)
-        return "rain";
-
-    // Nebel
-    if (e.weatherId >= 700 && e.weatherId < 800)
-        return "fog";
-
-    // Sonne / Wolken
-    if (e.clouds < 10) return "sun";
-    if (e.clouds < 50) return "suncloud";
-    return "cloud";
-}
-    
