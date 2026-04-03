@@ -122,49 +122,77 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 /* --------------------------------------------------
-   SVG ICONS
+   SVG ICONS (ALLE WETTERLAGEN)
 -------------------------------------------------- */
 const icons = {
-    sun: `
-        <svg viewBox="0 0 24 24" width="60" height="60" stroke="#FFD700" fill="none" stroke-width="2" stroke-linecap="round">
-          <circle cx="12" cy="12" r="5"></circle>
-          <line x1="12" y1="1" x2="12" y2="4"></line>
-          <line x1="12" y1="20" x2="12" y2="23"></line>
-          <line x1="4.22" y1="4.22" x2="6.34" y2="6.34"></line>
-          <line x1="17.66" y1="17.66" x2="19.78" y2="19.78"></line>
-          <line x1="1" y1="12" x2="4" y2="12"></line>
-          <line x1="20" y1="12" x2="23" y2="12"></line>
-          <line x1="4.22" y1="19.78" x2="6.34" y2="17.66"></line>
-          <line x1="17.66" y1="6.34" x2="19.78" y2="4.22"></line>
-        </svg>
-    `,
-    suncloud: `
-        <svg viewBox="0 0 24 24" width="60" height="60" stroke="#FFD700" fill="none" stroke-width="2" stroke-linecap="round">
-          <circle cx="8" cy="8" r="4"></circle>
-          <line x1="8" y1="1" x2="8" y2="3"></line>
-          <line x1="1" y1="8" x2="3" y2="8"></line>
-          <line x1="8" y1="13" x2="8" y2="15"></line>
-          <line x1="13" y1="8" x2="15" y2="8"></line>
-          <path d="M14 14c-1.5 0-2.7 1-3 2.3A3 3 0 0 0 14 20h6a3 3 0 0 0 0-6h-1"></path>
-        </svg>
-    `,
-    cloud: `
-        <svg viewBox="0 0 24 24" width="60" height="60" stroke="#CCCCCC" fill="none" stroke-width="2" stroke-linecap="round">
-          <path d="M5 18h12a4 4 0 0 0 0-8 6 6 0 0 0-11.5-2A4 4 0 0 0 5 18z"></path>
-        </svg>
-    `
+sun: `
+<svg viewBox="0 0 24 24" width="60" height="60" stroke="#FFD700" fill="none" stroke-width="2" stroke-linecap="round">
+  <circle cx="12" cy="12" r="5"></circle>
+  <line x1="12" y1="1" x2="12" y2="4"></line>
+  <line x1="12" y1="20" x2="12" y2="23"></line>
+  <line x1="4.22" y1="4.22" x2="6.34" y2="6.34"></line>
+  <line x1="17.66" y1="17.66" x2="19.78" y2="19.78"></line>
+  <line x1="1" y1="12" x2="4" y2="12"></line>
+  <line x1="20" y1="12" x2="23" y2="12"></line>
+  <line x1="4.22" y1="19.78" x2="6.34" y2="17.66"></line>
+  <line x1="17.66" y1="6.34" x2="19.78" y2="4.22"></line>
+</svg>
+`,
+
+suncloud: `
+<svg viewBox="0 0 24 24" width="60" height="60" stroke="#FFD700" fill="none" stroke-width="2" stroke-linecap="round">
+  <circle cx="8" cy="8" r="4"></circle>
+  <line x1="8" y1="1" x2="8" y2="3"></line>
+  <line x1="1" y1="8" x2="3" y2="8"></line>
+  <line x1="8" y1="13" x2="8" y2="15"></line>
+  <line x1="13" y1="8" x2="15" y2="8"></line>
+  <path d="M14 14c-1.5 0-2.7 1-3 2.3A3 3 0 0 0 14 20h6a3 3 0 0 0 0-6h-1"></path>
+</svg>
+`,
+
+cloud: `
+<svg viewBox="0 0 24 24" width="60" height="60" stroke="#CCCCCC" fill="none" stroke-width="2" stroke-linecap="round">
+  <path d="M5 18h12a4 4 0 0 0 0-8 6 6 0 0 0-11.5-2A4 4 0 0 0 5 18z"></path>
+</svg>
+`,
+
+rain: `
+<svg viewBox="0 0 24 24" width="60" height="60" stroke="#4aa3ff" fill="none" stroke-width="2" stroke-linecap="round">
+  <path d="M5 16h12a4 4 0 0 0 0-8 6 6 0 0 0-11.5-2A4 4 0 0 0 5 16z"></path>
+  <line x1="8" y1="18" x2="8" y2="22"></line>
+  <line x1="12" y1="18" x2="12" y2="22"></line>
+  <line x1="16" y1="18" x2="16" y2="22"></line>
+</svg>
+`,
+
+snow: `
+<svg viewBox="0 0 24 24" width="60" height="60" stroke="#aee1ff" fill="none" stroke-width="2" stroke-linecap="round">
+  <line x1="12" y1="2" x2="12" y2="22"></line>
+  <line x1="4" y1="6" x2="20" y2="18"></line>
+  <line x1="20" y1="6" x2="4" y2="18"></line>
+</svg>
+`,
+
+storm: `
+<svg viewBox="0 0 24 24" width="60" height="60" stroke="#ffaa00" fill="none" stroke-width="2" stroke-linecap="round">
+  <path d="M5 16h12a4 4 0 0 0 0-8 6 6 0 0 0-11.5-2A4 4 0 0 0 5 16z"></path>
+  <polyline points="13 11 10 17 14 17 11 23"></polyline>
+</svg>
+`,
+
+fog: `
+<svg viewBox="0 0 24 24" width="60" height="60" stroke="#bbbbbb" fill="none" stroke-width="2" stroke-linecap="round">
+  <line x1="3" y1="12" x2="21" y2="12"></line>
+  <line x1="4" y1="16" x2="20" y2="16"></line>
+  <line x1="6" y1="20" x2="18" y2="20"></line>
+</svg>
+`
 };
 
 /* --------------------------------------------------
-   Wolken-Logik
+   AUTOMATISCHE ICON-LOGIK
 -------------------------------------------------- */
-function cloudIconByPercent(clouds) {
-    if (clouds < 10) return "sun";
-    if (clouds < 50) return "suncloud";
-    return "cloud";
-}
-
-/* --------------------------------------------------
+function autoWeatherIcon(e) {/* --------------------------------------------------
    LIVE-DATEN
 -------------------------------------------------- */
 function loadLive() {
@@ -179,6 +207,7 @@ function loadLive() {
       minute: "2-digit"
     });
 
+    // Live-Werte
     document.getElementById("live").innerHTML = `
       Feuchte: ${e.humidity}%<br>
       Druck: ${e.pressure} hPa<br>
@@ -188,8 +217,8 @@ function loadLive() {
       Stand: ${time}
     `;
 
-    // NEUES ICON
-    const iconName = cloudIconByPercent(e.clouds);
+    // AUTOMATISCHES ICON
+    const iconName = autoWeatherIcon(e);
     document.getElementById("liveIcon").innerHTML = icons[iconName];
   });
 }
@@ -381,3 +410,30 @@ window.onload = function() {
 
 </body>
 </html>
+</script>
+
+</body>
+</html>
+
+    // Gewitter
+    if (e.weatherId >= 200 && e.weatherId < 300)
+        return "storm";
+
+    // Schnee
+    if (e.weatherId >= 600 && e.weatherId < 700)
+        return "snow";
+
+    // Regen
+    if ((e.weatherId >= 500 && e.weatherId < 600) || e.rain > 0)
+        return "rain";
+
+    // Nebel
+    if (e.weatherId >= 700 && e.weatherId < 800)
+        return "fog";
+
+    // Sonne / Wolken
+    if (e.clouds < 10) return "sun";
+    if (e.clouds < 50) return "suncloud";
+    return "cloud";
+}
+    
