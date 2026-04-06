@@ -356,25 +356,40 @@ function startHistory() {
       const age = now - e.ts;
       const date = new Date(e.ts * 1000);
 
+      // Woche
       if (age <= 7 * 86400) {
-        weekLabels.push(date.toLocaleDateString("de-DE", { weekday: "short", hour: "2-digit" }));
+        weekLabels.push(
+          date.toLocaleDateString("de-DE", { weekday: "short", hour: "2-digit" })
+        );
         weekTemps.push(e.temp);
       }
 
+      // Monat
       if (age <= 30 * 86400) {
-        monthLabels.push(date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" }));
+        monthLabels.push(
+          date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })
+        );
         monthTemps.push(e.temp);
       }
 
+      // Jahr
       if (age <= 365 * 86400) {
-        yearLabels.push(date.toLocaleDateString("de-DE", { month: "short" }));
+        yearLabels.push(
+          date.toLocaleDateString("de-DE", { month: "short" })
+        );
         yearTemps.push(e.temp);
       }
 
-      windLabels.push(date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
+      // ⭐⭐⭐ Wind – NUR DATUM ⭐⭐⭐
+      windLabels.push(
+        date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })
+      );
       windValues.push(e.wind);
 
-      rainLabels.push(date.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }));
+      // ⭐⭐⭐ Regen – NUR DATUM ⭐⭐⭐
+      rainLabels.push(
+        date.toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })
+      );
       rainValues.push(e.rain);
 
       windDirValues.push(e.winddir);
@@ -390,7 +405,6 @@ function startHistory() {
     drawWindRose(windDirValues);
   });
 }
-
 /* --------------------------------------------------
    WINDROSE
 -------------------------------------------------- */
